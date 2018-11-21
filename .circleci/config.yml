@@ -1,0 +1,28 @@
+version: 2
+jobs:
+  server-build:
+    docker:
+      - image: circleci/openjdk:8-jdk-browsers
+    environment:
+      TZ: "/usr/share/zoneinfo/Europe/Vienna"
+      GRADLE_OPTS: '-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -Dorg.gradle.jvmargs="-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:+HeapDumpOnOutOfMemoryError"'
+    steps:
+      - checkout
+      - run:
+          name: "Move to server directory"
+          command: cd litfass-server
+      - run:
+          name: "Build"
+          command: ./gradlew build --stacktrace
+      - run:
+          name: "Collect unit test results"
+          when: always
+          command: find . -type f -regex ".*/build/test-results/unitTest/.*xml" -exec cp {} build/circleci/test-results \;
+      - store_test_results:
+          path: build/circleci/test-results
+
+workflows:
+  version: 2
+  test:
+    jobs:
+      - server-build

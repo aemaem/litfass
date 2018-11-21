@@ -1,0 +1,16 @@
+apply plugin: "kotlin"
+apply plugin: "application"
+
+mainClassName = "io.ktor.server.netty.EngineMain"
+
+dependencies {
+    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion"
+    compile "io.ktor:ktor-server-netty:$ktorVersion"
+    compile "ch.qos.logback:logback-classic:1.2.1"
+    compile "io.ktor:ktor-server-core:$ktorVersion"
+    compile "io.ktor:ktor-auth:$ktorVersion"
+    compile "io.ktor:ktor-jackson:$ktorVersion"
+    compile "io.ktor:ktor-metrics:$ktorVersion"
+    compile "io.ktor:ktor-websockets:$ktorVersion"
+    testCompile "io.ktor:ktor-server-tests:$ktorVersion"
+}
