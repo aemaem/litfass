@@ -9,8 +9,8 @@ jobs:
     steps:
       - checkout
       - run:
-          name: "Move to server directory"
-          command: cd litfass-server
+          name: "Prepare"
+          command: mkdir -p build/circleci/test-results
       - run:
           name: "Build"
           command: ./gradlew build --stacktrace
