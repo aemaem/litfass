@@ -1,6 +1,6 @@
-image:https://img.shields.io/circleci/project/github/aemaem/litfass/master.svg?style=flat-square[CircleCI branch]
-image:https://img.shields.io/github/issues/aemaem/litfass.svg?style=flat-square[GitHub issues]
-image:https://img.shields.io/github/license/mashape/apistatus.svg?style=flat-square[GitHub]
+image:https://img.shields.io/circleci/project/github/aemaem/litfass/master.svg?style=flat-square["CircleCI branch",link="https://circleci.com/gh/aemaem/litfass"]
+image:https://img.shields.io/github/issues/aemaem/litfass.svg?style=flat-square["GitHub issues",link="https://github.com/aemaem/litfass/issues"]
+image:https://img.shields.io/github/license/mashape/apistatus.svg?style=flat-square["GitHub",link="https://github.com/aemaem/litfass/blob/master/LICENSE"]
 
 = LITFASS
 Lightweight Interactive Tailorable Fast Asynchronous Simple Splashboard
