@@ -17,7 +17,7 @@ jobs:
       - run:
           name: "Collect unit test results"
           when: always
-          command: find . -type f -regex ".*/build/test-results/unitTest/.*xml" -exec cp {} build/circleci/test-results \;
+          command: find . -type f -regex ".*/build/test-results/test/.*xml" -exec cp {} build/circleci/test-results \;
       - store_test_results:
           path: build/circleci/test-results
 
