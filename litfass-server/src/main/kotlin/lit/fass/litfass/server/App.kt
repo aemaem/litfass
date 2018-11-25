@@ -30,12 +30,10 @@ import java.time.Duration
 
 fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)
 
-const val AUTH_NAME = "LITFASS-SERVER"
-
 @JvmOverloads
 fun Application.module(testing: Boolean = false) {
     install(Authentication) {
-        basic(AUTH_NAME) {
+        basic {
             realm = "LITFASS"
             validate { if (it.name == "test" && it.password == "password") UserIdPrincipal(it.name) else null }
         }
@@ -91,7 +89,7 @@ fun Application.module(testing: Boolean = false) {
             call.respondText("HELLO WORLD!", contentType = Plain)
         }
 
-        authenticate(AUTH_NAME) {
+        authenticate {
             get("/secure/basic") {
                 val principal = call.principal<UserIdPrincipal>()!!
                 call.respondText("Hello ${principal.name}")
