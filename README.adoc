@@ -3,4 +3,4 @@ image:https://img.shields.io/github/issues/aemaem/litfass.svg?style=flat-square[
 image:https://img.shields.io/github/license/mashape/apistatus.svg?style=flat-square["GitHub",link="https://github.com/aemaem/litfass/blob/master/LICENSE"]
 
 = LITFASS
-Lightweight Integrated Tailorable Fast Asynchronous Statistics Service
+Lightweight Integrated Tailorable Flow Aware Software Service
