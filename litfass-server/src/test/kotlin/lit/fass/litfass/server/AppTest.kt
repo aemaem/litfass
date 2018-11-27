@@ -7,14 +7,21 @@ import io.ktor.server.testing.withTestApplication
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-class ApplicationTest {
+class AppTest {
     @Test
-    fun testRoot() {
+    fun pathRoot() {
         withTestApplication({ module(testing = true) }) {
             handleRequest(Get, "/").apply {
                 assertEquals(OK, response.status())
-                assertEquals("HELLO WORLD!", response.content)
+                assertEquals(
+                    """{
+  "application" : "LITFASS",
+  "description" : "Lightweight Integrated Tailorable Flow Aware Software Service"
+}""", response.content
+                )
             }
         }
     }
+
+    // todo: test path /collections
 }
