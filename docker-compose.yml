@@ -1,0 +1,28 @@
+version: "2"
+services:
+  litfass-elasticsearch:
+    image: elasticsearch:6.5.1
+    container_name: "litfass-elasticsearch"
+    hostname: "litfass-elasticsearch"
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      ES_JAVA_OPTS: "-Xmx256m -Xms256m"
+      "discovery.type": "single-node"
+    networks:
+      - litfass
+  litfass-grafana:
+    image: grafana/grafana:5.3.4
+    container_name: "litfass-grafana"
+    hostname: "litfass-grafana"
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: "admin"
+    networks:
+      - litfass
+
+networks:
+  litfass:
+    driver: bridge

@@ -5,6 +5,7 @@ jobs:
       - image: circleci/openjdk:8-jdk-node-browsers
       - image: elasticsearch:6.5.1
         environment:
+          ES_JAVA_OPTS: "-Xmx256m -Xms256m"
           "discovery.type": "single-node"
     environment:
       TZ: "/usr/share/zoneinfo/Europe/Vienna"
@@ -34,6 +35,7 @@ jobs:
       - image: circleci/openjdk:8-jdk-node-browsers
       - image: elasticsearch:6.5.1
         environment:
+          ES_JAVA_OPTS: "-Xmx256m -Xms256m"
           "discovery.type": "single-node"
     environment:
       TZ: "/usr/share/zoneinfo/Europe/Vienna"

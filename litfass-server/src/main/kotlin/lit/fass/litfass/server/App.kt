@@ -37,6 +37,9 @@ import org.elasticsearch.client.RestClient
 import org.elasticsearch.client.RestHighLevelClient
 import org.elasticsearch.common.xcontent.XContentType.JSON
 import org.slf4j.event.Level.INFO
+import java.time.OffsetDateTime
+import java.time.ZoneOffset.UTC
+import java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME
 
 
 fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)
@@ -94,14 +97,15 @@ fun Application.module(testing: Boolean = false) {
             log.debug("Payload received: $payload")
 
             val indexRequest = IndexRequest(collectionTitle, "doc")
-            indexRequest.source(payload, JSON)
+            val timestamp = ISO_OFFSET_DATE_TIME.format(OffsetDateTime.now(UTC))
+            indexRequest.source("""{"timestamp":"$timestamp","data":$payload}""", JSON)
             elasticsearchClient.indexAsync(indexRequest, DEFAULT, object : ActionListener<IndexResponse> {
                 override fun onFailure(ex: Exception?) {
                     log.error(ex?.message, ex)
                 }
 
                 override fun onResponse(response: IndexResponse?) {
-                    log.debug("Record ${response?.id} for collection ${response?.index} stored")
+                    log.debug("Indexed record ${response?.id} for collection ${response?.index}")
                 }
             })
 
