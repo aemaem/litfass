@@ -3,7 +3,7 @@ jobs:
   build:
     docker:
       - image: circleci/openjdk:8-jdk-node-browsers
-      - image: elasticsearch/6.5.1
+      - image: elasticsearch:6.5.1
         environment:
           "discovery.type": "single-node"
     environment:
@@ -32,7 +32,7 @@ jobs:
   release:
     docker:
       - image: circleci/openjdk:8-jdk-node-browsers
-      - image: elasticsearch/6.5.1
+      - image: elasticsearch:6.5.1
         environment:
           "discovery.type": "single-node"
     environment:
