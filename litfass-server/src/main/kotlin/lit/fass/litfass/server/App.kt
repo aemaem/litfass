@@ -28,18 +28,10 @@ import io.ktor.routing.get
 import io.ktor.routing.post
 import io.ktor.routing.routing
 import io.ktor.util.date.GMTDate
-import org.apache.http.HttpHost
-import org.elasticsearch.action.ActionListener
-import org.elasticsearch.action.index.IndexRequest
-import org.elasticsearch.action.index.IndexResponse
-import org.elasticsearch.client.RequestOptions.DEFAULT
-import org.elasticsearch.client.RestClient
-import org.elasticsearch.client.RestHighLevelClient
-import org.elasticsearch.common.xcontent.XContentType.JSON
+import io.ktor.util.toMap
+import lit.fass.litfass.server.persistence.elasticsearch.EsPersistenceClient
 import org.slf4j.event.Level.INFO
-import java.time.OffsetDateTime
-import java.time.ZoneOffset.UTC
-import java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME
+import java.net.URI
 
 
 fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)
@@ -85,30 +77,18 @@ fun Application.module(testing: Boolean = false) {
     }
     install(DataConversion)
 
-    // todo: move Elasticsearch parameters to configuration file
-    val elasticsearchClient = RestHighLevelClient(RestClient.builder(HttpHost("localhost", 9200, "http")))
+    val persistenceClient = EsPersistenceClient(URI("http://localhost:9200"))
+
     routing {
-        // todo: move to separate collections controller
-        post("/collections/{title}/{subTitle}") {
-            val collectionTitle = call.parameters["title"]
-            val collectionSubTitle = call.parameters["subTitle"]
-            log.debug("Got collection title $collectionTitle and sub title $collectionSubTitle")
-            val payload = call.receiveText()
-            log.debug("Payload received: $payload")
+        post("/collections/{collection}") {
+            val collection = call.parameters["collection"]
+            val collectionMetaData = call.request.queryParameters.toMap()
+            log.debug("Got collection $collection and meta data $collectionMetaData")
 
-            val indexRequest = IndexRequest(collectionTitle, "doc")
-            val timestamp = ISO_OFFSET_DATE_TIME.format(OffsetDateTime.now(UTC))
-            indexRequest.source("""{"timestamp":"$timestamp","data":$payload}""", JSON)
-            elasticsearchClient.indexAsync(indexRequest, DEFAULT, object : ActionListener<IndexResponse> {
-                override fun onFailure(ex: Exception?) {
-                    log.error(ex?.message, ex)
-                }
+            val collectionData = call.receiveText()
+            log.debug("Payload received: $collectionData")
 
-                override fun onResponse(response: IndexResponse?) {
-                    log.debug("Indexed record ${response?.id} for collection ${response?.index}")
-                }
-            })
-
+            persistenceClient.save(collection, collectionData, collectionMetaData)
             call.respond(OK, "")
         }
 

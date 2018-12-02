@@ -14,6 +14,8 @@ dependencies {
     compile "org.elasticsearch.client:elasticsearch-rest-high-level-client:$elasticSearchVersion"
 
     testCompile "io.ktor:ktor-server-tests:$ktorVersion"
+    testCompile "org.awaitility:awaitility:$awaitilityVersion"
+    testCompile "org.awaitility:awaitility-kotlin:$awaitilityVersion"
 }
 
 compileKotlin {
