@@ -77,9 +77,19 @@ fun Application.module(testing: Boolean = false) {
     }
     install(DataConversion)
 
+    //todo: read persistence URI from app config
     val persistenceClient = EsPersistenceClient(URI("http://localhost:9200"))
 
     routing {
+        get("/") {
+            call.respond(
+                mapOf(
+                    "application" to "LITFASS",
+                    "description" to "Lightweight Integrated Tailorable Flow Aware Software Service"
+                )
+            )
+        }
+
         post("/collections/{collection}") {
             val collection = call.parameters["collection"]
             val collectionMetaData = call.request.queryParameters.toMap()
@@ -90,15 +100,6 @@ fun Application.module(testing: Boolean = false) {
 
             persistenceClient.save(collection, collectionData, collectionMetaData)
             call.respond(OK, "")
-        }
-
-        get("/") {
-            call.respond(
-                mapOf(
-                    "application" to "LITFASS",
-                    "description" to "Lightweight Integrated Tailorable Flow Aware Software Service"
-                )
-            )
         }
 
         authenticate {
