@@ -36,7 +36,7 @@ class EsPersistenceClient(uri: URI) : PersistenceClient {
             } else if (it.value.size > 1) {
                 value = it.value.joinToString()
             }
-            "\"${it.key}\":\"${value}\""
+            "\"${it.key}\":\"$value\""
         })
 
         indexRequest.source("""{${meta.joinToString()},"data":$data}""", JSON)

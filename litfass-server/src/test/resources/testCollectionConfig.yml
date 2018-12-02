@@ -1,0 +1,4 @@
+collection: foo
+script:
+  language: kts
+  code: listOf(1,2,3).joinToString(":")
