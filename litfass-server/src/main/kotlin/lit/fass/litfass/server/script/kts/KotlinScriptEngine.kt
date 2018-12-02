@@ -12,11 +12,10 @@ class KotlinScriptEngine : ScriptEngine {
         private val log = LoggerFactory.getLogger(this::class.java.enclosingClass)
     }
 
+    private val scriptEngine: javax.script.ScriptEngine = ScriptEngineManager().getEngineByExtension("kts")
+
     override fun invoke(script: String, input: Map<String, Any>): Any? {
         log.debug("Invoking script:\n$script\nwith input \n$input")
-        with(ScriptEngineManager().getEngineByExtension("kts")) {
-            val bindings = createBindings().apply { putAll(input) }
-            return eval(script, bindings)
-        }
+        with(scriptEngine) { return eval(script, createBindings().apply { putAll(input) }) }
     }
 }
