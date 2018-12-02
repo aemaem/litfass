@@ -1,13 +1,19 @@
 version: 2
 jobs:
-  server-build:
+  build:
     docker:
-      - image: circleci/openjdk:8-jdk-browsers
+      - image: circleci/openjdk:8-jdk-node-browsers
+      - image: elasticsearch:6.5.1
+        environment:
+          ES_JAVA_OPTS: "-Xmx256m -Xms256m"
+          "discovery.type": "single-node"
     environment:
       TZ: "/usr/share/zoneinfo/Europe/Vienna"
       GRADLE_OPTS: '-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -Dorg.gradle.jvmargs="-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:+HeapDumpOnOutOfMemoryError"'
     steps:
       - checkout
+      - restore_cache:
+          key: cache-{{ checksum "build.gradle" }}
       - run:
           name: "Prepare"
           command: mkdir -p build/circleci/test-results
@@ -18,11 +24,42 @@ jobs:
           name: "Collect unit test results"
           when: always
           command: find . -type f -regex ".*/build/test-results/test/.*xml" -exec cp {} build/circleci/test-results \;
+      - save_cache:
+          paths:
+            - ~/.gradle
+          key: cache-{{ checksum "build.gradle" }}
       - store_test_results:
           path: build/circleci/test-results
+  release:
+    docker:
+      - image: circleci/openjdk:8-jdk-node-browsers
+      - image: elasticsearch:6.5.1
+        environment:
+          ES_JAVA_OPTS: "-Xmx256m -Xms256m"
+          "discovery.type": "single-node"
+    environment:
+      TZ: "/usr/share/zoneinfo/Europe/Vienna"
+      GRADLE_OPTS: '-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -Dorg.gradle.jvmargs="-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:+HeapDumpOnOutOfMemoryError"'
+    steps:
+      - checkout
+      - restore_cache:
+          key: cache-{{ checksum "build.gradle" }}
+      - run:
+          name: "Build, release and publish"
+          command: ./gradlew final -Prelease.useLastTag=true --stacktrace
+      - save_cache:
+          paths:
+            - ~/.gradle
+          key: cache-{{ checksum "build.gradle" }}
 
 workflows:
   version: 2
   test:
     jobs:
-      - server-build
+      - build
+      - release:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v\d+\.\d+\.\d+$/
