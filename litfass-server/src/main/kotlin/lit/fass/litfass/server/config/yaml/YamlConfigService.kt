@@ -31,7 +31,7 @@ class YamlConfigService : ConfigService {
             return
         }
         file.walkTopDown()
-            .filter { it.name.endsWith("yml") || it.name.endsWith("yaml") }
+            .filter { it.isFile && (it.name.endsWith("yml") || it.name.endsWith("yaml")) }
             .forEach { readConfig(it) }
     }
 
@@ -48,5 +48,9 @@ class YamlConfigService : ConfigService {
 
     override fun getConfig(name: String): CollectionConfig {
         return configStore[name] ?: throw ConfigException("Config with name $name not found")
+    }
+
+    override fun getConfigs(): Collection<CollectionConfig> {
+        return configStore.values
     }
 }

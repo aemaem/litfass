@@ -1,0 +1,49 @@
+package lit.fass.litfass.server
+
+
+import lit.fass.litfass.server.helper.ElasticsearchSupport
+import lit.fass.litfass.server.helper.IntegrationTest
+import lit.fass.litfass.server.helper.KtorSupport
+import org.junit.experimental.categories.Category
+import spock.lang.Shared
+import spock.lang.Specification
+
+import static io.ktor.http.HttpMethod.Post
+import static io.ktor.http.HttpStatusCode.OK
+import static io.ktor.server.testing.TestEngineKt.handleRequest
+import static org.awaitility.Awaitility.await
+
+/**
+ * @author Michael Mair
+ */
+@Category(IntegrationTest)
+class CollectionsRouteSpec extends Specification implements KtorSupport, ElasticsearchSupport {
+
+    @Shared
+    def app
+
+    def setupSpec() {
+        app = initializeApp([
+                "litfass.config.collection.path": this.class.getResource("/foo.yml").file
+        ])
+    }
+
+    def setup() {
+        cleanDatabase()
+    }
+
+    def "/collections/{collection} POST endpoint"() {
+        when: "requesting /collections/foo?param1=foo&param1=bar&param2=true"
+        def request = handleRequest(app, Post, "/collections/foo?param1=foo&param1=bar&param2=true", {
+            withBody(["foo": "bar"], it)
+        })
+        await().until { request.requestHandled }
+        def result = request.response
+
+        then: "status is OK"
+        result.status() == OK
+        result.content == null
+        and: "data is stored in database"
+        await().until { findAllIndex("foo").hits.totalHits == 1 }
+    }
+}

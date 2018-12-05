@@ -1,0 +1,7 @@
+collection: sub
+flow:
+  - request:
+      url: https://some.url/foo?bar=true
+  - transform:
+      language: kts
+      code: println("bar")

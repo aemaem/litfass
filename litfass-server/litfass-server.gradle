@@ -11,13 +11,13 @@ dependencies {
     compile "io.ktor:ktor-jackson:$ktorVersion"
     compile "io.ktor:ktor-metrics:$ktorVersion"
     compile "io.ktor:ktor-websockets:$ktorVersion"
-
     compile "ch.qos.logback:logback-classic:$logbackVersion"
     compile "org.elasticsearch.client:elasticsearch-rest-high-level-client:$elasticSearchVersion"
 
     testCompile "io.ktor:ktor-server-tests:$ktorVersion"
+    testCompile "org.spockframework:spock-core:$spockVersion"
     testCompile "org.awaitility:awaitility:$awaitilityVersion"
-    testCompile "org.awaitility:awaitility-kotlin:$awaitilityVersion"
+    testCompile "org.awaitility:awaitility-groovy:$awaitilityVersion"
 }
 
 compileKotlin {
@@ -32,4 +32,15 @@ jar {
         attributes "Main-Class": "lit.fass.litfass.server.AppKt"
     }
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+}
+
+task unitTest(type: Test) {
+    useJUnit {
+        includeCategories "lit.fass.litfass.server.helper.UnitTest"
+    }
+}
+task integrationTest(type: Test) {
+    useJUnit {
+        includeCategories "lit.fass.litfass.server.helper.IntegrationTest"
+    }
 }

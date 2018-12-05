@@ -21,7 +21,7 @@ jobs:
           name: "Build"
           command: ./gradlew build --stacktrace
       - run:
-          name: "Collect unit test results"
+          name: "Collect test results"
           when: always
           command: find . -type f -regex ".*/build/test-results/test/.*xml" -exec cp {} build/circleci/test-results \;
       - save_cache:
@@ -54,7 +54,7 @@ jobs:
 
 workflows:
   version: 2
-  test:
+  default:
     jobs:
       - build
       - release:

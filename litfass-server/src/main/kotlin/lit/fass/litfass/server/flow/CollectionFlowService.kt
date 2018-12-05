@@ -34,7 +34,7 @@ class CollectionFlowService : FlowService {
     ): Map<String, Any?> {
         log.debug("Executing step with description ${componentConfig.description}")
         return when (componentConfig) {
-            is CollectionComponentRequestConfig -> emptyMap()
+            is CollectionComponentRequestConfig -> throw UnsupportedOperationException("Not yet implemented")
             is CollectionComponentTransformConfig -> {
                 val scriptEngine = scriptEngines.find { it.isApplicable(componentConfig.language) }
                     ?: throw FlowException("No script engine available for extension ${componentConfig.language}")

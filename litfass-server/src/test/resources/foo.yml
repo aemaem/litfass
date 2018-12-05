@@ -3,4 +3,4 @@ flow:
   - transform:
       description: "Transform something"
       language: kts
-      code: mapOf("foo" to bindings["foo"])
+      code: bindings["data"]
