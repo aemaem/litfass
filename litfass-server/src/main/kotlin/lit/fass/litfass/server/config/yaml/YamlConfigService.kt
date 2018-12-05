@@ -14,20 +14,36 @@ import java.util.concurrent.ConcurrentHashMap
  */
 class YamlConfigService : ConfigService {
     companion object {
-        private val log = LoggerFactory.getLogger(this::class.java)
+        private val log = LoggerFactory.getLogger(this::class.java.enclosingClass)
     }
 
     private val configStore = ConcurrentHashMap<String, CollectionConfig>()
     private val mapper = ObjectMapper(YAMLFactory()).apply { registerModule(KotlinModule()) }
 
-    override fun readConfig(file: File) {
-        readConfig(file.name, file.inputStream())
+    override fun readRecursively(file: File) {
+        log.debug("Reading recursively ${file.absolutePath}")
+        if (!file.exists()) {
+            log.warn("Path ${file.absolutePath} does not exist. No configs read.")
+            return
+        }
+        if (file.isFile) {
+            readConfig(file)
+            return
+        }
+        file.walkTopDown()
+            .filter { it.name.endsWith("yml") || it.name.endsWith("yaml") }
+            .forEach { readConfig(it) }
     }
 
-    override fun readConfig(name: String, inputStream: InputStream) {
-        log.debug("Reading config $name")
+    override fun readConfig(file: File) {
+        log.debug("Reading config from file ${file.absolutePath}")
+        readConfig(file.inputStream())
+    }
+
+    override fun readConfig(inputStream: InputStream) {
         val config = mapper.readValue(inputStream, CollectionConfig::class.java)
-        configStore[name] = config
+        log.debug("Adding config ${config.collection}")
+        configStore[config.collection] = config
     }
 
     override fun getConfig(name: String): CollectionConfig {

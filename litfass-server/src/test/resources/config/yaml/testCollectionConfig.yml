@@ -1,0 +1,14 @@
+collection: foo
+flow:
+  - transform:
+      description: "First step"
+      language: kts
+      code: println("foo")
+  - request:
+      description: "Second step"
+      url: https://some.url/foo?bar=true
+      username: user
+      password: secret
+  - transform:
+      language: kts
+      code: println("bar")

@@ -5,5 +5,5 @@ package lit.fass.litfass.server.persistence
  */
 interface PersistenceClient {
 
-    fun save(collection: String?, data: String?, metadata: Map<String, List<String>>)
+    fun save(collection: String?, data: Map<String, Any?>)
 }
