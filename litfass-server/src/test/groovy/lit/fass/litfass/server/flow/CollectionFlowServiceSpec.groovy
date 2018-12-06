@@ -32,7 +32,6 @@ class CollectionFlowServiceSpec extends Specification {
         ]
         def config = new CollectionConfig("foo", [
                 new CollectionComponentTransformConfig(null, "kts", """bindings["data"]""")
-                //todo: define flow
         ])
         def scriptEngines = [new KotlinScriptEngine()]
 

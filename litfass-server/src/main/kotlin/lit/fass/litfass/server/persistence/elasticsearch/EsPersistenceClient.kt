@@ -6,7 +6,7 @@ import org.apache.http.HttpHost
 import org.elasticsearch.action.ActionListener
 import org.elasticsearch.action.index.IndexRequest
 import org.elasticsearch.action.index.IndexResponse
-import org.elasticsearch.client.RequestOptions
+import org.elasticsearch.client.RequestOptions.DEFAULT
 import org.elasticsearch.client.RestClient
 import org.elasticsearch.client.RestHighLevelClient
 import org.elasticsearch.common.xcontent.XContentType.JSON
@@ -28,7 +28,7 @@ class EsPersistenceClient(uris: List<URI>) : PersistenceClient {
     override fun save(collection: String?, data: Map<String, Any?>) {
         val indexRequest = IndexRequest(collection, "doc")
         indexRequest.source(jsonMapper.writeValueAsString(data), JSON)
-        elasticsearchClient.indexAsync(indexRequest, RequestOptions.DEFAULT, object : ActionListener<IndexResponse> {
+        elasticsearchClient.indexAsync(indexRequest, DEFAULT, object : ActionListener<IndexResponse> {
             override fun onFailure(ex: Exception?) {
                 log.error(ex?.message, ex)
             }
