@@ -40,11 +40,9 @@ class CollectionsRouteSpec extends Specification implements KtorSupport, Elastic
 
     def "/collections/{collection} POST endpoint"() {
         when: "requesting /collections/foo?param1=foo&param1=bar&param2=true"
-        def request = handleRequest(app, Post, "/collections/foo?param1=foo&param1=bar&param2=true", {
+        def result = handleRequest(app, Post, "/collections/foo?param1=foo&param1=bar&param2=true", {
             withBody(["foo": "bar"], it)
-        })
-        await().until { request.requestHandled }
-        def result = request.response
+        }).response
 
         then: "status is OK"
         result.status() == OK

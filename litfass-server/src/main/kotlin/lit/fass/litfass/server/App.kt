@@ -193,6 +193,28 @@ fun Application.module(testing: Boolean = false) {
                 }
                 call.respond(OK)
             }
+            post("/script/{language}/test") {
+                val principal = call.principal<UserIdPrincipal>()!!
+                val language = call.parameters["language"]
+                log.info("Trying $language config for user ${principal.name}")
+                if (language == null) {
+                    call.respond(BadRequest, "Language must not be null")
+                    return@post
+                }
+                val scriptEngine = scriptEngines.find { it.isApplicable(language) }
+                if (scriptEngine == null) {
+                    call.respond(BadRequest, "No script engine available for language $language")
+                    return@post
+                }
+
+                val body: Map<String, Any?> =
+                    jsonMapper.readValue(call.receiveStream(), object : TypeReference<Map<String, Any?>>() {})
+                val script = body["script"] as String
+                @Suppress("UNCHECKED_CAST")
+                val data = body["data"] as Map<String, Any?>
+                val result = scriptEngine.invoke(script, data)
+                call.respond(result)
+            }
         }
     }
 }
