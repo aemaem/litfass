@@ -18,6 +18,7 @@ dependencies {
     testCompile "org.spockframework:spock-core:$spockVersion"
     testCompile "org.awaitility:awaitility:$awaitilityVersion"
     testCompile "org.awaitility:awaitility-groovy:$awaitilityVersion"
+    testCompile "net.bytebuddy:byte-buddy:$byteBuddyVersion"
 }
 
 compileKotlin {

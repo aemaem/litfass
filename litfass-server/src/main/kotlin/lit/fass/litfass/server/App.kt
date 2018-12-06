@@ -36,8 +36,12 @@ import io.ktor.util.date.GMTDate
 import io.ktor.util.toMap
 import lit.fass.litfass.server.config.yaml.YamlConfigService
 import lit.fass.litfass.server.flow.CollectionFlowService
+import lit.fass.litfass.server.persistence.PersistenceClient.Companion.ID_KEY
 import lit.fass.litfass.server.persistence.elasticsearch.EsPersistenceClient
 import lit.fass.litfass.server.script.kts.KotlinScriptEngine
+import org.apache.http.HttpHost
+import org.elasticsearch.client.RestClient
+import org.elasticsearch.client.RestHighLevelClient
 import org.slf4j.event.Level.INFO
 import java.io.File
 import java.net.URI
@@ -91,12 +95,16 @@ fun Application.module(testing: Boolean = false) {
 
 
     val jsonMapper = jacksonObjectMapper()
-    val persistenceClient =
-        EsPersistenceClient(environment.config
-            .property("litfass.elasticsearch.client.urls")
-            .getString()
-            .split(",")
-            .map { URI(it) })
+    val elasticsearch = RestHighLevelClient(RestClient.builder(*environment.config
+        .property("litfass.elasticsearch.client.urls")
+        .getString()
+        .split(",")
+        .map { URI(it) }
+        .map { HttpHost(it.host, it.port, it.scheme) }.toTypedArray()
+    )
+    )
+
+    val persistenceClient = EsPersistenceClient(elasticsearch, jsonMapper)
     val configService = YamlConfigService()
     val configCollectionPath = environment.config.propertyOrNull("litfass.config.collection.path")
     if (configCollectionPath != null) {
@@ -129,7 +137,11 @@ fun Application.module(testing: Boolean = false) {
 
             val config = configService.getConfig(collection)
             val dataToPersist = flowService.execute(data, config, scriptEngines)
-            persistenceClient.save(collection, dataToPersist)
+            if (dataToPersist.containsKey(ID_KEY)) {
+                persistenceClient.save(collection, dataToPersist[ID_KEY], dataToPersist)
+            } else {
+                persistenceClient.save(collection, dataToPersist)
+            }
             call.respond(OK)
         }
 
