@@ -103,4 +103,15 @@ class YamlConfigServiceSpec extends Specification {
         result[0].flow[2].language == "kts"
         result[0].flow[2].code == """println("bar")"""
     }
+
+    def "config can be removed"() {
+        given: "a config foo"
+        yamlConfigService.configStore.put("foo", new CollectionConfig("foo", []))
+
+        when: "config foo is removed"
+        yamlConfigService.removeConfig("foo")
+
+        then: "config foo is not available in config store"
+        yamlConfigService.configStore.isEmpty()
+    }
 }

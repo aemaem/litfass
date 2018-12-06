@@ -13,4 +13,5 @@ interface ConfigService {
     fun readConfig(inputStream: InputStream)
     fun getConfig(name: String): CollectionConfig
     fun getConfigs(): Collection<CollectionConfig>
+    fun removeConfig(name: String)
 }

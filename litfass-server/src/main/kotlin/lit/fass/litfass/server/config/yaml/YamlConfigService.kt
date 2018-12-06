@@ -53,4 +53,8 @@ class YamlConfigService : ConfigService {
     override fun getConfigs(): Collection<CollectionConfig> {
         return configStore.values
     }
+
+    override fun removeConfig(name: String) {
+        configStore.remove(name)
+    }
 }

@@ -23,12 +23,14 @@ import io.ktor.http.HttpMethod.Companion.Patch
 import io.ktor.http.HttpMethod.Companion.Post
 import io.ktor.http.HttpMethod.Companion.Put
 import io.ktor.http.HttpStatusCode.Companion.BadRequest
+import io.ktor.http.HttpStatusCode.Companion.NoContent
 import io.ktor.http.HttpStatusCode.Companion.OK
 import io.ktor.http.content.CachingOptions
 import io.ktor.jackson.jackson
 import io.ktor.request.path
 import io.ktor.request.receiveStream
 import io.ktor.response.respond
+import io.ktor.routing.delete
 import io.ktor.routing.get
 import io.ktor.routing.post
 import io.ktor.routing.routing
@@ -153,6 +155,32 @@ fun Application.module(testing: Boolean = false) {
                         "description" to "Lightweight Integrated Tailorable Flow Aware Software Service"
                     )
                 )
+            }
+            get("/configs") {
+                val principal = call.principal<UserIdPrincipal>()!!
+                log.debug("Getting all configs for user ${principal.name}")
+                call.respond(jsonMapper.writeValueAsString(configService.getConfigs()))
+            }
+            get("/configs/{collection}") {
+                val collection = call.parameters["collection"]
+                if (collection == null) {
+                    call.respond(BadRequest, "Collection must not be null")
+                    return@get
+                }
+                val principal = call.principal<UserIdPrincipal>()!!
+                log.debug("Getting config $collection for user ${principal.name}")
+                call.respond(jsonMapper.writeValueAsString(configService.getConfig(collection)))
+            }
+            delete("/configs/{collection}") {
+                val collection = call.parameters["collection"]
+                if (collection == null) {
+                    call.respond(BadRequest, "Collection must not be null")
+                    return@delete
+                }
+                val principal = call.principal<UserIdPrincipal>()!!
+                log.debug("Removing config $collection for user ${principal.name}")
+                configService.removeConfig(collection)
+                call.respond(NoContent)
             }
             post("/configs") {
                 val principal = call.principal<UserIdPrincipal>()!!
