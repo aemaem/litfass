@@ -1,6 +1,6 @@
 collection: foo
 flow:
-  - transform:
+  - script:
       description: "Transform something"
       language: kts
       code: bindings["data"]

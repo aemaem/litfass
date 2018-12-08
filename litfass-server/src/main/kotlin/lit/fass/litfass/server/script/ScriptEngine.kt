@@ -5,5 +5,5 @@ package lit.fass.litfass.server.script
  */
 interface ScriptEngine {
     fun isApplicable(extension: String): Boolean
-    fun invoke(script: String, input: Map<String, Any?>): Map<String, Any?>
+    fun invoke(script: String, data: Map<String, Any?>): Map<String, Any?>
 }

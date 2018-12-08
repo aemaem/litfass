@@ -1,7 +1,7 @@
 collection: sub
 flow:
-  - request:
+  - http:
       url: https://some.url/foo?bar=true
-  - transform:
+  - script:
       language: kts
       code: println("bar")

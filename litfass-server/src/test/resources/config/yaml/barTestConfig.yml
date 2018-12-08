@@ -1,5 +1,5 @@
 collection: bar
 flow:
-  - transform:
+  - script:
       language: kts
       code: println("bar")

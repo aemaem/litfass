@@ -1,14 +1,14 @@
 collection: foo
 flow:
-  - transform:
+  - script:
       description: "First step"
       language: kts
       code: println("foo")
-  - request:
+  - http:
       description: "Second step"
       url: https://some.url/foo?bar=true
       username: user
       password: secret
-  - transform:
+  - script:
       language: kts
       code: println("bar")

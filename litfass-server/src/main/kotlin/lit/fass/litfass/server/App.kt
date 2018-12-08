@@ -13,6 +13,8 @@ import io.ktor.application.call
 import io.ktor.application.install
 import io.ktor.application.log
 import io.ktor.auth.*
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.apache.Apache
 import io.ktor.features.*
 import io.ktor.http.CacheControl
 import io.ktor.http.ContentType.Text.CSS
@@ -38,6 +40,7 @@ import io.ktor.util.date.GMTDate
 import io.ktor.util.toMap
 import lit.fass.litfass.server.config.yaml.YamlConfigService
 import lit.fass.litfass.server.flow.CollectionFlowService
+import lit.fass.litfass.server.http.CollectionHttpService
 import lit.fass.litfass.server.persistence.PersistenceClient.Companion.ID_KEY
 import lit.fass.litfass.server.persistence.elasticsearch.EsPersistenceClient
 import lit.fass.litfass.server.script.kts.KotlinScriptEngine
@@ -95,7 +98,6 @@ fun Application.module(testing: Boolean = false) {
     }
     install(DataConversion)
 
-
     val jsonMapper = jacksonObjectMapper()
     val elasticsearch = RestHighLevelClient(RestClient.builder(*environment.config
         .property("litfass.elasticsearch.client.urls")
@@ -105,21 +107,21 @@ fun Application.module(testing: Boolean = false) {
         .map { HttpHost(it.host, it.port, it.scheme) }.toTypedArray()
     )
     )
-
     val persistenceClient = EsPersistenceClient(elasticsearch, jsonMapper)
+
     val configService = YamlConfigService()
     val configCollectionPath = environment.config.propertyOrNull("litfass.config.collection.path")
     if (configCollectionPath != null) {
         configService.readRecursively(File(configCollectionPath.getString()))
     }
+    val httpService = CollectionHttpService(HttpClient(Apache))
     val scriptEngines = listOf(KotlinScriptEngine())
-    val flowService = CollectionFlowService()
+    val flowService = CollectionFlowService(httpService, scriptEngines)
 
     routing {
         get("/health") {
             call.respond(mapOf("status" to "OK"))
         }
-
         post("/collections/{collection}") {
             val collection = call.parameters["collection"]
             if (collection.isNullOrBlank()) {
@@ -138,7 +140,7 @@ fun Application.module(testing: Boolean = false) {
             data.putAll(collectionData)
 
             val config = configService.getConfig(collection)
-            val dataToPersist = flowService.execute(data, config, scriptEngines)
+            val dataToPersist = flowService.execute(data, config)
             if (dataToPersist.containsKey(ID_KEY)) {
                 persistenceClient.save(collection, dataToPersist[ID_KEY], dataToPersist)
             } else {
@@ -163,8 +165,8 @@ fun Application.module(testing: Boolean = false) {
             }
             get("/configs/{collection}") {
                 val collection = call.parameters["collection"]
-                if (collection == null) {
-                    call.respond(BadRequest, "Collection must not be null")
+                if (collection.isNullOrBlank()) {
+                    call.respond(BadRequest, "{\"error\":\"Collection must not be blank\"}")
                     return@get
                 }
                 val principal = call.principal<UserIdPrincipal>()!!
@@ -173,8 +175,8 @@ fun Application.module(testing: Boolean = false) {
             }
             delete("/configs/{collection}") {
                 val collection = call.parameters["collection"]
-                if (collection == null) {
-                    call.respond(BadRequest, "Collection must not be null")
+                if (collection.isNullOrBlank()) {
+                    call.respond(BadRequest, "{\"error\":\"Collection must not be blank\"}")
                     return@delete
                 }
                 val principal = call.principal<UserIdPrincipal>()!!
@@ -188,7 +190,7 @@ fun Application.module(testing: Boolean = false) {
                 try {
                     configService.readConfig(call.receiveStream())
                 } catch (ex: Exception) {
-                    call.respond(BadRequest, "Unable to read config: ${ex.message}")
+                    call.respond(BadRequest, "{\"error\":\"Unable to read config: ${ex.message}\"}")
                     return@post
                 }
                 call.respond(OK)
@@ -197,13 +199,13 @@ fun Application.module(testing: Boolean = false) {
                 val principal = call.principal<UserIdPrincipal>()!!
                 val language = call.parameters["language"]
                 log.info("Trying $language config for user ${principal.name}")
-                if (language == null) {
-                    call.respond(BadRequest, "Language must not be null")
+                if (language.isNullOrBlank()) {
+                    call.respond(BadRequest, "{\"error\":\"Language must not be blank\"}")
                     return@post
                 }
                 val scriptEngine = scriptEngines.find { it.isApplicable(language) }
                 if (scriptEngine == null) {
-                    call.respond(BadRequest, "No script engine available for language $language")
+                    call.respond(BadRequest, "{\"error\":\"No script engine available for language $language\"}")
                     return@post
                 }
 

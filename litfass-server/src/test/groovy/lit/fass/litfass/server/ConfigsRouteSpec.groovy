@@ -41,7 +41,7 @@ class ConfigsRouteSpec extends Specification implements KtorSupport {
             withBody("""
 collection: foo
 flow:
-  - transform:
+  - script:
       description: "Transform something"
       language: kts
       code: bindings["data"]

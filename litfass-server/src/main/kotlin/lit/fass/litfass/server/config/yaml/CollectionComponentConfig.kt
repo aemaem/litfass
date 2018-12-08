@@ -10,8 +10,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.WRAPPER_OBJECT)
 @JsonSubTypes(
     value = [
-        JsonSubTypes.Type(value = CollectionComponentRequestConfig::class, name = "request"),
-        JsonSubTypes.Type(value = CollectionComponentTransformConfig::class, name = "transform")
+        JsonSubTypes.Type(value = CollectionComponentHttpConfig::class, name = "http"),
+        JsonSubTypes.Type(value = CollectionComponentScriptConfig::class, name = "script")
     ]
 )
 abstract class CollectionComponentConfig @JsonCreator constructor(open val description: String?) {
