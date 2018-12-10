@@ -37,7 +37,6 @@ import io.ktor.routing.get
 import io.ktor.routing.post
 import io.ktor.routing.routing
 import io.ktor.util.date.GMTDate
-import io.ktor.util.toMap
 import lit.fass.litfass.server.config.yaml.YamlConfigService
 import lit.fass.litfass.server.flow.CollectionFlowService
 import lit.fass.litfass.server.http.CollectionHttpService
@@ -129,13 +128,18 @@ fun Application.module(testing: Boolean = false) {
                 return@post
             }
 
-            val collectionMetaData = call.request.queryParameters.toMap()
+            val collectionHeaders = call.request.headers.entries()
+                .associateBy({ entry -> entry.key }, { entry -> entry.value.joinToString(",") })
+            log.debug("Got headers $collectionHeaders for collection $collection")
+            val collectionMetaData = call.request.queryParameters.entries()
+                .associateBy({ entry -> entry.key }, { entry -> entry.value.joinToString(",") })
             log.debug("Got collection $collection and meta data $collectionMetaData")
             val collectionData: Map<String, Any?> =
                 jsonMapper.readValue(call.receiveStream(), object : TypeReference<Map<String, Any?>>() {})
             log.debug("Payload received: $collectionData")
 
             val data = mutableMapOf<String, Any?>("timestamp" to OffsetDateTime.now(UTC))
+            data.putAll(collectionHeaders)
             data.putAll(collectionMetaData)
             data.putAll(collectionData)
 
@@ -214,8 +218,13 @@ fun Application.module(testing: Boolean = false) {
                 val script = body["script"] as String
                 @Suppress("UNCHECKED_CAST")
                 val data = body["data"] as Map<String, Any?>
-                val result = scriptEngine.invoke(script, data)
-                call.respond(result)
+                try {
+                    val result = scriptEngine.invoke(script, data)
+                    call.respond(result)
+                } catch (ex: Exception) {
+                    call.respond(BadRequest, "{\"error\":\"${ex.message}\"}")
+                    return@post
+                }
             }
         }
     }
