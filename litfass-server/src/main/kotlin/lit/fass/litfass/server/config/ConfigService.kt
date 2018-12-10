@@ -1,6 +1,6 @@
 package lit.fass.litfass.server.config
 
-import lit.fass.litfass.server.config.yaml.CollectionConfig
+import lit.fass.litfass.server.config.yaml.model.CollectionConfig
 import java.io.File
 import java.io.InputStream
 

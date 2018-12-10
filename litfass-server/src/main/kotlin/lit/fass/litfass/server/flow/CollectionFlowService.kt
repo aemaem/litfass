@@ -1,6 +1,6 @@
 package lit.fass.litfass.server.flow
 
-import lit.fass.litfass.server.config.yaml.*
+import lit.fass.litfass.server.config.yaml.model.*
 import lit.fass.litfass.server.http.HttpService
 import lit.fass.litfass.server.script.ScriptEngine
 import org.slf4j.LoggerFactory

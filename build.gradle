@@ -2,13 +2,16 @@ buildscript {
     ext {
         ktorVersion = "1.0.0"
         kotlinVersion = "1.3.10"
-        elasticSearchVersion = "6.5.1"
+
         logbackVersion = "1.2.3"
         commonsLang3Version = "3.8.1"
+        elasticSearchVersion = "6.5.1"
+        cronUtilsVersion = "8.0.0"
 
         spockVersion = "1.2-groovy-2.5"
         awaitilityVersion = "3.1.3"
         byteBuddyVersion = "1.9.5"
+
     }
     repositories {
         jcenter()

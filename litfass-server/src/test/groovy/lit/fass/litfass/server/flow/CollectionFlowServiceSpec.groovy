@@ -1,9 +1,9 @@
 package lit.fass.litfass.server.flow
 
-import lit.fass.litfass.server.config.yaml.CollectionConfig
-import lit.fass.litfass.server.config.yaml.CollectionFlowConfig
-import lit.fass.litfass.server.config.yaml.CollectionFlowStepHttpConfig
-import lit.fass.litfass.server.config.yaml.CollectionFlowStepScriptConfig
+import lit.fass.litfass.server.config.yaml.model.CollectionConfig
+import lit.fass.litfass.server.config.yaml.model.CollectionFlowConfig
+import lit.fass.litfass.server.config.yaml.model.CollectionFlowStepHttpConfig
+import lit.fass.litfass.server.config.yaml.model.CollectionFlowStepScriptConfig
 import lit.fass.litfass.server.helper.UnitTest
 import lit.fass.litfass.server.http.HttpService
 import lit.fass.litfass.server.script.ScriptEngine

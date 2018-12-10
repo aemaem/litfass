@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import lit.fass.litfass.server.config.ConfigService
+import lit.fass.litfass.server.config.yaml.model.CollectionConfig
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.InputStream

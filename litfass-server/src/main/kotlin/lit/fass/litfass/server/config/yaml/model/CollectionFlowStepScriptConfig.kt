@@ -1,4 +1,4 @@
-package lit.fass.litfass.server.config.yaml
+package lit.fass.litfass.server.config.yaml.model
 
 import com.fasterxml.jackson.annotation.JsonCreator
 

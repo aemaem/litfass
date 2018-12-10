@@ -1,5 +1,6 @@
 package lit.fass.litfass.server.config.yaml
 
+import lit.fass.litfass.server.config.yaml.model.CollectionConfig
 import lit.fass.litfass.server.helper.UnitTest
 import org.junit.experimental.categories.Category
 import spock.lang.Specification
