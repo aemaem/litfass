@@ -29,17 +29,26 @@ class YamlConfigServiceSpec extends Specification {
         then: "config is available"
         yamlConfigService.getConfigs().size() == 1
         result.collection == "foo"
-        result.flow.size() == 3
-        result.flow[0].description == "First step"
-        result.flow[0].language == "kts"
-        result.flow[0].code == """println("foo")"""
-        result.flow[1].description == "Second step"
-        result.flow[1].url == "https://some.url/foo?bar=true"
-        result.flow[1].username == "user"
-        result.flow[1].password == "secret"
-        result.flow[2].description == null
-        result.flow[2].language == "kts"
-        result.flow[2].code == """println("bar")"""
+        result.flows.size() == 2
+        result.flows[0].name == "Flow 1"
+        result.flows[0].description == "Flow description 1"
+        result.flows[0].steps.size() == 3
+        result.flows[0].steps[0].description == null
+        result.flows[0].steps[0].extension == "kts"
+        result.flows[0].steps[0].code == """println("foo")"""
+        result.flows[0].steps[1].description == null
+        result.flows[0].steps[1].url == "https://some.url/foo?bar=true"
+        result.flows[0].steps[1].username == "user"
+        result.flows[0].steps[1].password == "secret"
+        result.flows[0].steps[2].description == null
+        result.flows[0].steps[2].extension == "kts"
+        result.flows[0].steps[2].code == """println("bar")"""
+        result.flows[1].name == null
+        result.flows[1].description == null
+        result.flows[1].steps.size() == 1
+        result.flows[1].steps[0].description == "First step"
+        result.flows[1].steps[0].extension == "kts"
+        result.flows[1].steps[0].code == """println("foo")"""
     }
 
     def "files in directory can be parsed"() {
@@ -53,31 +62,46 @@ class YamlConfigServiceSpec extends Specification {
         then: "configs are available"
         result.size() == 3
         def fooResult = result.find { it.collection == "foo" }
-        fooResult.flow.size() == 3
-        fooResult.flow[0].description == "First step"
-        fooResult.flow[0].language == "kts"
-        fooResult.flow[0].code == """println("foo")"""
-        fooResult.flow[1].description == "Second step"
-        fooResult.flow[1].url == "https://some.url/foo?bar=true"
-        fooResult.flow[1].username == "user"
-        fooResult.flow[1].password == "secret"
-        fooResult.flow[2].description == null
-        fooResult.flow[2].language == "kts"
-        fooResult.flow[2].code == """println("bar")"""
+        fooResult.flows.size() == 2
+        fooResult.flows[0].name == "Flow 1"
+        fooResult.flows[0].description == "Flow description 1"
+        fooResult.flows[0].steps.size() == 3
+        fooResult.flows[0].steps[0].description == null
+        fooResult.flows[0].steps[0].extension == "kts"
+        fooResult.flows[0].steps[0].code == """println("foo")"""
+        fooResult.flows[0].steps[1].description == null
+        fooResult.flows[0].steps[1].url == "https://some.url/foo?bar=true"
+        fooResult.flows[0].steps[1].username == "user"
+        fooResult.flows[0].steps[1].password == "secret"
+        fooResult.flows[0].steps[2].description == null
+        fooResult.flows[0].steps[2].extension == "kts"
+        fooResult.flows[0].steps[2].code == """println("bar")"""
+        fooResult.flows[1].name == null
+        fooResult.flows[1].description == null
+        fooResult.flows[1].steps.size() == 1
+        fooResult.flows[1].steps[0].description == "First step"
+        fooResult.flows[1].steps[0].extension == "kts"
+        fooResult.flows[1].steps[0].code == """println("foo")"""
         def barResult = result.find { it.collection == "bar" }
-        barResult.flow.size() == 1
-        barResult.flow[0].description == null
-        barResult.flow[0].language == "kts"
-        barResult.flow[0].code == """println("bar")"""
+        barResult.flows.size() == 1
+        barResult.flows[0].name == null
+        barResult.flows[0].description == null
+        barResult.flows[0].steps.size() == 1
+        barResult.flows[0].steps[0].description == null
+        barResult.flows[0].steps[0].extension == "kts"
+        barResult.flows[0].steps[0].code == """println("bar")"""
         def subResult = result.find { it.collection == "sub" }
-        subResult.flow.size() == 2
-        subResult.flow[0].description == null
-        subResult.flow[0].url == "https://some.url/foo?bar=true"
-        subResult.flow[0].username == null
-        subResult.flow[0].password == null
-        subResult.flow[1].description == null
-        subResult.flow[1].language == "kts"
-        subResult.flow[1].code == """println("bar")"""
+        subResult.flows.size() == 1
+        subResult.flows[0].name == null
+        subResult.flows[0].description == null
+        subResult.flows[0].steps.size() == 2
+        subResult.flows[0].steps[0].description == null
+        subResult.flows[0].steps[0].url == "https://some.url/foo?bar=true"
+        subResult.flows[0].steps[0].username == null
+        subResult.flows[0].steps[0].password == null
+        subResult.flows[0].steps[1].description == null
+        subResult.flows[0].steps[1].extension == "kts"
+        subResult.flows[0].steps[1].code == """println("bar")"""
     }
 
     def "file can be parsed"() {
@@ -91,17 +115,6 @@ class YamlConfigServiceSpec extends Specification {
         then: "only the given file is read"
         result.size() == 1
         result[0].collection == "foo"
-        result[0].flow.size() == 3
-        result[0].flow[0].description == "First step"
-        result[0].flow[0].language == "kts"
-        result[0].flow[0].code == """println("foo")"""
-        result[0].flow[1].description == "Second step"
-        result[0].flow[1].url == "https://some.url/foo?bar=true"
-        result[0].flow[1].username == "user"
-        result[0].flow[1].password == "secret"
-        result[0].flow[2].description == null
-        result[0].flow[2].language == "kts"
-        result[0].flow[2].code == """println("bar")"""
     }
 
     def "config can be removed"() {

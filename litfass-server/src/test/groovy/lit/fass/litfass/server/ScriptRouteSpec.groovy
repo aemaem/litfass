@@ -25,8 +25,8 @@ class ScriptRouteSpec extends Specification implements KtorSupport {
         app = initializeApp()
     }
 
-    def "/script/{language}/test POST endpoint is secured"() {
-        when: "requesting /script/{language}/test unauthorized"
+    def "/script/{extension}/test POST endpoint is secured"() {
+        when: "requesting /script/{extension}/test unauthorized"
         def result = handleRequest(app, Post, "/script/kts/test", {}).response
 
         then: "access is forbidden"
@@ -34,8 +34,8 @@ class ScriptRouteSpec extends Specification implements KtorSupport {
         result.content == null
     }
 
-    def "/script/{language}/test POST endpoint returns result"() {
-        when: "requesting /script/{language}/test"
+    def "/script/{extension}/test POST endpoint returns result"() {
+        when: "requesting /script/{extension}/test"
         def result = handleRequest(app, Post, "/script/kts/test", {
             withBasicAuth("admin", "admin", it)
             withBody([

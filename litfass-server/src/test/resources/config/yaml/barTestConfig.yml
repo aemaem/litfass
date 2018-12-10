@@ -1,5 +1,7 @@
 collection: bar
-flow:
-  - script:
-      language: kts
-      code: println("bar")
+flows:
+  - flow:
+      steps:
+        - script:
+            extension: kts
+            code: println("bar")

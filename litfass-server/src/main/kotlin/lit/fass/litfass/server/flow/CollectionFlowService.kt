@@ -1,9 +1,6 @@
 package lit.fass.litfass.server.flow
 
-import lit.fass.litfass.server.config.yaml.CollectionComponentConfig
-import lit.fass.litfass.server.config.yaml.CollectionComponentHttpConfig
-import lit.fass.litfass.server.config.yaml.CollectionComponentScriptConfig
-import lit.fass.litfass.server.config.yaml.CollectionConfig
+import lit.fass.litfass.server.config.yaml.*
 import lit.fass.litfass.server.http.HttpService
 import lit.fass.litfass.server.script.ScriptEngine
 import org.slf4j.LoggerFactory
@@ -23,28 +20,43 @@ class CollectionFlowService(
 
     override fun execute(data: Map<String, Any?>, config: CollectionConfig): Map<String, Any?> {
         var currentData = data
-        config.flow.forEach { currentData = executeStep(currentData, it) }
+        config.flows
+            .filter { isApplicable(data, it.applyIf) }
+            .forEach { currentData = executeFlow(currentData, it) }
         return currentData
     }
 
-    private fun executeStep(data: Map<String, Any?>, componentConfig: CollectionComponentConfig): Map<String, Any?> {
-        log.debug("Executing step with description ${componentConfig.description}")
-        when (componentConfig) {
-            is CollectionComponentHttpConfig -> {
+    private fun executeFlow(data: Map<String, Any?>, flowConfig: CollectionFlowConfig): Map<String, Any?> {
+        var currentData = data
+        flowConfig.steps.forEach { currentData = executeStep(currentData, it) }
+        return currentData
+    }
+
+    private fun executeStep(
+        data: Map<String, Any?>,
+        flowStepConfig: AbstractCollectionFlowStepConfig
+    ): Map<String, Any?> {
+        log.debug("Executing step with description ${flowStepConfig.description}")
+        when (flowStepConfig) {
+            is CollectionFlowStepHttpConfig -> {
                 val httpResult = httpService.get(
-                    replaceVariables(componentConfig.url, data),
-                    componentConfig.username,
-                    componentConfig.password
+                    replaceVariables(flowStepConfig.url, data),
+                    flowStepConfig.username,
+                    flowStepConfig.password
                 )
                 return data + httpResult
             }
-            is CollectionComponentScriptConfig -> {
-                val scriptEngine = scriptEngines.find { it.isApplicable(componentConfig.language) }
-                    ?: throw FlowException("No script engine available for extension ${componentConfig.language}")
-                return scriptEngine.invoke(componentConfig.code, data)
+            is CollectionFlowStepScriptConfig -> {
+                val scriptEngine = scriptEngines.find { it.isApplicable(flowStepConfig.extension) }
+                    ?: throw FlowException("No script engine available for extension ${flowStepConfig.extension}")
+                return scriptEngine.invoke(flowStepConfig.code, data)
             }
-            else -> throw FlowException("Unknown component config ${componentConfig::class}")
+            else -> throw FlowException("Unknown component config ${flowStepConfig::class}")
         }
+    }
+
+    private fun isApplicable(data: Map<String, Any?>, applyIfData: Map<String, Any?>): Boolean {
+        return applyIfData.isEmpty() || applyIfData.any { data[it.key] != null && data[it.key] == it.value }
     }
 
     private fun replaceVariables(string: String, values: Map<String, Any?>): String {

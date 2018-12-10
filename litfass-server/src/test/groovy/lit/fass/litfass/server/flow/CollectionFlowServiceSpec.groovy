@@ -1,8 +1,9 @@
 package lit.fass.litfass.server.flow
 
-import lit.fass.litfass.server.config.yaml.CollectionComponentHttpConfig
-import lit.fass.litfass.server.config.yaml.CollectionComponentScriptConfig
 import lit.fass.litfass.server.config.yaml.CollectionConfig
+import lit.fass.litfass.server.config.yaml.CollectionFlowConfig
+import lit.fass.litfass.server.config.yaml.CollectionFlowStepHttpConfig
+import lit.fass.litfass.server.config.yaml.CollectionFlowStepScriptConfig
 import lit.fass.litfass.server.helper.UnitTest
 import lit.fass.litfass.server.http.HttpService
 import lit.fass.litfass.server.script.ScriptEngine
@@ -38,9 +39,9 @@ class CollectionFlowServiceSpec extends Specification {
                 foo      : "bar",
                 bar      : true
         ]
-        def config = new CollectionConfig("foo", [
-                new CollectionComponentScriptConfig(null, "kts", """bindings["data"]""")
-        ])
+        def config = new CollectionConfig("foo", [new CollectionFlowConfig(null, null, [:], [
+                new CollectionFlowStepScriptConfig(null, "kts", """bindings["data"]""")
+        ])])
 
         when: "flow is executed"
         def result = collectionFlowService.execute(data, config)
@@ -59,9 +60,9 @@ class CollectionFlowServiceSpec extends Specification {
                 foo      : "bar",
                 bar      : true
         ]
-        def config = new CollectionConfig("foo", [
-                new CollectionComponentHttpConfig(null, "http://localhost/\${foo}", "admin", "admin")
-        ])
+        def config = new CollectionConfig("foo", [new CollectionFlowConfig(null, null, [:], [
+                new CollectionFlowStepHttpConfig(null, "http://localhost/\${foo}", "admin", "admin")
+        ])])
 
         when: "flow is executed"
         def result = collectionFlowService.execute(data, config)
@@ -72,6 +73,25 @@ class CollectionFlowServiceSpec extends Specification {
         result.foo == "bar"
         result.bar == true
         result.some == "thing"
+    }
+
+    @Unroll
+    def "#applyIfData is applicable for #data: #expected"() {
+        expect:
+        collectionFlowService.isApplicable(data, applyIfData) == expected
+
+        where:
+        applyIfData  | data           || expected
+        [:]          | [:]            || true
+        [:]          | [foo: null]    || true
+        [foo: null]  | [foo: null]    || false
+        [foo: true]  | [foo: false]   || false
+        [foo: true]  | [foo: "false"] || false
+        [foo: true]  | [foo: true]    || true
+        [foo: 1]     | [foo: 1.1]     || false
+        [foo: 1]     | [foo: 1]       || true
+        [foo: "bar"] | [foo: "bar-1"] || false
+        [foo: "bar"] | [foo: "bar"]   || true
     }
 
     @Unroll

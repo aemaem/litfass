@@ -1,6 +1,8 @@
 collection: foo
-flow:
-  - script:
-      description: "Transform something"
-      language: kts
-      code: bindings["data"]
+flows:
+  - flow:
+      steps:
+        - script:
+            description: "Transform something"
+            extension: kts
+            code: bindings["data"]

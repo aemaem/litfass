@@ -1,14 +1,25 @@
 collection: foo
-flow:
-  - script:
-      description: "First step"
-      language: kts
-      code: println("foo")
-  - http:
-      description: "Second step"
-      url: https://some.url/foo?bar=true
-      username: user
-      password: secret
-  - script:
-      language: kts
-      code: println("bar")
+flows:
+  - flow:
+      name: "Flow 1"
+      description: "Flow description 1"
+      applyIf:
+        foo: bar
+        bar: true
+      steps:
+        - script:
+            extension: kts
+            code: println("foo")
+        - http:
+            url: https://some.url/foo?bar=true
+            username: user
+            password: secret
+        - script:
+            extension: kts
+            code: println("bar")
+  - flow:
+      steps:
+        - script:
+            description: "First step"
+            extension: kts
+            code: println("foo")

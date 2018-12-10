@@ -199,17 +199,17 @@ fun Application.module(testing: Boolean = false) {
                 }
                 call.respond(OK)
             }
-            post("/script/{language}/test") {
+            post("/script/{extension}/test") {
                 val principal = call.principal<UserIdPrincipal>()!!
-                val language = call.parameters["language"]
-                log.info("Trying $language config for user ${principal.name}")
-                if (language.isNullOrBlank()) {
-                    call.respond(BadRequest, "{\"error\":\"Language must not be blank\"}")
+                val extension = call.parameters["extension"]
+                log.info("Trying $extension script for user ${principal.name}")
+                if (extension.isNullOrBlank()) {
+                    call.respond(BadRequest, "{\"error\":\"Extension must not be blank\"}")
                     return@post
                 }
-                val scriptEngine = scriptEngines.find { it.isApplicable(language) }
+                val scriptEngine = scriptEngines.find { it.isApplicable(extension) }
                 if (scriptEngine == null) {
-                    call.respond(BadRequest, "{\"error\":\"No script engine available for language $language\"}")
+                    call.respond(BadRequest, "{\"error\":\"No script engine available for extension $extension\"}")
                     return@post
                 }
 

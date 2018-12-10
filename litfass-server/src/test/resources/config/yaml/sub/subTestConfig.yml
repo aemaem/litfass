@@ -1,7 +1,9 @@
 collection: sub
-flow:
-  - http:
-      url: https://some.url/foo?bar=true
-  - script:
-      language: kts
-      code: println("bar")
+flows:
+  - flow:
+      steps:
+        - http:
+            url: https://some.url/foo?bar=true
+        - script:
+            extension: kts
+            code: println("bar")

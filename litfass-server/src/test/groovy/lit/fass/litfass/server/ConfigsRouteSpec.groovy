@@ -40,11 +40,13 @@ class ConfigsRouteSpec extends Specification implements KtorSupport {
         def result = handleRequest(app, Post, "/configs", {
             withBody("""
 collection: foo
-flow:
-  - script:
-      description: "Transform something"
-      language: kts
-      code: bindings["data"]
+flows:
+  - flow:
+      steps:
+        - script:
+            description: "Transform something"
+            extension: kts
+            code: println("bar")
             """, it)
             withBasicAuth("admin", "admin", it)
         }).response
@@ -71,7 +73,7 @@ flow:
         result.status() == OK
         resultContent.size() == 1
         resultContent[0].collection == "foo"
-        resultContent[0].flow.size() == 1
+        resultContent[0].flows.size() == 1
     }
 
     def "/configs/{collection} GET endpoint"() {
@@ -82,7 +84,7 @@ flow:
         then: "configs are returned"
         result.status() == OK
         resultContent.collection == "foo"
-        resultContent.flow.size() == 1
+        resultContent.flows.size() == 1
     }
 
     def "/configs/{collection} DELETE endpoint"() {
