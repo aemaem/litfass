@@ -38,7 +38,7 @@ class CollectionExecutionServiceSpec extends Specification {
         collectionExecutionService.execute(collection, data)
 
         then: "all sub services are called"
-        1 * configServiceMock.getConfig(collection) >> new CollectionConfig(collection, [])
+        1 * configServiceMock.getConfig(collection) >> new CollectionConfig(collection, null, [])
         1 * flowServiceMock.execute(data, _ as CollectionConfig) >> [foo: "blub"]
         1 * persistenceServiceMock.save(collection, [foo: "blub"])
     }
@@ -52,7 +52,7 @@ class CollectionExecutionServiceSpec extends Specification {
         collectionExecutionService.execute(collection, data)
 
         then: "all sub services are called"
-        1 * configServiceMock.getConfig(collection) >> new CollectionConfig(collection, [])
+        1 * configServiceMock.getConfig(collection) >> new CollectionConfig(collection, null, [])
         1 * flowServiceMock.execute(data, _ as CollectionConfig) >> [id: 1, foo: "blub"]
         1 * persistenceServiceMock.save(collection, 1, [id: 1, foo: "blub"])
     }

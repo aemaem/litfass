@@ -39,10 +39,12 @@ import io.ktor.routing.post
 import io.ktor.routing.routing
 import io.ktor.util.date.GMTDate
 import lit.fass.litfass.server.config.yaml.YamlConfigService
+import lit.fass.litfass.server.config.yaml.model.CollectionConfig
 import lit.fass.litfass.server.execution.CollectionExecutionService
 import lit.fass.litfass.server.flow.CollectionFlowService
 import lit.fass.litfass.server.http.CollectionHttpService
 import lit.fass.litfass.server.persistence.elasticsearch.ElasticsearchPersistenceService
+import lit.fass.litfass.server.schedule.CollectionSchedulerService
 import lit.fass.litfass.server.script.kts.KotlinScriptEngine
 import org.apache.http.HttpHost
 import org.elasticsearch.client.RestClient
@@ -118,6 +120,7 @@ fun Application.module(testing: Boolean = false) {
     val persistenceService = ElasticsearchPersistenceService(elasticsearch, jsonMapper)
 
     val executionService = CollectionExecutionService(configService, flowService, persistenceService)
+    val schedulerService = CollectionSchedulerService(executionService)
 
     routing {
         get("/health") {
@@ -192,11 +195,26 @@ fun Application.module(testing: Boolean = false) {
             post("/configs") {
                 val principal = call.principal<UserIdPrincipal>()!!
                 log.info("Adding config for user ${principal.name}")
+                val config: CollectionConfig
                 try {
-                    configService.readConfig(call.receiveStream())
+                    config = configService.readConfig(call.receiveStream())
                 } catch (ex: Exception) {
+                    log.error("Unable to read config", ex)
                     call.respond(BadRequest, "{\"error\":\"Unable to read config: ${ex.message}\"}")
                     return@post
+                }
+
+                if (config.scheduled != null) {
+                    try {
+                        schedulerService.createJob(config.collection, config.scheduled)
+                    } catch (ex: Exception) {
+                        log.error("Unable to schedule config ${config.collection}", ex)
+                        call.respond(
+                            BadRequest,
+                            "{\"error\":\"Unable to schedule config ${config.collection}: ${ex.message}\"}"
+                        )
+                        return@post
+                    }
                 }
                 call.respond(OK)
             }

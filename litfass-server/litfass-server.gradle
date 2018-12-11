@@ -16,6 +16,8 @@ dependencies {
     compile "org.apache.commons:commons-lang3:$commonsLang3Version"
     compile "org.elasticsearch.client:elasticsearch-rest-high-level-client:$elasticSearchVersion"
 
+    compile "com.cronutils:cron-utils:$cronUtilsVersion"
+
     testCompile "io.ktor:ktor-server-tests:$ktorVersion"
     testCompile "org.spockframework:spock-core:$spockVersion"
     testCompile "org.awaitility:awaitility:$awaitilityVersion"

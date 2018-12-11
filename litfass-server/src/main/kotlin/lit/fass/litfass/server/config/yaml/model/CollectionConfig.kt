@@ -11,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo.Id.NAME
  */
 data class CollectionConfig @JsonCreator constructor(
     val collection: String,
+    val scheduled: String?,
     @JsonTypeInfo(use = NAME, include = WRAPPER_OBJECT)
     @JsonSubTypes(value = [JsonSubTypes.Type(value = CollectionFlowConfig::class, name = "flow")])
     val flows: List<CollectionFlowConfig>

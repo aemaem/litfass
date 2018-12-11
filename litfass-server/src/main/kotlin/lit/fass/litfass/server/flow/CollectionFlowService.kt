@@ -41,8 +41,8 @@ class CollectionFlowService(
             is CollectionFlowStepHttpConfig -> {
                 val httpResult = httpService.get(
                     replaceVariables(flowStepConfig.url, data),
-                    flowStepConfig.username,
-                    flowStepConfig.password
+                    replaceVariables(flowStepConfig.username ?: "", data),
+                    replaceVariables(flowStepConfig.password ?: "", data)
                 )
                 return data + httpResult
             }
@@ -60,6 +60,10 @@ class CollectionFlowService(
     }
 
     private fun replaceVariables(string: String, values: Map<String, Any?>): String {
+        if (string.isBlank()) {
+            log.debug("Cannot replace any variables because string is empty")
+            return string
+        }
         if (values.isEmpty()) {
             log.debug("Cannot replace any variables because values are empty")
             return string

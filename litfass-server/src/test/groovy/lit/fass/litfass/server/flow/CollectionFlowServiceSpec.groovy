@@ -39,7 +39,7 @@ class CollectionFlowServiceSpec extends Specification {
                 foo      : "bar",
                 bar      : true
         ]
-        def config = new CollectionConfig("foo", [new CollectionFlowConfig(null, null, [:], [
+        def config = new CollectionConfig("foo", null, [new CollectionFlowConfig(null, null, [:], [
                 new CollectionFlowStepScriptConfig(null, "kts", """bindings["data"]""")
         ])])
 
@@ -60,7 +60,7 @@ class CollectionFlowServiceSpec extends Specification {
                 foo      : "bar",
                 bar      : true
         ]
-        def config = new CollectionConfig("foo", [new CollectionFlowConfig(null, null, [:], [
+        def config = new CollectionConfig("foo", null, [new CollectionFlowConfig(null, null, [:], [
                 new CollectionFlowStepHttpConfig(null, "http://localhost/\${foo}", "admin", "admin")
         ])])
 

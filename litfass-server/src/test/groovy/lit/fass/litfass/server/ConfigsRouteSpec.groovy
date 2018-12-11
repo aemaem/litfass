@@ -3,6 +3,8 @@ package lit.fass.litfass.server
 import groovy.json.JsonSlurper
 import lit.fass.litfass.server.helper.IntegrationTest
 import lit.fass.litfass.server.helper.KtorSupport
+import lit.fass.litfass.server.helper.LogCapture
+import org.junit.Rule
 import org.junit.experimental.categories.Category
 import spock.lang.Shared
 import spock.lang.Specification
@@ -21,6 +23,9 @@ class ConfigsRouteSpec extends Specification implements KtorSupport {
 
     @Shared
     def app
+
+    @Rule
+    LogCapture log = new LogCapture()
 
     def setupSpec() {
         app = initializeApp()
@@ -51,7 +56,30 @@ flows:
             withBasicAuth("admin", "admin", it)
         }).response
 
-        then: "configs are returned"
+        then: "configs are created"
+        result.status() == OK
+    }
+
+    def "/configs POST endpoint schedules config"() {
+        when: "requesting /configs"
+        def result = handleRequest(app, Post, "/configs", {
+            withBody("""
+collection: foo
+scheduled: "* * * * * * *"
+flows:
+  - flow:
+      steps:
+        - script:
+            description: "Transform something"
+            extension: kts
+            code: println("bar")
+            """, it)
+            withBasicAuth("admin", "admin", it)
+        }).response
+
+        then: "configs are created and scheduled"
+        log.toString().contains("Creating scheduled job foo with cron * * * * * * *")
+        log.toString().contains("Sending job foo to be scheduled every second")
         result.status() == OK
     }
 

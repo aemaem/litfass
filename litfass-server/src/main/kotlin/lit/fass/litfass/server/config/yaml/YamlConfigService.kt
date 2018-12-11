@@ -36,15 +36,19 @@ class YamlConfigService : ConfigService {
             .forEach { readConfig(it) }
     }
 
-    override fun readConfig(file: File) {
+    override fun readConfig(file: File): CollectionConfig {
         log.debug("Reading config from file ${file.absolutePath}")
-        readConfig(file.inputStream())
+        return readConfig(file.inputStream())
     }
 
-    override fun readConfig(inputStream: InputStream) {
+    override fun readConfig(inputStream: InputStream): CollectionConfig {
         val config = mapper.readValue(inputStream, CollectionConfig::class.java)
         log.debug("Adding config ${config.collection}")
+        if (config == null) {
+            throw ConfigException("Config must not be null")
+        }
         configStore[config.collection] = config
+        return config
     }
 
     override fun getConfig(name: String): CollectionConfig {

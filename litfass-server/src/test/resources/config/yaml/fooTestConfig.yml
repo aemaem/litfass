@@ -1,4 +1,5 @@
 collection: foo
+scheduled: "*/30 * * * * * *"
 flows:
   - flow:
       name: "Flow 1"

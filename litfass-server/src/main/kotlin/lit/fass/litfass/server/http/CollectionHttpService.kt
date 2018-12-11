@@ -19,7 +19,7 @@ class CollectionHttpService(private val httpClient: HttpClient) : HttpService {
     override fun get(url: String, username: String?, password: String?): Map<String, Any?> = runBlocking {
         log.info("Executing http get request on $url")
         httpClient.get<Map<String, Any?>>(url) {
-            if (!username.isNullOrEmpty()) {
+            if (!username.isNullOrBlank()) {
                 header(Authorization, "Basic ${base64Encode("$username:$password")}")
             }
         }

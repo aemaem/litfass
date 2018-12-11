@@ -30,6 +30,7 @@ class YamlConfigServiceSpec extends Specification {
         then: "config is available"
         yamlConfigService.getConfigs().size() == 1
         result.collection == "foo"
+        result.scheduled == "*/30 * * * * * *"
         result.flows.size() == 2
         result.flows[0].name == "Flow 1"
         result.flows[0].description == "Flow description 1"
@@ -63,6 +64,7 @@ class YamlConfigServiceSpec extends Specification {
         then: "configs are available"
         result.size() == 3
         def fooResult = result.find { it.collection == "foo" }
+        fooResult.scheduled == "*/30 * * * * * *"
         fooResult.flows.size() == 2
         fooResult.flows[0].name == "Flow 1"
         fooResult.flows[0].description == "Flow description 1"
@@ -84,6 +86,7 @@ class YamlConfigServiceSpec extends Specification {
         fooResult.flows[1].steps[0].extension == "kts"
         fooResult.flows[1].steps[0].code == """println("foo")"""
         def barResult = result.find { it.collection == "bar" }
+        barResult.scheduled == null
         barResult.flows.size() == 1
         barResult.flows[0].name == null
         barResult.flows[0].description == null
@@ -92,6 +95,7 @@ class YamlConfigServiceSpec extends Specification {
         barResult.flows[0].steps[0].extension == "kts"
         barResult.flows[0].steps[0].code == """println("bar")"""
         def subResult = result.find { it.collection == "sub" }
+        subResult.scheduled == null
         subResult.flows.size() == 1
         subResult.flows[0].name == null
         subResult.flows[0].description == null
@@ -120,7 +124,7 @@ class YamlConfigServiceSpec extends Specification {
 
     def "config can be removed"() {
         given: "a config foo"
-        yamlConfigService.configStore.put("foo", new CollectionConfig("foo", []))
+        yamlConfigService.configStore.put("foo", new CollectionConfig("foo", null, []))
 
         when: "config foo is removed"
         yamlConfigService.removeConfig("foo")
