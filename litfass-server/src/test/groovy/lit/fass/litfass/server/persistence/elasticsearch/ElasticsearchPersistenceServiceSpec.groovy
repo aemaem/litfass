@@ -12,21 +12,21 @@ import spock.lang.Specification
 import spock.lang.Subject
 import spock.lang.Unroll
 
-import static lit.fass.litfass.server.persistence.PersistenceClient.Companion.ID_KEY
+import static lit.fass.litfass.server.persistence.PersistenceService.Companion.ID_KEY
 
 /**
  * @author Michael Mair
  */
 @Category(IntegrationTest)
-class EsPersistenceClientSpec extends Specification implements ElasticsearchSupport {
+class ElasticsearchPersistenceServiceSpec extends Specification implements ElasticsearchSupport {
 
     @Subject
-    EsPersistenceClient esPersistenceClient
+    ElasticsearchPersistenceService esPersistenceClient
 
     def setup() {
         cleanDatabase()
         RestHighLevelClient restClient = new RestHighLevelClient(RestClient.builder(new HttpHost("localhost", 9200, "http")))
-        esPersistenceClient = new EsPersistenceClient(restClient, new ObjectMapper())
+        esPersistenceClient = new ElasticsearchPersistenceService(restClient, new ObjectMapper())
     }
 
     def "collection and data is saved"() {

@@ -25,6 +25,7 @@ import io.ktor.http.HttpMethod.Companion.Patch
 import io.ktor.http.HttpMethod.Companion.Post
 import io.ktor.http.HttpMethod.Companion.Put
 import io.ktor.http.HttpStatusCode.Companion.BadRequest
+import io.ktor.http.HttpStatusCode.Companion.InternalServerError
 import io.ktor.http.HttpStatusCode.Companion.NoContent
 import io.ktor.http.HttpStatusCode.Companion.OK
 import io.ktor.http.content.CachingOptions
@@ -38,10 +39,10 @@ import io.ktor.routing.post
 import io.ktor.routing.routing
 import io.ktor.util.date.GMTDate
 import lit.fass.litfass.server.config.yaml.YamlConfigService
+import lit.fass.litfass.server.execution.CollectionExecutionService
 import lit.fass.litfass.server.flow.CollectionFlowService
 import lit.fass.litfass.server.http.CollectionHttpService
-import lit.fass.litfass.server.persistence.PersistenceClient.Companion.ID_KEY
-import lit.fass.litfass.server.persistence.elasticsearch.EsPersistenceClient
+import lit.fass.litfass.server.persistence.elasticsearch.ElasticsearchPersistenceService
 import lit.fass.litfass.server.script.kts.KotlinScriptEngine
 import org.apache.http.HttpHost
 import org.elasticsearch.client.RestClient
@@ -106,8 +107,6 @@ fun Application.module(testing: Boolean = false) {
         .map { HttpHost(it.host, it.port, it.scheme) }.toTypedArray()
     )
     )
-    val persistenceClient = EsPersistenceClient(elasticsearch, jsonMapper)
-
     val configService = YamlConfigService()
     val configCollectionPath = environment.config.propertyOrNull("litfass.config.collection.path")
     if (configCollectionPath != null) {
@@ -116,6 +115,9 @@ fun Application.module(testing: Boolean = false) {
     val httpService = CollectionHttpService(HttpClient(Apache))
     val scriptEngines = listOf(KotlinScriptEngine())
     val flowService = CollectionFlowService(httpService, scriptEngines)
+    val persistenceService = ElasticsearchPersistenceService(elasticsearch, jsonMapper)
+
+    val executionService = CollectionExecutionService(configService, flowService, persistenceService)
 
     routing {
         get("/health") {
@@ -143,12 +145,11 @@ fun Application.module(testing: Boolean = false) {
             data.putAll(collectionMetaData)
             data.putAll(collectionData)
 
-            val config = configService.getConfig(collection)
-            val dataToPersist = flowService.execute(data, config)
-            if (dataToPersist.containsKey(ID_KEY)) {
-                persistenceClient.save(collection, dataToPersist[ID_KEY], dataToPersist)
-            } else {
-                persistenceClient.save(collection, dataToPersist)
+            try {
+                executionService.execute(collection, data)
+            } catch (ex: Exception) {
+                log.error("Exception during execution of collection $collection", ex)
+                call.respond(InternalServerError, "{\"error\":\"${ex.message}\"}")
             }
             call.respond(OK)
         }

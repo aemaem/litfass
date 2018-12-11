@@ -3,7 +3,7 @@ package lit.fass.litfass.server.persistence
 /**
  * @author Michael Mair
  */
-interface PersistenceClient {
+interface PersistenceService {
     companion object {
         const val ID_KEY = "id"
     }

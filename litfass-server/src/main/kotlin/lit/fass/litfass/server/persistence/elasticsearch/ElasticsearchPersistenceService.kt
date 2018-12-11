@@ -1,8 +1,8 @@
 package lit.fass.litfass.server.persistence.elasticsearch
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import lit.fass.litfass.server.persistence.PersistenceClient
 import lit.fass.litfass.server.persistence.PersistenceException
+import lit.fass.litfass.server.persistence.PersistenceService
 import org.elasticsearch.action.ActionListener
 import org.elasticsearch.action.index.IndexRequest
 import org.elasticsearch.action.index.IndexResponse
@@ -14,10 +14,10 @@ import org.slf4j.LoggerFactory
 /**
  * @author Michael Mair
  */
-class EsPersistenceClient(
+class ElasticsearchPersistenceService(
     private val elasticsearchClient: RestHighLevelClient,
     private val jsonMapper: ObjectMapper
-) : PersistenceClient {
+) : PersistenceService {
     companion object {
         private val log = LoggerFactory.getLogger(this::class.java.enclosingClass)
     }
