@@ -7,6 +7,7 @@ import org.junit.Rule
 import org.junit.experimental.categories.Category
 import spock.lang.Specification
 import spock.lang.Subject
+import spock.util.concurrent.BlockingVariable
 
 import static java.util.concurrent.TimeUnit.SECONDS
 import static org.awaitility.Awaitility.await
@@ -35,6 +36,11 @@ class CollectionSchedulerServiceSpec extends Specification {
         given: "a collection and a cron expression"
         def collection = "foo"
         def cronExpression = "* * * * * * *" // every second
+        def executionServiceCalled = new BlockingVariable<Boolean>()
+        (1.._) * executionServiceMock.execute(collection, _) >> { args ->
+            assert args[1].containsKey("timestamp")
+            executionServiceCalled.set(true)
+        }
 
         when: "job is created"
         collectionSchedulerService.createJob(collection, cronExpression)
@@ -45,6 +51,8 @@ class CollectionSchedulerServiceSpec extends Specification {
         and: "scheduler scheduled job"
         await().until { log.toString().contains("Scheduled job foo") }
         await().until { log.toString().contains("Executed job foo") }
+        and: "execution service has been called at least once"
+        executionServiceCalled.get()
     }
 
     def "job creation throws exception when expression is not valid"() {
@@ -56,6 +64,7 @@ class CollectionSchedulerServiceSpec extends Specification {
         collectionSchedulerService.createJob(collection, cronExpression)
 
         then: "creation logs are printed"
+        0 * executionServiceMock._
         thrown(SchedulerException)
     }
 
@@ -89,6 +98,8 @@ class CollectionSchedulerServiceSpec extends Specification {
         log.toString().contains("Sending job foo to be scheduled every hour at 2016 year")
         and: "scheduler immediately cancels the job"
         await().until { log.toString().contains("Job foo cancelled because there is no upcoming execution") }
+        and: "execution service has never been called"
+        0 * executionServiceMock._
     }
 
     def "job can be cancelled"() {
