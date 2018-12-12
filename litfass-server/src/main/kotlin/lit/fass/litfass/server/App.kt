@@ -54,20 +54,23 @@ import java.io.File
 import java.net.URI
 import java.time.OffsetDateTime
 import java.time.ZoneOffset.UTC
+import java.util.*
 
 
 fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)
 
-@JvmOverloads
-fun Application.module(testing: Boolean = false) {
+fun Application.module() {
+    val testing = environment.config.propertyOrNull("testing")?.getString() == true.toString()
     if (testing) {
         log.warn("Application in test mode")
     }
 
+    val adminPassword = if (testing) "admin" else UUID.randomUUID().toString()
+    log.warn("Generated admin password: $adminPassword")
     install(Authentication) {
         basic {
             realm = "LITFASS"
-            validate { if (it.name == "admin" && it.password == "admin") UserIdPrincipal(it.name) else null }
+            validate { if (it.name == "admin" && it.password == adminPassword) UserIdPrincipal(it.name) else null }
         }
     }
     install(ContentNegotiation) {

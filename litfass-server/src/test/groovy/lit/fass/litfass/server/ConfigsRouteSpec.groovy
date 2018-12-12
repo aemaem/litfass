@@ -28,7 +28,7 @@ class ConfigsRouteSpec extends Specification implements KtorSupport {
     LogCapture log = new LogCapture()
 
     def setupSpec() {
-        app = initializeApp()
+        app = initializeApp([testing: true])
     }
 
     def "/configs POST endpoint is secured"() {

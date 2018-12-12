@@ -22,7 +22,7 @@ class ScriptRouteSpec extends Specification implements KtorSupport {
     def app
 
     def setupSpec() {
-        app = initializeApp()
+        app = initializeApp([testing: true])
     }
 
     def "/script/{extension}/test POST endpoint is secured"() {

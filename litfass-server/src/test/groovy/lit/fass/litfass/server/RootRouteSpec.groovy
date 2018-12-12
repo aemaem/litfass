@@ -23,7 +23,7 @@ class RootRouteSpec extends Specification implements KtorSupport {
     def app
 
     def setupSpec() {
-        app = initializeApp()
+        app = initializeApp([testing: true])
     }
 
     def "/ GET endpoint"() {
