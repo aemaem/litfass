@@ -16,10 +16,11 @@ import java.util.concurrent.ConcurrentHashMap
 class YamlConfigService : ConfigService {
     companion object {
         private val log = LoggerFactory.getLogger(this::class.java.enclosingClass)
+        private val collectionNameRegex = Regex("^[a-zA-Z0-9-_]{2,30}$")
     }
 
     private val configStore = ConcurrentHashMap<String, CollectionConfig>()
-    private val mapper = ObjectMapper(YAMLFactory()).apply { registerModule(KotlinModule()) }
+    private val yamlMapper = ObjectMapper(YAMLFactory()).apply { registerModule(KotlinModule()) }
 
     override fun readRecursively(file: File) {
         log.debug("Reading recursively ${file.absolutePath}")
@@ -42,7 +43,11 @@ class YamlConfigService : ConfigService {
     }
 
     override fun readConfig(inputStream: InputStream): CollectionConfig {
-        val config = mapper.readValue(inputStream, CollectionConfig::class.java)
+        val config = yamlMapper.readValue(inputStream, CollectionConfig::class.java)
+        if (collectionNameRegex.matches(config.collection)) {
+            throw ConfigException("Collection name must match regex ${collectionNameRegex.pattern}")
+        }
+
         log.debug("Adding config ${config.collection}")
         if (config == null) {
             throw ConfigException("Config must not be null")

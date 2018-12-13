@@ -15,7 +15,7 @@ import lit.fass.litfass.server.persistence.Datastore
  * @author Michael Mair
  */
 data class CollectionConfig @JsonCreator constructor(
-    val collection: String, //todo: validate collection for no white spaces
+    val collection: String,
     val scheduled: String?,
     @JsonSerialize(using = DatastoreSerializer::class)
     @JsonDeserialize(using = DatastoreDeserializer::class)

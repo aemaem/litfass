@@ -5,6 +5,7 @@ import lit.fass.litfass.server.helper.UnitTest
 import org.junit.experimental.categories.Category
 import spock.lang.Specification
 import spock.lang.Subject
+import spock.lang.Unroll
 
 import static lit.fass.litfass.server.persistence.Datastore.ELASTICSEARCH
 import static lit.fass.litfass.server.persistence.Datastore.POSTGRES
@@ -55,6 +56,31 @@ class YamlConfigServiceSpec extends Specification {
         result.flows[1].steps[0].description == "First step"
         result.flows[1].steps[0].extension == "kts"
         result.flows[1].steps[0].code == """println("foo")"""
+    }
+
+    @Unroll
+    def "config file throws exception for invalid collection name '#collectionName'"() {
+        given: "a config file with invalid collection name"
+        def configFile = File.createTempFile("config", ".yml")
+        configFile.text = """
+        collection: foo
+        flows:
+          - flow:
+              steps:
+                - script:
+                    description: "Transform something"
+                    extension: kts
+                    code: bindings["data"]
+        """.stripIndent()
+
+        when: "file is parsed"
+        yamlConfigService.readConfig(configFile)
+
+        then: "exception is thrown"
+        thrown(ConfigException)
+
+        where:
+        collectionName << ["a", "ab ", "abc d", "abcö", "a,c", "abcdefghijklmnopqrstuvwxyz01234"]
     }
 
     def "files in directory can be parsed"() {
