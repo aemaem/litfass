@@ -35,7 +35,7 @@ class ElasticsearchPersistenceServiceSpec extends Specification implements Elast
         def data = [foo: "bar", bar: true]
 
         when: "saved is called"
-        esPersistenceClient.save(collection, data, null)
+        esPersistenceClient.saveCollection(collection, data, null)
 
         then: "no exception is thrown"
         noExceptionThrown()
@@ -47,7 +47,7 @@ class ElasticsearchPersistenceServiceSpec extends Specification implements Elast
         def data = [(ID_KEY): "1", foo: "bar", bar: true]
 
         when: "saved is called"
-        esPersistenceClient.save(collection, data, data.id)
+        esPersistenceClient.saveCollection(collection, data, data.id)
 
         then: "no exception is thrown"
         noExceptionThrown()
@@ -60,7 +60,7 @@ class ElasticsearchPersistenceServiceSpec extends Specification implements Elast
         def data = [(ID_KEY): id, foo: "bar", bar: true]
 
         when: "saved is called"
-        esPersistenceClient.save(collection, data, data.id)
+        esPersistenceClient.saveCollection(collection, data, data.id)
 
         then: "exception is thrown"
         thrown(PersistenceException)

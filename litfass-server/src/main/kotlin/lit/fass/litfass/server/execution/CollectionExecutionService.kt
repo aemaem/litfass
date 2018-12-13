@@ -21,9 +21,9 @@ class CollectionExecutionService(
             ?: throw ExecutionException("No persistence service applicable for ${config.datastore}")
 
         if (dataToPersist.containsKey(ID_KEY)) {
-            persistenceService.save(collection, dataToPersist, dataToPersist[ID_KEY])
+            persistenceService.saveCollection(collection, dataToPersist, dataToPersist[ID_KEY])
         } else {
-            persistenceService.save(collection, dataToPersist)
+            persistenceService.saveCollection(collection, dataToPersist)
         }
     }
 }

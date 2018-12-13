@@ -1,4 +1,4 @@
-package lit.fass.litfass.server.persistence.postgresql
+package lit.fass.litfass.server.persistence.postgres
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import lit.fass.litfass.server.helper.IntegrationTest
@@ -9,6 +9,8 @@ import spock.lang.Specification
 import spock.lang.Subject
 import spock.lang.Unroll
 
+import java.time.OffsetDateTime
+
 import static lit.fass.litfass.server.persistence.PersistenceService.Companion.ID_KEY
 
 /**
@@ -18,11 +20,11 @@ import static lit.fass.litfass.server.persistence.PersistenceService.Companion.I
 class PostgresPersistenceServiceSpec extends Specification implements PostgresSupport {
 
     @Subject
-    PostgresqlPersistenceService postgresPersistenceService
+    PostgresPersistenceService postgresPersistenceService
 
     def setup() {
         dropTable("foo")
-        postgresPersistenceService = new PostgresqlPersistenceService(jdbcDataSource, new ObjectMapper())
+        postgresPersistenceService = new PostgresPersistenceService(jdbcDataSource, new ObjectMapper())
     }
 
     def "collection and data is saved"() {
@@ -31,14 +33,15 @@ class PostgresPersistenceServiceSpec extends Specification implements PostgresSu
         def data = [foo: "bar", bar: true]
 
         when: "saved is called"
-        postgresPersistenceService.save(collection, data, null)
+        postgresPersistenceService.saveCollection(collection, data, null)
         def result = selectAllFromTable(collection)
 
         then: "data is stored"
         result.size() == 1
         result.getValues("id", String)[0] ==~ /[a-zA-Z0-9].+/
-        result.getValues("timestamp", Long)[0]
         result.getValues("data", String)[0] == '{"bar": true, "foo": "bar"}'
+        result.getValues("created", OffsetDateTime)[0]
+        result.getValues("updated", OffsetDateTime)[0]
         and: "no exception is thrown"
         noExceptionThrown()
     }
@@ -49,14 +52,37 @@ class PostgresPersistenceServiceSpec extends Specification implements PostgresSu
         def data = [(ID_KEY): "1", foo: "bar", bar: true]
 
         when: "saved is called"
-        postgresPersistenceService.save(collection, data, data.id)
+        postgresPersistenceService.saveCollection(collection, data, data.id)
         def result = selectAllFromTable(collection)
 
         then: "data is stored"
         result.size() == 1
         result.getValues("id", String)[0] == "1"
-        result.getValues("timestamp", Long)[0]
         result.getValues("data", String)[0] == '{"id": "1", "bar": true, "foo": "bar"}'
+        result.getValues("created", OffsetDateTime)[0]
+        result.getValues("updated", OffsetDateTime)[0]
+        and: "no exception is thrown"
+        noExceptionThrown()
+    }
+
+    def "collection and data with id is inserted and updated"() {
+        given: "a collection and data with id"
+        def collection = "foo"
+        def data = [(ID_KEY): "1", foo: "bar", bar: true]
+
+        when: "saved is called"
+        postgresPersistenceService.saveCollection(collection, data, data.id)
+        and: "saved is called another time with different data and the same id"
+        def dataUpdate = [(ID_KEY): "1", foo: "blub", blub: 100]
+        postgresPersistenceService.saveCollection(collection, dataUpdate, dataUpdate.id)
+        def result = selectAllFromTable(collection)
+
+        then: "data is merged"
+        result.size() == 1
+        result.getValues("id", String)[0] == "1"
+        result.getValues("data", String)[0] == '{"id": "1", "bar": true, "foo": "blub", "blub": 100}'
+        result.getValues("created", OffsetDateTime)[0]
+        result.getValues("updated", OffsetDateTime)[0]
         and: "no exception is thrown"
         noExceptionThrown()
     }
@@ -68,7 +94,7 @@ class PostgresPersistenceServiceSpec extends Specification implements PostgresSu
         def data = [(ID_KEY): id, foo: "bar", bar: true]
 
         when: "saved is called"
-        postgresPersistenceService.save(collection, data, data.id)
+        postgresPersistenceService.saveCollection(collection, data, data.id)
 
         then: "exception is thrown"
         thrown(PersistenceException)

@@ -9,5 +9,5 @@ interface PersistenceService {
     }
 
     fun isApplicable(datastore: Datastore): Boolean
-    fun save(collection: String, data: Map<String, Any?>, id: Any? = null)
+    fun saveCollection(collection: String, data: Map<String, Any?>, id: Any? = null)
 }

@@ -28,7 +28,7 @@ class ElasticsearchPersistenceService(
         return ELASTICSEARCH == datastore
     }
 
-    override fun save(collection: String, data: Map<String, Any?>, id: Any?) {
+    override fun saveCollection(collection: String, data: Map<String, Any?>, id: Any?) {
         if (id !is String?) {
             throw PersistenceException("id must be of type String")
         }

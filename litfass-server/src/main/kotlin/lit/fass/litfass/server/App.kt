@@ -46,7 +46,7 @@ import lit.fass.litfass.server.http.CollectionHttpService
 import lit.fass.litfass.server.persistence.JdbcDataSource
 import lit.fass.litfass.server.persistence.PersistenceService
 import lit.fass.litfass.server.persistence.elasticsearch.ElasticsearchPersistenceService
-import lit.fass.litfass.server.persistence.postgresql.PostgresqlPersistenceService
+import lit.fass.litfass.server.persistence.postgres.PostgresPersistenceService
 import lit.fass.litfass.server.schedule.CollectionSchedulerService
 import lit.fass.litfass.server.script.kts.KotlinScriptEngine
 import org.apache.http.HttpHost
@@ -126,7 +126,7 @@ fun Application.module() {
     val postgresqlPassword = environment.config.property("litfass.postgresql.jdbc.password").getString()
     val postgresqlDatasource = JdbcDataSource(postgresqlUrl, postgresqlUser, postgresqlPassword)
     log.info("Instantiating postgresql persistence service")
-    val postgresqlPersistenceService = PostgresqlPersistenceService(postgresqlDatasource, jsonMapper)
+    val postgresqlPersistenceService = PostgresPersistenceService(postgresqlDatasource, jsonMapper)
     persistenceServices.add(postgresqlPersistenceService)
 
     if (environment.config.property("litfass.elasticsearch.enabled").getString() == true.toString()) {
