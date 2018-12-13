@@ -43,7 +43,10 @@ import lit.fass.litfass.server.config.yaml.model.CollectionConfig
 import lit.fass.litfass.server.execution.CollectionExecutionService
 import lit.fass.litfass.server.flow.CollectionFlowService
 import lit.fass.litfass.server.http.CollectionHttpService
+import lit.fass.litfass.server.persistence.JdbcDataSource
+import lit.fass.litfass.server.persistence.PersistenceService
 import lit.fass.litfass.server.persistence.elasticsearch.ElasticsearchPersistenceService
+import lit.fass.litfass.server.persistence.postgresql.PostgresqlPersistenceService
 import lit.fass.litfass.server.schedule.CollectionSchedulerService
 import lit.fass.litfass.server.script.kts.KotlinScriptEngine
 import org.apache.http.HttpHost
@@ -103,15 +106,10 @@ fun Application.module() {
     }
     install(DataConversion)
 
+    log.info("Instantiating JSON mapper")
     val jsonMapper = jacksonObjectMapper()
-    val elasticsearch = RestHighLevelClient(RestClient.builder(*environment.config
-        .property("litfass.elasticsearch.client.urls")
-        .getString()
-        .split(",")
-        .map { URI(it) }
-        .map { HttpHost(it.host, it.port, it.scheme) }.toTypedArray()
-    )
-    )
+
+    log.info("Instantiating config service")
     val configService = YamlConfigService()
     val configCollectionPath = environment.config.propertyOrNull("litfass.config.collection.path")
     if (configCollectionPath != null) {
@@ -120,9 +118,35 @@ fun Application.module() {
     val httpService = CollectionHttpService(HttpClient(Apache))
     val scriptEngines = listOf(KotlinScriptEngine())
     val flowService = CollectionFlowService(httpService, scriptEngines)
-    val persistenceService = ElasticsearchPersistenceService(elasticsearch, jsonMapper)
 
-    val executionService = CollectionExecutionService(configService, flowService, persistenceService)
+    val persistenceServices = mutableListOf<PersistenceService>()
+    log.info("Instantiating postgresql database connection")
+    val postgresqlUrl = environment.config.property("litfass.postgresql.jdbc.url").getString()
+    val postgresqlUser = environment.config.property("litfass.postgresql.jdbc.user").getString()
+    val postgresqlPassword = environment.config.property("litfass.postgresql.jdbc.password").getString()
+    val postgresqlDatasource = JdbcDataSource(postgresqlUrl, postgresqlUser, postgresqlPassword)
+    log.info("Instantiating postgresql persistence service")
+    val postgresqlPersistenceService = PostgresqlPersistenceService(postgresqlDatasource, jsonMapper)
+    persistenceServices.add(postgresqlPersistenceService)
+
+    if (environment.config.property("litfass.elasticsearch.enabled").getString() == true.toString()) {
+        log.info("Instantiating elasticsearch client")
+        val elasticsearch = RestHighLevelClient(RestClient.builder(*environment.config
+            .property("litfass.elasticsearch.client.urls")
+            .getString()
+            .split(",")
+            .map { URI(it) }
+            .map { HttpHost(it.host, it.port, it.scheme) }.toTypedArray()
+        )
+        )
+        log.info("Instantiating elasticsearch persistence service")
+        val elasticsearchPersistenceService = ElasticsearchPersistenceService(elasticsearch, jsonMapper)
+        persistenceServices.add(elasticsearchPersistenceService)
+    }
+
+    log.info("Instantiating execution service")
+    val executionService = CollectionExecutionService(configService, flowService, persistenceServices)
+    log.info("Instantiating scheduler service")
     val schedulerService = CollectionSchedulerService(executionService)
 
     routing {

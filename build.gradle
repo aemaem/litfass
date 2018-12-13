@@ -5,8 +5,11 @@ buildscript {
 
         logbackVersion = "1.2.3"
         commonsLang3Version = "3.8.1"
-        elasticSearchVersion = "6.5.1"
         cronUtilsVersion = "8.0.0"
+        hikariCpVersion = "3.2.0"
+        jooqVersion = "3.11.7"
+        postgresqlVersion = "42.2.5"
+        elasticSearchVersion = "6.5.1"
 
         spockVersion = "1.2-groovy-2.5"
         awaitilityVersion = "3.1.3"

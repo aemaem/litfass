@@ -8,6 +8,6 @@ interface PersistenceService {
         const val ID_KEY = "id"
     }
 
-    fun save(collection: String, data: Map<String, Any?>)
-    fun save(collection: String, id: Any?, data: Map<String, Any?>)
+    fun isApplicable(datastore: Datastore): Boolean
+    fun save(collection: String, data: Map<String, Any?>, id: Any? = null)
 }

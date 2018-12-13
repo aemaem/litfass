@@ -1,5 +1,18 @@
 version: "2"
 services:
+  litfass-postgres:
+    image: postgres:11.1-alpine
+    restart: always
+    container_name: "litfass-postgresql"
+    hostname: "litfass-postgresql"
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: "admin"
+      POSTGRES_PASSWORD: "admin"
+      POSTGRES_DB: litfass
+    networks:
+      - litfass
   litfass-elasticsearch:
     image: elasticsearch:6.5.1
     container_name: "litfass-elasticsearch"
@@ -14,6 +27,7 @@ services:
       - litfass
   litfass-grafana:
     image: grafana/grafana:5.3.4
+    restart: always
     container_name: "litfass-grafana"
     hostname: "litfass-grafana"
     ports:

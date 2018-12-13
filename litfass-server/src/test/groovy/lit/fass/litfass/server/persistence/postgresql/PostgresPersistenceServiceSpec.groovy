@@ -1,12 +1,9 @@
-package lit.fass.litfass.server.persistence.elasticsearch
+package lit.fass.litfass.server.persistence.postgresql
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import lit.fass.litfass.server.helper.ElasticsearchSupport
 import lit.fass.litfass.server.helper.IntegrationTest
+import lit.fass.litfass.server.helper.PostgresSupport
 import lit.fass.litfass.server.persistence.PersistenceException
-import org.apache.http.HttpHost
-import org.elasticsearch.client.RestClient
-import org.elasticsearch.client.RestHighLevelClient
 import org.junit.experimental.categories.Category
 import spock.lang.Specification
 import spock.lang.Subject
@@ -18,15 +15,14 @@ import static lit.fass.litfass.server.persistence.PersistenceService.Companion.I
  * @author Michael Mair
  */
 @Category(IntegrationTest)
-class ElasticsearchPersistenceServiceSpec extends Specification implements ElasticsearchSupport {
+class PostgresPersistenceServiceSpec extends Specification implements PostgresSupport {
 
     @Subject
-    ElasticsearchPersistenceService esPersistenceClient
+    PostgresqlPersistenceService postgresPersistenceService
 
     def setup() {
-        cleanDatabase()
-        RestHighLevelClient restClient = new RestHighLevelClient(RestClient.builder(new HttpHost("localhost", 9200, "http")))
-        esPersistenceClient = new ElasticsearchPersistenceService(restClient, new ObjectMapper())
+        dropTable("foo")
+        postgresPersistenceService = new PostgresqlPersistenceService(jdbcDataSource, new ObjectMapper())
     }
 
     def "collection and data is saved"() {
@@ -35,9 +31,15 @@ class ElasticsearchPersistenceServiceSpec extends Specification implements Elast
         def data = [foo: "bar", bar: true]
 
         when: "saved is called"
-        esPersistenceClient.save(collection, data, null)
+        postgresPersistenceService.save(collection, data, null)
+        def result = selectAllFromTable(collection)
 
-        then: "no exception is thrown"
+        then: "data is stored"
+        result.size() == 1
+        result.getValues("id", String)[0] ==~ /[a-zA-Z0-9].+/
+        result.getValues("timestamp", Long)[0]
+        result.getValues("data", String)[0] == '{"bar": true, "foo": "bar"}'
+        and: "no exception is thrown"
         noExceptionThrown()
     }
 
@@ -47,9 +49,15 @@ class ElasticsearchPersistenceServiceSpec extends Specification implements Elast
         def data = [(ID_KEY): "1", foo: "bar", bar: true]
 
         when: "saved is called"
-        esPersistenceClient.save(collection, data, data.id)
+        postgresPersistenceService.save(collection, data, data.id)
+        def result = selectAllFromTable(collection)
 
-        then: "no exception is thrown"
+        then: "data is stored"
+        result.size() == 1
+        result.getValues("id", String)[0] == "1"
+        result.getValues("timestamp", Long)[0]
+        result.getValues("data", String)[0] == '{"id": "1", "bar": true, "foo": "bar"}'
+        and: "no exception is thrown"
         noExceptionThrown()
     }
 
@@ -60,7 +68,7 @@ class ElasticsearchPersistenceServiceSpec extends Specification implements Elast
         def data = [(ID_KEY): id, foo: "bar", bar: true]
 
         when: "saved is called"
-        esPersistenceClient.save(collection, data, data.id)
+        postgresPersistenceService.save(collection, data, data.id)
 
         then: "exception is thrown"
         thrown(PersistenceException)

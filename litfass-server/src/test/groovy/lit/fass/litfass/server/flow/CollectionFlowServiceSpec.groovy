@@ -12,6 +12,8 @@ import spock.lang.Specification
 import spock.lang.Subject
 import spock.lang.Unroll
 
+import static lit.fass.litfass.server.persistence.Datastore.POSTGRES
+
 /**
  * @author Michael Mair
  */
@@ -39,7 +41,7 @@ class CollectionFlowServiceSpec extends Specification {
                 foo      : "bar",
                 bar      : true
         ]
-        def config = new CollectionConfig("foo", null, [new CollectionFlowConfig(null, null, [:], [
+        def config = new CollectionConfig("foo", null, POSTGRES, [new CollectionFlowConfig(null, null, [:], [
                 new CollectionFlowStepScriptConfig(null, "kts", """bindings["data"]""")
         ])])
 
@@ -60,7 +62,7 @@ class CollectionFlowServiceSpec extends Specification {
                 foo      : "bar",
                 bar      : true
         ]
-        def config = new CollectionConfig("foo", null, [new CollectionFlowConfig(null, null, [:], [
+        def config = new CollectionConfig("foo", null, POSTGRES, [new CollectionFlowConfig(null, null, [:], [
                 new CollectionFlowStepHttpConfig(null, "http://localhost/\${foo}", "admin", "admin")
         ])])
 

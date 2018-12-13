@@ -6,6 +6,9 @@ import org.junit.experimental.categories.Category
 import spock.lang.Specification
 import spock.lang.Subject
 
+import static lit.fass.litfass.server.persistence.Datastore.ELASTICSEARCH
+import static lit.fass.litfass.server.persistence.Datastore.POSTGRES
+
 /**
  * @author Michael Mair
  */
@@ -31,6 +34,7 @@ class YamlConfigServiceSpec extends Specification {
         yamlConfigService.getConfigs().size() == 1
         result.collection == "foo"
         result.scheduled == "*/30 * * * * * *"
+        result.datastore == ELASTICSEARCH
         result.flows.size() == 2
         result.flows[0].name == "Flow 1"
         result.flows[0].description == "Flow description 1"
@@ -65,6 +69,7 @@ class YamlConfigServiceSpec extends Specification {
         result.size() == 3
         def fooResult = result.find { it.collection == "foo" }
         fooResult.scheduled == "*/30 * * * * * *"
+        fooResult.datastore == ELASTICSEARCH
         fooResult.flows.size() == 2
         fooResult.flows[0].name == "Flow 1"
         fooResult.flows[0].description == "Flow description 1"
@@ -87,6 +92,7 @@ class YamlConfigServiceSpec extends Specification {
         fooResult.flows[1].steps[0].code == """println("foo")"""
         def barResult = result.find { it.collection == "bar" }
         barResult.scheduled == null
+        barResult.datastore == POSTGRES
         barResult.flows.size() == 1
         barResult.flows[0].name == null
         barResult.flows[0].description == null
@@ -96,6 +102,7 @@ class YamlConfigServiceSpec extends Specification {
         barResult.flows[0].steps[0].code == """println("bar")"""
         def subResult = result.find { it.collection == "sub" }
         subResult.scheduled == null
+        subResult.datastore == POSTGRES
         subResult.flows.size() == 1
         subResult.flows[0].name == null
         subResult.flows[0].description == null
@@ -124,7 +131,7 @@ class YamlConfigServiceSpec extends Specification {
 
     def "config can be removed"() {
         given: "a config foo"
-        yamlConfigService.configStore.put("foo", new CollectionConfig("foo", null, []))
+        yamlConfigService.configStore.put("foo", new CollectionConfig("foo", null, POSTGRES, []))
 
         when: "config foo is removed"
         yamlConfigService.removeConfig("foo")

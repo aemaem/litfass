@@ -9,6 +9,8 @@ import org.junit.experimental.categories.Category
 import spock.lang.Specification
 import spock.lang.Subject
 
+import static lit.fass.litfass.server.persistence.Datastore.POSTGRES
+
 /**
  * @author Michael Mair
  */
@@ -26,7 +28,7 @@ class CollectionExecutionServiceSpec extends Specification {
         configServiceMock = Mock()
         flowServiceMock = Mock()
         persistenceServiceMock = Mock()
-        collectionExecutionService = new CollectionExecutionService(configServiceMock, flowServiceMock, persistenceServiceMock)
+        collectionExecutionService = new CollectionExecutionService(configServiceMock, flowServiceMock, [persistenceServiceMock])
     }
 
     def "execution calls required services"() {
@@ -38,9 +40,10 @@ class CollectionExecutionServiceSpec extends Specification {
         collectionExecutionService.execute(collection, data)
 
         then: "all sub services are called"
-        1 * configServiceMock.getConfig(collection) >> new CollectionConfig(collection, null, [])
+        1 * configServiceMock.getConfig(collection) >> new CollectionConfig(collection, null, POSTGRES, [])
         1 * flowServiceMock.execute(data, _ as CollectionConfig) >> [foo: "blub"]
-        1 * persistenceServiceMock.save(collection, [foo: "blub"])
+        1 * persistenceServiceMock.isApplicable(_) >> true
+        1 * persistenceServiceMock.save(collection, [foo: "blub"], null)
     }
 
     def "execution calls required services with given id"() {
@@ -52,8 +55,25 @@ class CollectionExecutionServiceSpec extends Specification {
         collectionExecutionService.execute(collection, data)
 
         then: "all sub services are called"
-        1 * configServiceMock.getConfig(collection) >> new CollectionConfig(collection, null, [])
+        1 * configServiceMock.getConfig(collection) >> new CollectionConfig(collection, null, POSTGRES, [])
         1 * flowServiceMock.execute(data, _ as CollectionConfig) >> [id: 1, foo: "blub"]
-        1 * persistenceServiceMock.save(collection, 1, [id: 1, foo: "blub"])
+        1 * persistenceServiceMock.isApplicable(_) >> true
+        1 * persistenceServiceMock.save(collection, [id: 1, foo: "blub"], 1)
+    }
+
+    def "execution calls throws exception when no persistence service is applicable"() {
+        given: "a collection and data"
+        def collection = "foo"
+        def data = [bar: true, foo: "bar"]
+
+        when: "execution service is called"
+        collectionExecutionService.execute(collection, data)
+
+        then: "all sub services are called"
+        1 * configServiceMock.getConfig(collection) >> new CollectionConfig(collection, null, POSTGRES, [])
+        1 * flowServiceMock.execute(data, _ as CollectionConfig) >> [foo: "blub"]
+        1 * persistenceServiceMock.isApplicable(_) >> false
+        0 * persistenceServiceMock.save(*_)
+        thrown(ExecutionException)
     }
 }

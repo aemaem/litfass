@@ -1,5 +1,6 @@
 collection: foo
 scheduled: "*/30 * * * * * *"
+datastore: elasticsearch
 flows:
   - flow:
       name: "Flow 1"

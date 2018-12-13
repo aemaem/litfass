@@ -1,6 +1,8 @@
 package lit.fass.litfass.server.persistence.elasticsearch
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import lit.fass.litfass.server.persistence.Datastore
+import lit.fass.litfass.server.persistence.Datastore.ELASTICSEARCH
 import lit.fass.litfass.server.persistence.PersistenceException
 import lit.fass.litfass.server.persistence.PersistenceService
 import org.elasticsearch.action.ActionListener
@@ -22,14 +24,12 @@ class ElasticsearchPersistenceService(
         private val log = LoggerFactory.getLogger(this::class.java.enclosingClass)
     }
 
-    override fun save(collection: String, data: Map<String, Any?>) {
-        val indexRequest = IndexRequest(collection, "doc")
-        indexRequest.source(jsonMapper.writeValueAsString(data), JSON)
-        save(indexRequest)
+    override fun isApplicable(datastore: Datastore): Boolean {
+        return ELASTICSEARCH == datastore
     }
 
-    override fun save(collection: String, id: Any?, data: Map<String, Any?>) {
-        if (id !is String) {
+    override fun save(collection: String, data: Map<String, Any?>, id: Any?) {
+        if (id !is String?) {
             throw PersistenceException("id must be of type String")
         }
 
