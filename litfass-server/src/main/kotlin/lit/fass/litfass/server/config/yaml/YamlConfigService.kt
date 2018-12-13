@@ -44,8 +44,8 @@ class YamlConfigService : ConfigService {
 
     override fun readConfig(inputStream: InputStream): CollectionConfig {
         val config = yamlMapper.readValue(inputStream, CollectionConfig::class.java)
-        if (collectionNameRegex.matches(config.collection)) {
-            throw ConfigException("Collection name must match regex ${collectionNameRegex.pattern}")
+        if (!collectionNameRegex.matches(config.collection)) {
+            throw ConfigException("Collection name ${config.collection} must match regex ${collectionNameRegex.pattern}")
         }
 
         log.debug("Adding config ${config.collection}")

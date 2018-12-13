@@ -63,7 +63,7 @@ class YamlConfigServiceSpec extends Specification {
         given: "a config file with invalid collection name"
         def configFile = File.createTempFile("config", ".yml")
         configFile.text = """
-        collection: foo
+        collection: $collectionName
         flows:
           - flow:
               steps:
@@ -80,7 +80,7 @@ class YamlConfigServiceSpec extends Specification {
         thrown(ConfigException)
 
         where:
-        collectionName << ["a", "ab ", "abc d", "abcö", "a,c", "abcdefghijklmnopqrstuvwxyz01234"]
+        collectionName << ["a", "abc d", "abcö", "a,c", "abcdefghijklmnopqrstuvwxyz01234"]
     }
 
     def "files in directory can be parsed"() {
