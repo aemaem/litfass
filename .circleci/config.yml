@@ -14,7 +14,7 @@ jobs:
           "discovery.type": "single-node"
     environment:
       TZ: "/usr/share/zoneinfo/Europe/Vienna"
-      GRADLE_OPTS: '-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -Dorg.gradle.jvmargs="-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:+HeapDumpOnOutOfMemoryError"'
+      GRADLE_OPTS: '-Xmx128m -Dorg.gradle.jvmargs="-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:+HeapDumpOnOutOfMemoryError"'
     steps:
       - checkout
       - restore_cache:
@@ -38,13 +38,18 @@ jobs:
   release:
     docker:
       - image: circleci/openjdk:8-jdk-node-browsers
+      - image: postgres:11.1-alpine
+        environment:
+          POSTGRES_USER: "admin"
+          POSTGRES_PASSWORD: "admin"
+          POSTGRES_DB: litfass
       - image: elasticsearch:6.5.1
         environment:
           ES_JAVA_OPTS: "-Xmx256m -Xms256m"
           "discovery.type": "single-node"
     environment:
       TZ: "/usr/share/zoneinfo/Europe/Vienna"
-      GRADLE_OPTS: '-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -Dorg.gradle.jvmargs="-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:+HeapDumpOnOutOfMemoryError"'
+      GRADLE_OPTS: '-Xmx128m -Dorg.gradle.jvmargs="-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:+HeapDumpOnOutOfMemoryError"'
     steps:
       - checkout
       - restore_cache:
