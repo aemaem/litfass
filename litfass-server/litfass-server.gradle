@@ -1,5 +1,6 @@
 apply plugin: "kotlin"
 apply plugin: "groovy"
+apply plugin: "distribution"
 
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion"
@@ -36,10 +37,46 @@ compileTestKotlin {
 }
 
 jar {
+    baseName = project.name
     manifest {
+        attributes "Implementation-Title": "LITFASS"
+        attributes "Implementation-Version": version
+        attributes "Main-Class": "lit.fass.litfass.server.AppKt"
+    }
+}
+
+task allJar(type: Jar) {
+    classifier "all"
+    manifest {
+        attributes "Implementation-Title": "LITFASS"
+        attributes "Implementation-Version": version
         attributes "Main-Class": "lit.fass.litfass.server.AppKt"
     }
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
+assembleDist.dependsOn allJar
+
+distributions {
+    def runFile
+    doFirst {
+        runFile = File.createTempFile("run", ".sh")
+        runFile.write """#!/bin/sh\njava -classpath "./*:./lib/*" lit.fass.litfass.server.AppKt"""
+        runFile.deleteOnExit()
+    }
+    main {
+        contents {
+            from(runFile) {
+                rename {
+                    "run.sh"
+                }
+            }
+            from jar
+            into("lib") {
+                from configurations.compile
+            }
+        }
+    }
 }
 
 task unitTest(type: Test) {
