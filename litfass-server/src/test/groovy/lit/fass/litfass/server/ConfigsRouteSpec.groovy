@@ -31,6 +31,10 @@ class ConfigsRouteSpec extends Specification implements KtorSupport {
         app = initializeApp([testing: true])
     }
 
+    def cleanupSpec() {
+        stopApp(app)
+    }
+
     def "/configs POST endpoint is secured"() {
         when: "requesting /configs unauthorized"
         def result = handleRequest(app, Post, "/configs", {}).response

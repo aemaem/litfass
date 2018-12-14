@@ -7,6 +7,8 @@ package lit.fass.litfass.server
  */
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT
+import com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.ktor.application.Application
 import io.ktor.application.call
@@ -38,6 +40,7 @@ import io.ktor.routing.get
 import io.ktor.routing.post
 import io.ktor.routing.routing
 import io.ktor.util.date.GMTDate
+import io.ktor.util.getDigestFunction
 import lit.fass.litfass.server.config.yaml.YamlConfigService
 import lit.fass.litfass.server.config.yaml.model.CollectionConfig
 import lit.fass.litfass.server.execution.CollectionExecutionService
@@ -68,12 +71,29 @@ fun Application.module() {
         log.warn("Application in test mode")
     }
 
-    val adminPassword = if (testing) "admin" else UUID.randomUUID().toString()
-    log.warn("Generated admin password: $adminPassword")
+    val digestFunction = getDigestFunction("SHA-256", salt = "lit.fass")
+    var users = environment.config.configList("litfass.config.security.users")
+        .associateBy({ it.property("name").getString() }, {
+            digestFunction.invoke(it.property("password").getString())
+        })
+    if (!users.containsKey("admin")) {
+        log.warn("No user defined with name admin. Generating admin user")
+        val adminPassword: String
+        if (testing) {
+            adminPassword = "admin"
+        } else {
+            adminPassword = UUID.randomUUID().toString()
+            log.warn("Generated admin password: $adminPassword")
+        }
+        val adminUser = mapOf("admin" to digestFunction.invoke(adminPassword))
+        users = adminUser + users
+    }
+    log.info("Registered ${users.size} users")
+    val userTable = UserHashedTableAuth(digestFunction, users)
     install(Authentication) {
         basic {
             realm = "LITFASS"
-            validate { if (it.name == "admin" && it.password == adminPassword) UserIdPrincipal(it.name) else null }
+            validate { userTable.authenticate(it) }
         }
     }
     install(ContentNegotiation) {
@@ -99,7 +119,10 @@ fun Application.module() {
     install(CachingHeaders) {
         options { outgoingContent ->
             when (outgoingContent.contentType?.withoutParameters()) {
-                CSS -> CachingOptions(CacheControl.MaxAge(maxAgeSeconds = 24 * 60 * 60), expires = null as? GMTDate?)
+                CSS -> CachingOptions(
+                    CacheControl.MaxAge(maxAgeSeconds = 24 * 60 * 60),
+                    expires = null as? GMTDate?
+                )
                 else -> null
             }
         }
@@ -107,7 +130,10 @@ fun Application.module() {
     install(DataConversion)
 
     log.info("Instantiating JSON mapper")
-    val jsonMapper = jacksonObjectMapper()
+    val jsonMapper = jacksonObjectMapper().apply {
+        registerModule(JavaTimeModule())
+        configure(WRITE_DATES_AS_TIMESTAMPS, false)
+    }
 
     log.info("Instantiating config service")
     val configService = YamlConfigService()

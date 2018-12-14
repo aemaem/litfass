@@ -24,6 +24,10 @@ class HealthRouteSpec extends Specification implements KtorSupport {
         app = initializeApp()
     }
 
+    def cleanupSpec() {
+        stopApp(app)
+    }
+
     def "/health GET endpoint"() {
         when: "requesting /health"
         def result = handleRequest(app, Get, "/health", {}).response

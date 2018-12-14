@@ -12,6 +12,7 @@ import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.channels.sendBlocking
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import lit.fass.litfass.server.execution.ExecutionService
 import lit.fass.litfass.server.schedule.model.CancelJobMessage
 import lit.fass.litfass.server.schedule.model.CreateJobMessage
@@ -47,7 +48,7 @@ class CollectionSchedulerService(private val executionService: ExecutionService)
         private val cronDescriptor = CronDescriptor.instance()
     }
 
-    private lateinit var scheduler: SendChannel<ScheduledJobMessage>
+    private var scheduler: SendChannel<ScheduledJobMessage>? = null
 
     init {
         GlobalScope.launch {
@@ -91,6 +92,13 @@ class CollectionSchedulerService(private val executionService: ExecutionService)
                 }
             }
         }
+        log.debug("Waiting for scheduler to be initialized.")
+        runBlocking {
+            while (scheduler == null) {
+                delay(10)
+            }
+            log.debug("Scheduler initialized")
+        }
     }
 
     override fun createJob(collection: String, cronExpression: String) {
@@ -103,12 +111,12 @@ class CollectionSchedulerService(private val executionService: ExecutionService)
         }
 
         log.info("Sending job $collection to be scheduled ${cronDescriptor.describe(cron)}")
-        scheduler.sendBlocking(CreateJobMessage(collection, cron))
+        scheduler?.sendBlocking(CreateJobMessage(collection, cron))
     }
 
     override fun cancelJob(collection: String) {
         log.info("Sending job $collection to be cancelled")
-        scheduler.sendBlocking(CancelJobMessage(collection))
+        scheduler?.sendBlocking(CancelJobMessage(collection))
     }
 
     /**

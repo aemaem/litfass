@@ -26,6 +26,10 @@ class RootRouteSpec extends Specification implements KtorSupport {
         app = initializeApp([testing: true])
     }
 
+    def cleanupSpec() {
+        stopApp(app)
+    }
+
     def "/ GET endpoint"() {
         when: "requesting /"
         def result = handleRequest(app, Get, "/", { withBasicAuth("admin", "admin", it) }).response

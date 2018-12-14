@@ -9,6 +9,7 @@ import io.ktor.server.testing.TestApplicationRequest
 import static io.ktor.http.HttpHeaders.Authorization
 import static io.ktor.server.testing.TestApplicationRequestKt.setBody
 import static io.ktor.server.testing.TestEngineKt.createTestEnvironment
+import static java.util.concurrent.TimeUnit.SECONDS
 
 /**
  * @author Michael Mair
@@ -23,6 +24,10 @@ trait KtorSupport {
         }), {})
         app.start(true)
         return app
+    }
+
+    void stopApp(TestApplicationEngine app) {
+        app.stop(0, 5, SECONDS)
     }
 
     void withBasicAuth(String username, String password, TestApplicationRequest request) {

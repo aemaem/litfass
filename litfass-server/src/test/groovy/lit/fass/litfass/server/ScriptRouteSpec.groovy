@@ -25,6 +25,10 @@ class ScriptRouteSpec extends Specification implements KtorSupport {
         app = initializeApp([testing: true])
     }
 
+    def cleanupSpec() {
+        stopApp(app)
+    }
+    
     def "/script/{extension}/test POST endpoint is secured"() {
         when: "requesting /script/{extension}/test unauthorized"
         def result = handleRequest(app, Post, "/script/kts/test", {}).response

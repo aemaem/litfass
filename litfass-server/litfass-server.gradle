@@ -13,6 +13,7 @@ dependencies {
     compile "io.ktor:ktor-client-apache:$ktorVersion"
 
     compile "ch.qos.logback:logback-classic:$logbackVersion"
+    compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonVersion"
     compile "org.apache.commons:commons-lang3:$commonsLang3Version"
     compile "com.cronutils:cron-utils:$cronUtilsVersion"
     compile "com.zaxxer:HikariCP:$hikariCpVersion"

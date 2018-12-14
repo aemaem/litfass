@@ -22,6 +22,10 @@ class PostgresPersistenceServiceSpec extends Specification implements PostgresSu
     @Subject
     PostgresPersistenceService postgresPersistenceService
 
+    def cleanupSpec() {
+        jdbcDataSource.dataSource.close()
+    }
+
     def setup() {
         dropTable("foo")
         postgresPersistenceService = new PostgresPersistenceService(jdbcDataSource, new ObjectMapper())

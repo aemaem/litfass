@@ -35,6 +35,10 @@ class CollectionsRouteSpec extends Specification implements KtorSupport, Postgre
         ])
     }
 
+    def cleanupSpec() {
+        stopApp(app)
+    }
+
     def setup() {
         dropTable("foo")
     }

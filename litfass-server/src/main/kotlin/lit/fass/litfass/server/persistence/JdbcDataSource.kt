@@ -13,6 +13,8 @@ class JdbcDataSource(url: String, username: String, password: String, properties
         this.jdbcUrl = url
         this.username = username
         this.password = password
+        this.isAutoCommit = true
+        this.maximumPoolSize = 3
         properties.forEach { name, value ->
             addDataSourceProperty(name, value)
         }
