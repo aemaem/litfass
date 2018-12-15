@@ -36,7 +36,7 @@ class CollectionSchedulerServiceSpec extends Specification {
         given: "a collection and a cron expression"
         def collection = "foo"
         def cronExpression = "* * * * * * *" // every second
-        def executionServiceCalled = new BlockingVariable<Boolean>()
+        def executionServiceCalled = new BlockingVariable<Boolean>(5)
         (1.._) * executionServiceMock.execute(collection, _) >> { args ->
             assert args[1].containsKey("timestamp")
             executionServiceCalled.set(true)
@@ -48,11 +48,11 @@ class CollectionSchedulerServiceSpec extends Specification {
         then: "creation logs are printed"
         log.toString().contains("Creating scheduled job foo with cron * * * * * * *")
         log.toString().contains("Sending job foo to be scheduled every second")
+        and: "execution service has been called at least once"
+        executionServiceCalled.get()
         and: "scheduler scheduled job"
         await().until { log.toString().contains("Scheduled job foo") }
         await().until { log.toString().contains("Executed job foo") }
-        and: "execution service has been called at least once"
-        executionServiceCalled.get()
     }
 
     def "job creation throws exception when expression is not valid"() {
