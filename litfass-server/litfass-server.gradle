@@ -20,7 +20,12 @@ dependencies {
     compile "io.ktor:ktor-auth:$ktorVersion"
     compile "io.ktor:ktor-jackson:$ktorVersion"
     compile "io.ktor:ktor-metrics:$ktorVersion"
+    compile "io.ktor:ktor-client-core:$ktorVersion"
+    compile "io.ktor:ktor-client-core-jvm:$ktorVersion"
     compile "io.ktor:ktor-client-apache:$ktorVersion"
+    compile "io.ktor:ktor-client-json-jvm:$ktorVersion"
+    compile "io.ktor:ktor-client-jackson:$ktorVersion"
+    compile "io.ktor:ktor-client-logging-jvm:$ktorVersion"
 
     compile "ch.qos.logback:logback-classic:$logbackVersion"
     compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonVersion"

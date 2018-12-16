@@ -17,6 +17,11 @@ import io.ktor.application.log
 import io.ktor.auth.*
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.apache.Apache
+import io.ktor.client.features.json.JacksonSerializer
+import io.ktor.client.features.json.JsonFeature
+import io.ktor.client.features.logging.LogLevel.ALL
+import io.ktor.client.features.logging.LogLevel.NONE
+import io.ktor.client.features.logging.Logging
 import io.ktor.features.*
 import io.ktor.http.CacheControl
 import io.ktor.http.ContentType.Text.CSS
@@ -55,6 +60,7 @@ import lit.fass.litfass.server.script.kts.KotlinScriptEngine
 import org.apache.http.HttpHost
 import org.elasticsearch.client.RestClient
 import org.elasticsearch.client.RestHighLevelClient
+import org.slf4j.event.Level.DEBUG
 import org.slf4j.event.Level.INFO
 import java.io.File
 import java.net.URI
@@ -102,7 +108,7 @@ fun Application.module() {
         }
     }
     install(CallLogging) {
-        level = INFO
+        level = if (testing) DEBUG else INFO
         filter { call -> call.request.path().startsWith("/") }
     }
     install(ConditionalHeaders)
@@ -141,7 +147,17 @@ fun Application.module() {
     if (configCollectionPath != null) {
         configService.readRecursively(File(configCollectionPath.getString()))
     }
-    val httpService = CollectionHttpService(HttpClient(Apache))
+    val httpService = CollectionHttpService(HttpClient(Apache) {
+        install(JsonFeature) {
+            serializer = JacksonSerializer()
+        }
+        install(Logging) {
+            level = if (testing) ALL else NONE
+        }
+        engine {
+            followRedirects = true
+        }
+    })
     val scriptEngines = listOf(KotlinScriptEngine())
     val flowService = CollectionFlowService(httpService, scriptEngines)
 
