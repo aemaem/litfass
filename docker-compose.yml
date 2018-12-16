@@ -1,10 +1,15 @@
 version: "2"
 services:
   litfass-server:
-    image: aemaem/litfass:0.5.0
+    image: aemaem/litfass:0.6.0-dev.0.uncommitted.develop.66cc3bf
+    depends_on:
+      - litfass-postgres
+      - litfass-elasticsearch
     restart: always
     container_name: "litfass-server"
     hostname: "litfass-server"
+    volumes:
+      - /home/mmair/Downloads/litfass/conf:/var/litfass/conf
     ports:
       - "8080:8080"
     networks:
