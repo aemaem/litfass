@@ -1,8 +1,8 @@
 rootProject.name = rootProjectName
 
-gradle.ext.dockerHubUsername = System.getenv("DOCKER_HUB_USERNAME") ?: DOCKER_HUB_USERNAME
-gradle.ext.dockerHubPassword = System.getenv("DOCKER_HUB_PASSWORD") ?: DOCKER_HUB_PASSWORD
-gradle.ext.dockerHubEmail = System.getenv("DOCKER_HUB_EMAIL") ?: DOCKER_HUB_EMAIL
+gradle.ext.dockerHubUsername = System.getenv("DOCKER_HUB_USERNAME") ?: (hasProperty("DOCKER_HUB_USERNAME") ? DOCKER_HUB_USERNAME : null)
+gradle.ext.dockerHubPassword = System.getenv("DOCKER_HUB_PASSWORD") ?: (hasProperty("DOCKER_HUB_PASSWORD") ? DOCKER_HUB_PASSWORD : null)
+gradle.ext.dockerHubEmail = System.getenv("DOCKER_HUB_EMAIL") ?: (hasProperty("DOCKER_HUB_EMAIL") ? DOCKER_HUB_EMAIL : null)
 
 
 include "litfass-server"

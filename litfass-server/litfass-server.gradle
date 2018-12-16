@@ -114,11 +114,11 @@ task prepareImage(type: Copy) {
 task buildImage(type: com.bmuschko.gradle.docker.tasks.image.DockerBuildImage) {
     dependsOn prepareImage
     inputDir = file("${buildDir}/docker/")
-    tag = "aemaem/${rootProject.name}:${version.toString().replaceAll("\\+", ".")}"
+    tag = "${gradle.dockerHubUsername}/${rootProject.name}:${version.toString().replaceAll("\\+", ".")}"
 }
 task pushImage(type: com.bmuschko.gradle.docker.tasks.image.DockerPushImage) {
     dependsOn buildImage
-    imageName = "aemaem/${rootProject.name}"
+    imageName = "${gradle.dockerHubUsername}/${rootProject.name}"
     tag = version.toString().replaceAll("\\+", ".")
 }
 
