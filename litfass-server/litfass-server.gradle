@@ -1,6 +1,15 @@
 apply plugin: "kotlin"
 apply plugin: "groovy"
 apply plugin: "distribution"
+apply plugin: "com.bmuschko.docker-remote-api"
+
+sourceSets {
+    infra {
+        java {
+            srcDir "src/infra/docker"
+        }
+    }
+}
 
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion"
@@ -61,15 +70,14 @@ distributions {
     def runFile
     doFirst {
         runFile = File.createTempFile("run", ".sh")
-        runFile.write """#!/bin/sh\njava -classpath "./*:./lib/*" lit.fass.litfass.server.AppKt"""
+        runFile.write """#!/bin/sh\njava -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -server -ea -classpath "./*:./lib/*" lit.fass.litfass.server.AppKt"""
+        runFile.executable = true
         runFile.deleteOnExit()
     }
     main {
         contents {
             from(runFile) {
-                rename {
-                    "run.sh"
-                }
+                rename { "run.sh" }
             }
             from jar
             into("lib") {
@@ -77,6 +85,41 @@ distributions {
             }
         }
     }
+}
+
+docker {
+    registryCredentials {
+        username = gradle.dockerHubUsername
+        password = gradle.dockerHubPassword
+        email = gradle.dockerHubEmail
+    }
+}
+task prepareImage(type: Copy) {
+    dependsOn distZip
+    from zipTree(distZip.archivePath)
+    include "${project.name}-${version}/lib/*"
+    include "${project.name}-${version}/${project.name}-${version}.jar"
+    from sourceSets.infra.allSource.srcDirs
+    include "Dockerfile"
+    from sourceSets.infra.resources.srcDirs
+    include "application.conf"
+    include "logback.xml"
+    into "${buildDir}/docker/"
+    doLast {
+        ant.move file: "${buildDir}/docker/${project.name}-${version}/lib/", todir: "${buildDir}/docker/"
+        ant.move file: "${buildDir}/docker/${project.name}-${version}/${project.name}-${version}.jar", tofile: "${buildDir}/docker/app.jar"
+        ant.delete dir: "${buildDir}/docker/${project.name}-${version}/", quiet: true
+    }
+}
+task buildImage(type: com.bmuschko.gradle.docker.tasks.image.DockerBuildImage) {
+    dependsOn prepareImage
+    inputDir = file("${buildDir}/docker/")
+    tag = "aemaem/${rootProject.name}:${version.toString().replaceAll("\\+", ".")}"
+}
+task pushImage(type: com.bmuschko.gradle.docker.tasks.image.DockerPushImage) {
+    dependsOn buildImage
+    imageName = "aemaem/${rootProject.name}"
+    tag = version.toString().replaceAll("\\+", ".")
 }
 
 task unitTest(type: Test) {

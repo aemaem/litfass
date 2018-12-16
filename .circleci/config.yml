@@ -47,16 +47,18 @@ jobs:
         environment:
           ES_JAVA_OPTS: "-Xmx256m -Xms256m"
           "discovery.type": "single-node"
+      - image: docker:stable-git
     environment:
       TZ: "/usr/share/zoneinfo/Europe/Vienna"
       GRADLE_OPTS: '-Xmx128m -Dorg.gradle.jvmargs="-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:+HeapDumpOnOutOfMemoryError"'
     steps:
       - checkout
+      - setup_remote_docker
       - restore_cache:
           key: cache-{{ checksum "build.gradle" }}
       - run:
           name: "Build, release and publish"
-          command: ./gradlew final -Prelease.useLastTag=true --stacktrace
+          command: ./gradlew final -Prelease.useLastTag=true pushImage --stacktrace
       - save_cache:
           paths:
             - ~/.gradle
@@ -68,6 +70,7 @@ workflows:
     jobs:
       - build
       - release:
+          context: docker-hub
           filters:
             branches:
               ignore: /.*/

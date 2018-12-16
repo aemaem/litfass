@@ -1,5 +1,10 @@
 rootProject.name = rootProjectName
 
+gradle.ext.dockerHubUsername = System.getenv("DOCKER_HUB_USERNAME") ?: DOCKER_HUB_USERNAME
+gradle.ext.dockerHubPassword = System.getenv("DOCKER_HUB_PASSWORD") ?: DOCKER_HUB_PASSWORD
+gradle.ext.dockerHubEmail = System.getenv("DOCKER_HUB_EMAIL") ?: DOCKER_HUB_EMAIL
+
+
 include "litfass-server"
 
 rootProject.children.each { subproject ->
