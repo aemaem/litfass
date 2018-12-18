@@ -51,7 +51,7 @@ class PostgresPersistenceService(dataSource: JdbcDataSource, private val jsonMap
         using(config).execute(
             """
             CREATE TABLE IF NOT EXISTS $tableName (
-                $ID_KEY VARCHAR(30) NOT NULL PRIMARY KEY,
+                $ID_KEY VARCHAR(128) NOT NULL PRIMARY KEY,
                 data JSONB,
                 created TIMESTAMP,
                 updated TIMESTAMP
@@ -73,7 +73,7 @@ class PostgresPersistenceService(dataSource: JdbcDataSource, private val jsonMap
             ON CONFLICT ($ID_KEY) DO UPDATE
             SET data = $collection.data || excluded.data
             """.trimIndent(),
-            id ?: randomAlphanumeric(30),
+            id ?: randomAlphanumeric(64),
             jsonMapper.writeValueAsString(data),
             now(UTC)
         )
