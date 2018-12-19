@@ -190,6 +190,15 @@ fun Application.module() {
     val executionService = CollectionExecutionService(configService, flowService, persistenceServices)
     log.info("Instantiating scheduler service")
     val schedulerService = CollectionSchedulerService(executionService)
+    configService.getConfigs()
+        .filter { it.scheduled != null }
+        .forEach { config ->
+            try {
+                schedulerService.createJob(config.collection, config.scheduled!!)
+            } catch (ex: Exception) {
+                log.error("Unable to schedule config ${config.collection}", ex)
+            }
+        }
 
     routing {
         get("/health") {
