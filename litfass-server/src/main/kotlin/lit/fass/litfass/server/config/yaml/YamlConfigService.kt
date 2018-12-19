@@ -16,7 +16,7 @@ import java.util.concurrent.ConcurrentHashMap
 class YamlConfigService : ConfigService {
     companion object {
         private val log = LoggerFactory.getLogger(this::class.java.enclosingClass)
-        private val collectionNameRegex = Regex("^[a-zA-Z0-9-_]{2,30}$")
+        private val collectionNameRegex = Regex("^[a-zA-Z0-9_]{2,30}$")
     }
 
     private val configStore = ConcurrentHashMap<String, CollectionConfig>()
