@@ -16,7 +16,25 @@ class KotlinScriptEngine : ScriptEngine {
         private val scriptLog = LoggerFactory.getLogger("$EXTENSION.Script")
     }
 
-    private val scriptEngine: javax.script.ScriptEngine = ScriptEngineManager().getEngineByExtension(EXTENSION)
+    private val scriptEngine: javax.script.ScriptEngine
+
+    init {
+        val classPath = System.getProperty("java.class.path")
+            .splitToSequence(":")
+            .filter {
+                !it.contains("*") && (
+                        it.contains("kotlin-script-util") ||
+                                it.contains("kotlin-script-runtime") ||
+                                it.contains("kotlin-stdlib") ||
+                                it.contains("slf4j-api") ||
+                                it.contains("ext/")
+                        )
+            }
+            .joinToString(":")
+        log.debug("Adding classpath $classPath")
+        System.setProperty("kotlin.script.classpath", classPath)
+        scriptEngine = ScriptEngineManager().getEngineByExtension(EXTENSION)
+    }
 
     override fun isApplicable(extension: String): Boolean {
         return EXTENSION == extension
