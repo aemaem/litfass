@@ -4,6 +4,8 @@ import lit.fass.litfass.server.script.ScriptEngine
 import org.apache.commons.lang3.time.DurationFormatUtils.formatDurationHMS
 import org.jetbrains.kotlin.utils.addToStdlib.measureTimeMillisWithResult
 import org.slf4j.LoggerFactory
+import java.time.ZoneOffset.UTC
+import java.time.format.DateTimeFormatter.ISO_DATE_TIME
 import javax.script.ScriptEngineManager
 
 /**
@@ -14,6 +16,7 @@ class KotlinScriptEngine : ScriptEngine {
         const val EXTENSION = "kts"
         private val log = LoggerFactory.getLogger(this::class.java.enclosingClass)
         private val scriptLog = LoggerFactory.getLogger("$EXTENSION.Script")
+        private val scriptTimestampFormatter = ISO_DATE_TIME.withZone(UTC)
     }
 
     private val scriptEngine: javax.script.ScriptEngine
@@ -47,6 +50,7 @@ class KotlinScriptEngine : ScriptEngine {
                 @Suppress("UNCHECKED_CAST")
                 eval(script, createBindings().apply {
                     put("log", scriptLog)
+                    put("timestampFormatter", scriptTimestampFormatter)
                     put("data", data)
                 }) as Map<String, Any?>
             }
