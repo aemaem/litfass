@@ -25,7 +25,9 @@ dependencies {
     compile "io.ktor:ktor-client-apache:$ktorVersion"
     compile "io.ktor:ktor-client-json-jvm:$ktorVersion"
     compile "io.ktor:ktor-client-jackson:$ktorVersion"
-    compile "io.ktor:ktor-client-logging-jvm:$ktorVersion"
+    compile "io.ktor:ktor-client-logging-jvm:$ktorVersion", {
+        exclude module: "slf4j-simple"
+    }
 
     compile "ch.qos.logback:logback-classic:$logbackVersion"
     compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonVersion"

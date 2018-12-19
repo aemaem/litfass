@@ -48,7 +48,7 @@ class YamlConfigService : ConfigService {
             throw ConfigException("Collection name ${config.collection} must match regex ${collectionNameRegex.pattern}")
         }
 
-        log.debug("Adding config ${config.collection}")
+        log.info("Adding config ${config.collection}")
         if (config == null) {
             throw ConfigException("Config must not be null")
         }
@@ -65,6 +65,7 @@ class YamlConfigService : ConfigService {
     }
 
     override fun removeConfig(name: String) {
+        log.info("Removing config $name")
         configStore.remove(name)
     }
 }
