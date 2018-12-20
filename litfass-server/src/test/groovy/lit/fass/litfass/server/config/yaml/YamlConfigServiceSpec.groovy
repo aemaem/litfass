@@ -157,12 +157,12 @@ class YamlConfigServiceSpec extends Specification {
 
     def "config can be removed"() {
         given: "a config foo"
-        yamlConfigService.configStore.put("foo", new CollectionConfig("foo", null, POSTGRES, []))
+        yamlConfigService.configCache.put("foo", new CollectionConfig("foo", null, POSTGRES, []))
 
         when: "config foo is removed"
         yamlConfigService.removeConfig("foo")
 
         then: "config foo is not available in config store"
-        yamlConfigService.configStore.isEmpty()
+        yamlConfigService.configCache.size() == 0
     }
 }
