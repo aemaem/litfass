@@ -19,8 +19,6 @@ class KotlinScriptEngine : ScriptEngine {
         private val scriptTimestampFormatter = ISO_DATE_TIME.withZone(UTC)
     }
 
-    private val scriptEngine: javax.script.ScriptEngine
-
     init {
         val classPath = System.getProperty("java.class.path")
             .splitToSequence(":")
@@ -36,7 +34,6 @@ class KotlinScriptEngine : ScriptEngine {
             .joinToString(":")
         log.debug("Adding classpath $classPath")
         System.setProperty("kotlin.script.classpath", classPath)
-        scriptEngine = ScriptEngineManager().getEngineByExtension(EXTENSION)
     }
 
     override fun isApplicable(extension: String): Boolean {
@@ -46,7 +43,7 @@ class KotlinScriptEngine : ScriptEngine {
     override fun invoke(script: String, data: Map<String, Any?>): Map<String, Any?> {
         log.debug("Invoking script:\n$script\nwith data \n$data")
         val (elapsedTime, result) = measureTimeMillisWithResult {
-            with(scriptEngine) {
+            with(ScriptEngineManager().getEngineByExtension(EXTENSION)) {
                 @Suppress("UNCHECKED_CAST")
                 eval(script, createBindings().apply {
                     put("log", scriptLog)

@@ -36,7 +36,7 @@ class CollectionFlowService(
         data: Map<String, Any?>,
         flowStepConfig: AbstractCollectionFlowStepConfig
     ): Map<String, Any?> {
-        log.debug("Executing step with description ${flowStepConfig.description}")
+        log.debug("Executing step with description: ${flowStepConfig.description}")
         when (flowStepConfig) {
             is CollectionFlowStepHttpConfig -> {
                 val httpResult = httpService.get(
