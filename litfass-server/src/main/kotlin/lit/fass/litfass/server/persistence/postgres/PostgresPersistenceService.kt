@@ -1,6 +1,8 @@
 package lit.fass.litfass.server.persistence.postgres
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.google.common.base.Charsets.UTF_8
+import com.google.common.hash.Hashing.murmur3_128
 import lit.fass.litfass.server.persistence.Datastore
 import lit.fass.litfass.server.persistence.Datastore.POSTGRES
 import lit.fass.litfass.server.persistence.JdbcDataSource
@@ -19,10 +21,14 @@ import java.time.ZoneOffset.UTC
 /**
  * @author Michael Mair
  */
-class PostgresPersistenceService(dataSource: JdbcDataSource, private val jsonMapper: ObjectMapper) :
+class PostgresPersistenceService(private val dataSource: JdbcDataSource, private val jsonMapper: ObjectMapper) :
     PersistenceService {
     companion object {
         private val log = LoggerFactory.getLogger(this::class.java.enclosingClass)
+    }
+
+    init {
+        System.setProperty("org.jooq.no-logo", true.toString())
     }
 
     private val jooq = using(
@@ -47,19 +53,6 @@ class PostgresPersistenceService(dataSource: JdbcDataSource, private val jsonMap
         log.debug("Saved collection $collection")
     }
 
-    private fun createTableIfNotExists(tableName: String, config: Configuration) {
-        using(config).execute(
-            """
-            CREATE TABLE IF NOT EXISTS $tableName (
-                $ID_KEY VARCHAR(128) NOT NULL PRIMARY KEY,
-                data JSONB,
-                created TIMESTAMP,
-                updated TIMESTAMP
-            )
-            """.trimIndent()
-        )
-    }
-
     private fun insertOrUpdateCollection(
         collection: String,
         data: Map<String, Any?>,
@@ -77,5 +70,38 @@ class PostgresPersistenceService(dataSource: JdbcDataSource, private val jsonMap
             jsonMapper.writeValueAsString(data),
             now(UTC)
         )
+    }
+
+    private fun createTableIfNotExists(tableName: String, config: Configuration) {
+        if (existsTable(tableName, config)) {
+            return
+        }
+
+        val tableNameHash = murmur3_128(44).hashString(tableName, UTF_8)
+        using(config).execute(
+            """
+            CREATE TABLE $tableName (
+                $ID_KEY VARCHAR(128) NOT NULL PRIMARY KEY,
+                data JSONB,
+                created TIMESTAMP NOT NULL,
+                updated TIMESTAMP NOT NULL
+            );
+            CREATE INDEX idx_created_${tableNameHash} ON $tableName (created);
+            CREATE INDEX idx_updated_${tableNameHash} ON $tableName (updated);
+            """.trimIndent()
+        )
+    }
+
+    private fun existsTable(tableName: String, config: Configuration): Boolean {
+        return using(config).resultQuery(
+            """
+            SELECT EXISTS (
+                SELECT 1
+                FROM information_schema.tables
+                WHERE table_catalog = '${dataSource.database()}'
+                AND table_name = '$tableName'
+            );
+            """.trimIndent()
+        ).fetchSingleInto(Boolean::class.java)
     }
 }

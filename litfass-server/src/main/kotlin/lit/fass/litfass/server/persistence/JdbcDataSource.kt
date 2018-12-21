@@ -8,9 +8,15 @@ import javax.sql.DataSource
 /**
  * @author Michael Mair
  */
-class JdbcDataSource(url: String, username: String, password: String, properties: Map<String, Any> = emptyMap()) {
+class JdbcDataSource(
+    url: String,
+    private val database: String,
+    username: String,
+    password: String,
+    properties: Map<String, Any> = emptyMap()
+) {
     private val dataSource = HikariDataSource(HikariConfig().apply {
-        this.jdbcUrl = url
+        this.jdbcUrl = "$url/$database"
         this.username = username
         this.password = password
         this.isAutoCommit = true
@@ -22,5 +28,9 @@ class JdbcDataSource(url: String, username: String, password: String, properties
 
     fun instance(): DataSource {
         return dataSource
+    }
+
+    fun database(): String {
+        return database
     }
 }

@@ -18,7 +18,7 @@ import java.util.concurrent.Callable
 class YamlConfigService : ConfigService {
     companion object {
         private val log = LoggerFactory.getLogger(this::class.java.enclosingClass)
-        private val collectionNameRegex = Regex("^[a-zA-Z0-9_]{2,30}$")
+        private val collectionNameRegex = Regex("^[a-zA-Z0-9_]{2,50}$")
     }
 
     private val configCache = CacheBuilder.newBuilder()

@@ -13,7 +13,7 @@ import static org.jooq.impl.DSL.using
  */
 trait PostgresSupport {
 
-    JdbcDataSource jdbcDataSource = new JdbcDataSource("jdbc:postgresql://localhost:5432/litfass", "admin", "admin", [:])
+    JdbcDataSource jdbcDataSource = new JdbcDataSource("jdbc:postgresql://localhost:5432", "litfass", "admin", "admin", [:])
     DSLContext jooq = using(jdbcDataSource.instance(), SQLDialect.POSTGRES)
 
     void dropTable(String tableName) {

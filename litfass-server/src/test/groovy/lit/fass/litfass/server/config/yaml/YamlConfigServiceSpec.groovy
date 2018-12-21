@@ -80,7 +80,7 @@ class YamlConfigServiceSpec extends Specification {
         thrown(ConfigException)
 
         where:
-        collectionName << ["a", "abc d", "abcö", "a,c", "abcdefghijklmnopqrstuvwxyz01234"]
+        collectionName << ["a", "abc d", "abcö", "a,c", "abcdefghijklmnopqrstuvwxyz0123456789101112113141516"]
     }
 
     def "files in directory can be parsed"() {
