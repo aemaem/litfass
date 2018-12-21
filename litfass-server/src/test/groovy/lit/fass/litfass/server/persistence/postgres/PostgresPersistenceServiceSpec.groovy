@@ -11,7 +11,8 @@ import spock.lang.Unroll
 
 import java.time.OffsetDateTime
 
-import static lit.fass.litfass.server.persistence.PersistenceService.Companion.ID_KEY
+import static lit.fass.litfass.server.persistence.CollectionConfigPersistenceService.Companion.COLLECTION_CONFIG_TABLE
+import static lit.fass.litfass.server.persistence.CollectionPersistenceService.Companion.ID_KEY
 
 /**
  * @author Michael Mair
@@ -28,6 +29,7 @@ class PostgresPersistenceServiceSpec extends Specification implements PostgresSu
 
     def setup() {
         dropTable("foo")
+        dropTable(COLLECTION_CONFIG_TABLE)
         postgresPersistenceService = new PostgresPersistenceService(jdbcDataSource, new ObjectMapper())
     }
 
@@ -105,5 +107,100 @@ class PostgresPersistenceServiceSpec extends Specification implements PostgresSu
 
         where:
         id << [true, 1]
+    }
+
+    def "collection config is saved"() {
+        given: "a collection config"
+        def collection = "foo"
+        def config = """
+        collection: $collection
+        flows:
+          - flow:
+              steps:
+                - script:
+                    description: "Transform something"
+                    extension: kts
+                    code: bindings["data"]
+        """.stripIndent()
+
+        when: "saved is called"
+        postgresPersistenceService.saveConfig(collection, config)
+        def result = selectAllFromTable(COLLECTION_CONFIG_TABLE)
+
+        then: "config is stored"
+        result.size() == 1
+        result.getValues("collection", String)[0] == "foo"
+        result.getValues("config", String)[0] == """
+        collection: foo
+        flows:
+          - flow:
+              steps:
+                - script:
+                    description: "Transform something"
+                    extension: kts
+                    code: bindings["data"]
+        """.stripIndent()
+        result.getValues("created", OffsetDateTime)[0]
+        result.getValues("updated", OffsetDateTime)[0]
+        and: "no exception is thrown"
+        noExceptionThrown()
+    }
+
+    def "collection config is found"() {
+        given: "a collection config"
+        def collection = "foo"
+        def config = """
+        collection: $collection
+        flows:
+          - flow:
+              steps:
+                - script:
+                    description: "Transform something"
+                    extension: kts
+                    code: bindings["data"]
+        """.stripIndent()
+        postgresPersistenceService.saveConfig(collection, config)
+
+        when: "find is called"
+        def result = postgresPersistenceService.findConfig("foo")
+
+        then: "config is found"
+        result == """
+        collection: foo
+        flows:
+          - flow:
+              steps:
+                - script:
+                    description: "Transform something"
+                    extension: kts
+                    code: bindings["data"]
+        """.stripIndent()
+        and: "no exception is thrown"
+        noExceptionThrown()
+    }
+
+    def "collection config is deleted"() {
+        given: "a collection config"
+        def collection = "foo"
+        def config = """
+        collection: $collection
+        flows:
+          - flow:
+              steps:
+                - script:
+                    description: "Transform something"
+                    extension: kts
+                    code: bindings["data"]
+        """.stripIndent()
+        postgresPersistenceService.saveConfig(collection, config)
+
+        when: "delete is called"
+        postgresPersistenceService.deleteConfig("foo")
+        def result = selectAllFromTable(COLLECTION_CONFIG_TABLE)
+
+        then: "config is found"
+        result.isEmpty()
+        and: "no exception is thrown"
+        noExceptionThrown()
     }
 }

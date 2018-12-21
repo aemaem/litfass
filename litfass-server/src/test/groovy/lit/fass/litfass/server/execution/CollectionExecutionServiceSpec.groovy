@@ -4,7 +4,7 @@ import lit.fass.litfass.server.config.ConfigService
 import lit.fass.litfass.server.config.yaml.model.CollectionConfig
 import lit.fass.litfass.server.flow.FlowService
 import lit.fass.litfass.server.helper.UnitTest
-import lit.fass.litfass.server.persistence.PersistenceService
+import lit.fass.litfass.server.persistence.CollectionPersistenceService
 import org.junit.experimental.categories.Category
 import spock.lang.Specification
 import spock.lang.Subject
@@ -22,7 +22,7 @@ class CollectionExecutionServiceSpec extends Specification {
 
     ConfigService configServiceMock
     FlowService flowServiceMock
-    PersistenceService persistenceServiceMock
+    CollectionPersistenceService persistenceServiceMock
 
     def setup() {
         configServiceMock = Mock()

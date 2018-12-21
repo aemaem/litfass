@@ -6,7 +6,7 @@ import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.google.common.cache.CacheBuilder
 import lit.fass.litfass.server.config.ConfigService
 import lit.fass.litfass.server.config.yaml.model.CollectionConfig
-import lit.fass.litfass.server.persistence.Datastore
+import lit.fass.litfass.server.persistence.CollectionConfigPersistenceService
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.InputStream
@@ -15,7 +15,7 @@ import java.util.concurrent.Callable
 /**
  * @author Michael Mair
  */
-class YamlConfigService : ConfigService {
+class YamlConfigService(private val configPersistenceService: CollectionConfigPersistenceService) : ConfigService {
     companion object {
         private val log = LoggerFactory.getLogger(this::class.java.enclosingClass)
         private val collectionNameRegex = Regex("^[a-zA-Z0-9_]{2,50}$")
@@ -56,7 +56,12 @@ class YamlConfigService : ConfigService {
         if (config == null) {
             throw ConfigException("Config must not be null")
         }
-        //todo: put to database
+        try {
+            configPersistenceService.saveConfig(config.collection, yamlMapper.writeValueAsString(config))
+        } catch (ex: Exception) {
+            log.error(ex.message, ex)
+            throw ConfigException("Unable to save config ${config.collection} in database")
+        }
         configCache.put(config.collection, config)
         return config
     }
@@ -71,14 +76,19 @@ class YamlConfigService : ConfigService {
 
     override fun removeConfig(name: String) {
         log.info("Removing config $name")
-        //todo: remove from database
+        try {
+            configPersistenceService.deleteConfig(name)
+        } catch (ex: Exception) {
+            log.error(ex.message, ex)
+            throw ConfigException("Unable to delete config $name in database")
+        }
         configCache.invalidate(name)
     }
 
     private fun loadConfig(name: String): CollectionConfig? {
         return configCache.get(name, Callable {
-            //todo: load from database
-            return@Callable CollectionConfig(name, null, Datastore.POSTGRES, emptyList())
+            val configData = configPersistenceService.findConfig(name) ?: return@Callable null
+            return@Callable yamlMapper.readValue(configData, CollectionConfig::class.java)
         })
     }
 }

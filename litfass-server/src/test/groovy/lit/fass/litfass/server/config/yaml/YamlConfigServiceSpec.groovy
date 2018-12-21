@@ -2,6 +2,7 @@ package lit.fass.litfass.server.config.yaml
 
 import lit.fass.litfass.server.config.yaml.model.CollectionConfig
 import lit.fass.litfass.server.helper.UnitTest
+import lit.fass.litfass.server.persistence.CollectionConfigPersistenceService
 import org.junit.experimental.categories.Category
 import spock.lang.Specification
 import spock.lang.Subject
@@ -19,8 +20,11 @@ class YamlConfigServiceSpec extends Specification {
     @Subject
     YamlConfigService yamlConfigService
 
+    CollectionConfigPersistenceService configPersistenceServiceMock
+
     def setup() {
-        yamlConfigService = new YamlConfigService()
+        configPersistenceServiceMock = Mock()
+        yamlConfigService = new YamlConfigService(configPersistenceServiceMock)
     }
 
     def "config file can be parsed"() {
@@ -32,6 +36,8 @@ class YamlConfigServiceSpec extends Specification {
         def result = yamlConfigService.getConfig("foo")
 
         then: "config is available"
+        1 * configPersistenceServiceMock.saveConfig("foo", _)
+        0 * configPersistenceServiceMock.findConfig(_) // because it is cached
         yamlConfigService.getConfigs().size() == 1
         result.collection == "foo"
         result.scheduled == "*/30 * * * * * *"
@@ -77,6 +83,7 @@ class YamlConfigServiceSpec extends Specification {
         yamlConfigService.readConfig(configFile)
 
         then: "exception is thrown"
+        0 * configPersistenceServiceMock._
         thrown(ConfigException)
 
         where:
@@ -92,6 +99,8 @@ class YamlConfigServiceSpec extends Specification {
         def result = yamlConfigService.configs
 
         then: "configs are available"
+        3 * configPersistenceServiceMock.saveConfig(_, _)
+        0 * configPersistenceServiceMock.findConfig(_) // because it is cached
         result.size() == 3
         def fooResult = result.find { it.collection == "foo" }
         fooResult.scheduled == "*/30 * * * * * *"
@@ -151,6 +160,8 @@ class YamlConfigServiceSpec extends Specification {
         def result = yamlConfigService.configs
 
         then: "only the given file is read"
+        1 * configPersistenceServiceMock.saveConfig("foo", _)
+        0 * configPersistenceServiceMock.findConfig(_) // because it is cached
         result.size() == 1
         result[0].collection == "foo"
     }
@@ -163,6 +174,9 @@ class YamlConfigServiceSpec extends Specification {
         yamlConfigService.removeConfig("foo")
 
         then: "config foo is not available in config store"
+        1 * configPersistenceServiceMock.deleteConfig("foo")
+        0 * configPersistenceServiceMock.saveConfig(_, _)
+        0 * configPersistenceServiceMock.findConfig(_) // because it is cached
         yamlConfigService.configCache.size() == 0
     }
 }

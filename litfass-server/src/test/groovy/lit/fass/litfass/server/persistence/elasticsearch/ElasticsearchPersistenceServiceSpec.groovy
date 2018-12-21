@@ -12,7 +12,7 @@ import spock.lang.Specification
 import spock.lang.Subject
 import spock.lang.Unroll
 
-import static lit.fass.litfass.server.persistence.PersistenceService.Companion.ID_KEY
+import static lit.fass.litfass.server.persistence.CollectionPersistenceService.Companion.ID_KEY
 
 /**
  * @author Michael Mair

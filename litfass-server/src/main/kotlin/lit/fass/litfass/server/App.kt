@@ -51,8 +51,8 @@ import lit.fass.litfass.server.config.yaml.model.CollectionConfig
 import lit.fass.litfass.server.execution.CollectionExecutionService
 import lit.fass.litfass.server.flow.CollectionFlowService
 import lit.fass.litfass.server.http.CollectionHttpService
+import lit.fass.litfass.server.persistence.CollectionPersistenceService
 import lit.fass.litfass.server.persistence.JdbcDataSource
-import lit.fass.litfass.server.persistence.PersistenceService
 import lit.fass.litfass.server.persistence.elasticsearch.ElasticsearchPersistenceService
 import lit.fass.litfass.server.persistence.postgres.PostgresPersistenceService
 import lit.fass.litfass.server.schedule.CollectionSchedulerService
@@ -141,27 +141,7 @@ fun Application.module() {
         configure(WRITE_DATES_AS_TIMESTAMPS, false)
     }
 
-    log.info("Instantiating config service")
-    val configService = YamlConfigService()
-    val configCollectionPath = environment.config.propertyOrNull("litfass.config.collection.path")
-    if (configCollectionPath != null) {
-        configService.readRecursively(File(configCollectionPath.getString()))
-    }
-    val httpService = CollectionHttpService(HttpClient(Apache) {
-        install(JsonFeature) {
-            serializer = JacksonSerializer()
-        }
-        install(Logging) {
-            level = if (testing) ALL else NONE
-        }
-        engine {
-            followRedirects = true
-        }
-    })
-    val scriptEngines = listOf(KotlinScriptEngine())
-    val flowService = CollectionFlowService(httpService, scriptEngines)
-
-    val persistenceServices = mutableListOf<PersistenceService>()
+    val persistenceServices = mutableListOf<CollectionPersistenceService>()
     log.info("Instantiating postgresql database connection")
     val postgresqlUrl = environment.config.property("litfass.postgresql.jdbc.url").getString()
     val postgresqlDatabase = environment.config.property("litfass.postgresql.jdbc.database").getString()
@@ -186,6 +166,26 @@ fun Application.module() {
         val elasticsearchPersistenceService = ElasticsearchPersistenceService(elasticsearch, jsonMapper)
         persistenceServices.add(elasticsearchPersistenceService)
     }
+
+    log.info("Instantiating config service")
+    val configService = YamlConfigService(postgresqlPersistenceService)
+    val configCollectionPath = environment.config.propertyOrNull("litfass.config.collection.path")
+    if (configCollectionPath != null) {
+        configService.readRecursively(File(configCollectionPath.getString()))
+    }
+    val httpService = CollectionHttpService(HttpClient(Apache) {
+        install(JsonFeature) {
+            serializer = JacksonSerializer()
+        }
+        install(Logging) {
+            level = if (testing) ALL else NONE
+        }
+        engine {
+            followRedirects = true
+        }
+    })
+    val scriptEngines = listOf(KotlinScriptEngine())
+    val flowService = CollectionFlowService(httpService, scriptEngines)
 
     log.info("Instantiating execution service")
     val executionService = CollectionExecutionService(configService, flowService, persistenceServices)
