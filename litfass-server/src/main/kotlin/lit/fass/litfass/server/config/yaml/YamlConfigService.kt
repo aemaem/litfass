@@ -7,15 +7,21 @@ import com.google.common.cache.CacheBuilder
 import lit.fass.litfass.server.config.ConfigService
 import lit.fass.litfass.server.config.yaml.model.CollectionConfig
 import lit.fass.litfass.server.persistence.CollectionConfigPersistenceService
+import lit.fass.litfass.server.schedule.SchedulerService
+import org.apache.commons.lang3.time.DurationFormatUtils.formatDurationHMS
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.InputStream
+import java.time.Duration
 import java.util.concurrent.Callable
 
 /**
  * @author Michael Mair
  */
-class YamlConfigService(private val configPersistenceService: CollectionConfigPersistenceService) : ConfigService {
+class YamlConfigService(
+    private val configPersistenceService: CollectionConfigPersistenceService,
+    private val schedulerService: SchedulerService
+) : ConfigService {
     companion object {
         private val log = LoggerFactory.getLogger(this::class.java.enclosingClass)
         private val collectionNameRegex = Regex("^[a-zA-Z0-9_]{2,50}$")
@@ -51,16 +57,26 @@ class YamlConfigService(private val configPersistenceService: CollectionConfigPe
         if (!collectionNameRegex.matches(config.collection)) {
             throw ConfigException("Collection name ${config.collection} must match regex ${collectionNameRegex.pattern}")
         }
+        if (!config.retention.isNullOrBlank()) {
+            try {
+                val retentionDuration = Duration.parse(config.retention)
+                val retentionDurationHumanReadable = formatDurationHMS(retentionDuration.toMillis())
+                log.info("Collection config ${config.collection} with retention of $retentionDurationHumanReadable")
+            } catch (ex: Exception) {
+                throw ConfigException("Retention duration ${config.retention} of collection name ${config.collection} is not a valid ISO-8601 format")
+            }
+        }
 
         log.info("Adding config ${config.collection}")
         if (config == null) {
             throw ConfigException("Config must not be null")
         }
         try {
+            scheduleConfig(config)
             configPersistenceService.saveConfig(config.collection, yamlMapper.writeValueAsString(config))
         } catch (ex: Exception) {
             log.error(ex.message, ex)
-            throw ConfigException("Unable to save config ${config.collection} in database")
+            throw ConfigException("Unable to save config ${config.collection} in database: ${ex.message}")
         }
         configCache.put(config.collection, config)
         return config
@@ -76,12 +92,15 @@ class YamlConfigService(private val configPersistenceService: CollectionConfigPe
 
     override fun removeConfig(name: String) {
         log.info("Removing config $name")
+        val config = loadConfig(name) ?: return
         try {
             configPersistenceService.deleteConfig(name)
         } catch (ex: Exception) {
             log.error(ex.message, ex)
             throw ConfigException("Unable to delete config $name in database")
         }
+        schedulerService.cancelCollectionJob(config)
+        schedulerService.cancelRetentionJob(config)
         configCache.invalidate(name)
     }
 
@@ -90,5 +109,24 @@ class YamlConfigService(private val configPersistenceService: CollectionConfigPe
             val configData = configPersistenceService.findConfig(name) ?: return@Callable null
             return@Callable yamlMapper.readValue(configData, CollectionConfig::class.java)
         })
+    }
+
+    private fun scheduleConfig(config: CollectionConfig) {
+        if (config.scheduled != null) {
+            try {
+                schedulerService.createCollectionJob(config)
+            } catch (ex: Exception) {
+                log.error("Unable to schedule config ${config.collection}", ex)
+                throw ConfigException("Unable to schedule collection config ${config.collection}: ${ex.message}")
+            }
+        }
+        if (config.retention != null) {
+            try {
+                schedulerService.createRetentionJob(config)
+            } catch (ex: Exception) {
+                log.error("Unable to schedule config ${config.collection}", ex)
+                throw ConfigException("Unable to schedule retention config ${config.collection}: ${ex.message}")
+            }
+        }
     }
 }

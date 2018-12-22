@@ -1,10 +1,14 @@
 package lit.fass.litfass.server.schedule
 
+import lit.fass.litfass.server.config.yaml.model.CollectionConfig
+
 /**
  * @author Michael Mair
  */
 interface SchedulerService {
 
-    fun createJob(collection: String, cronExpression: String)
-    fun cancelJob(collection: String)
+    fun createCollectionJob(config: CollectionConfig)
+    fun cancelCollectionJob(config: CollectionConfig)
+    fun createRetentionJob(config: CollectionConfig)
+    fun cancelRetentionJob(config: CollectionConfig)
 }

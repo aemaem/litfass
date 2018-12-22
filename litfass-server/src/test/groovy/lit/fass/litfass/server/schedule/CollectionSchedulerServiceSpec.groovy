@@ -1,8 +1,10 @@
 package lit.fass.litfass.server.schedule
 
+import lit.fass.litfass.server.config.yaml.model.CollectionConfig
 import lit.fass.litfass.server.execution.ExecutionService
 import lit.fass.litfass.server.helper.LogCapture
 import lit.fass.litfass.server.helper.UnitTest
+import lit.fass.litfass.server.retention.RetentionService
 import org.junit.Rule
 import org.junit.experimental.categories.Category
 import spock.lang.Specification
@@ -10,6 +12,7 @@ import spock.lang.Subject
 import spock.util.concurrent.BlockingVariable
 
 import static java.util.concurrent.TimeUnit.SECONDS
+import static lit.fass.litfass.server.persistence.Datastore.POSTGRES
 import static org.awaitility.Awaitility.await
 import static org.awaitility.Awaitility.with
 
@@ -23,98 +26,151 @@ class CollectionSchedulerServiceSpec extends Specification {
     CollectionSchedulerService collectionSchedulerService
 
     ExecutionService executionServiceMock
+    RetentionService retentionServiceMock
 
     @Rule
     LogCapture log = new LogCapture()
 
     def setup() {
         executionServiceMock = Mock()
-        collectionSchedulerService = new CollectionSchedulerService(executionServiceMock)
+        retentionServiceMock = Mock()
+        collectionSchedulerService = new CollectionSchedulerService(executionServiceMock, retentionServiceMock)
     }
 
-    def "scheduled job is created"() {
-        given: "a collection and a cron expression"
-        def collection = "foo"
-        def cronExpression = "* * * * * * *" // every second
+    def "scheduled collection job is created"() {
+        given: "a config and a cron expression"
+        def config = new CollectionConfig("foo", "* * * * * ? *", null, POSTGRES, [])
         def executionServiceCalled = new BlockingVariable<Boolean>(5)
-        (1.._) * executionServiceMock.execute(collection, _) >> { args ->
+        (1.._) * executionServiceMock.execute(config, _) >> { args ->
             assert args[1].containsKey("timestamp")
             executionServiceCalled.set(true)
         }
 
         when: "job is created"
-        collectionSchedulerService.createJob(collection, cronExpression)
+        collectionSchedulerService.createCollectionJob(config)
 
         then: "creation logs are printed"
-        log.toString().contains("Creating scheduled job foo with cron * * * * * * *")
-        log.toString().contains("Sending job foo to be scheduled every second")
+        log.toString().contains("Creating scheduled collection job foo with cron * * * * * ? *")
+        log.toString().contains("Sending collection job foo to be scheduled every second")
         and: "execution service has been called at least once"
         executionServiceCalled.get()
         and: "scheduler scheduled job"
-        await().until { log.toString().contains("Scheduled job foo") }
-        await().until { log.toString().contains("Executed job foo") }
+        await().until { log.toString().contains("Scheduled collection job foo") }
+        await().until { log.toString().contains("Executed collection job foo") }
     }
 
-    def "job creation throws exception when expression is not valid"() {
-        given: "a collection and a wrong cron expression"
-        def collection = "foo"
-        def cronExpression = "99 * * * * * *"
+    def "collection job creation throws exception when expression is not valid"() {
+        given: "a config and a wrong cron expression"
+        def config = new CollectionConfig("foo", "99 * * * * ? *", null, POSTGRES, [])
 
         when: "job is created"
-        collectionSchedulerService.createJob(collection, cronExpression)
+        collectionSchedulerService.createCollectionJob(config)
 
         then: "creation logs are printed"
         0 * executionServiceMock._
         thrown(SchedulerException)
     }
 
-    def "job cannot be created if it already exists"() {
-        given: "a collection and a cron expression"
-        def collection = "foo"
-        def cronExpression = "0 0 * * * * *" // every hour
+    def "collection job cannot be created if it already exists"() {
+        given: "a config and a cron expression"
+        def config = new CollectionConfig("foo", "0 0 * * * ? *", null, POSTGRES, [])
 
         when: "job is created"
-        collectionSchedulerService.createJob(collection, cronExpression)
+        collectionSchedulerService.createCollectionJob(config)
         and: "the same job should be created again"
-        collectionSchedulerService.createJob(collection, "* * * * * * *")
+        collectionSchedulerService.createCollectionJob(new CollectionConfig("foo", "* * * * * ? *", null, POSTGRES, []))
 
         then: "creation logs are printed"
-        log.toString().contains("Creating scheduled job foo with cron * * * * * * *")
-        log.toString().contains("Sending job foo to be scheduled every second")
+        log.toString().contains("Creating scheduled collection job foo with cron * * * * * ? *")
+        log.toString().contains("Sending collection job foo to be scheduled every second")
         and: "scheduler does not schedule the job"
-        await().until { log.toString().contains("Scheduled job foo already exists. Job won't be scheduled") }
+        await().until { log.toString().contains("Scheduled collection job foo already exists. Job won't be scheduled") }
     }
 
-    def "job is cancelled immediately if next execution is in the past"() {
-        given: "a collection and a cron expression"
-        def collection = "foo"
-        def cronExpression = "0 0 * * * * 2016" // every hour 2016
+    def "collection job is cancelled immediately if next execution is in the past"() {
+        given: "a config and a cron expression"
+        def config = new CollectionConfig("foo", "0 0 * * * ? 2016", null, POSTGRES, [])
 
         when: "job is created"
-        collectionSchedulerService.createJob(collection, cronExpression)
+        collectionSchedulerService.createCollectionJob(config)
 
         then: "creation logs are printed"
-        log.toString().contains("Creating scheduled job foo with cron 0 0 * * * * 2016")
-        log.toString().contains("Sending job foo to be scheduled every hour at 2016 year")
+        log.toString().contains("Creating scheduled collection job foo with cron 0 0 * * * ? 2016")
+        log.toString().contains("Sending collection job foo to be scheduled every hour at 2016 year")
         and: "scheduler immediately cancels the job"
-        await().until { log.toString().contains("Job foo cancelled because there is no upcoming execution") }
+        await().until { log.toString().contains("Collection job foo cancelled because there is no upcoming execution") }
         and: "execution service has never been called"
         0 * executionServiceMock._
     }
 
-    def "job can be cancelled"() {
+    def "collection job can be cancelled"() {
         given: "scheduled job"
-        def collection = "foo"
-        def cronExpression = "* * * * * * *" // every second
-        collectionSchedulerService.createJob(collection, cronExpression)
+        def config = new CollectionConfig("foo", "* * * * * ? *", null, POSTGRES, [])
+        collectionSchedulerService.createCollectionJob(config)
         with().pollDelay(2, SECONDS).await().until { true }
 
         when: "job is cancelled"
-        collectionSchedulerService.cancelJob(collection)
+        collectionSchedulerService.cancelCollectionJob(config)
 
         then: "cancellation logs are printed"
-        log.toString().contains("Sending job foo to be cancelled")
+        log.toString().contains("Sending collection job foo to be cancelled")
         and: "scheduler cancels the job"
-        await().until { log.toString().contains("Cancelled scheduled job foo") }
+        await().until { log.toString().contains("Cancelled scheduled collection job foo") }
     }
+
+    def "scheduled retention job is created"() {
+        given: "a config and a retention duration"
+        def config = new CollectionConfig("foo", null, "P2D", POSTGRES, [])
+        def retentionServiceCalled = new BlockingVariable<Boolean>(5)
+        2 * retentionServiceMock.getCronExpression() >> "* * * * * ? *"
+        (1.._) * retentionServiceMock.clean(config) >> { args ->
+            retentionServiceCalled.set(true)
+        }
+
+        when: "job is created"
+        collectionSchedulerService.createRetentionJob(config)
+
+        then: "creation logs are printed"
+        log.toString().contains("Creating scheduled retention job foo with cron * * * * * ? *")
+        log.toString().contains("Sending retention job foo to be scheduled every second")
+        and: "retention service has been called at least once"
+        retentionServiceCalled.get()
+        and: "scheduler scheduled job"
+        await().until { log.toString().contains("Scheduled retention job foo") }
+        await().until { log.toString().contains("Executed retention job foo") }
+    }
+
+    def "retention job cannot be created if it already exists"() {
+        given: "a config and a retention duration"
+        def config = new CollectionConfig("foo", null, "P2D", POSTGRES, [])
+        4 * retentionServiceMock.getCronExpression() >> "* * * * * ? *"
+
+        when: "job is created"
+        collectionSchedulerService.createRetentionJob(config)
+        and: "the same job should be created again"
+        collectionSchedulerService.createRetentionJob(new CollectionConfig("foo", null, "P3D", POSTGRES, []))
+
+        then: "creation logs are printed"
+        log.toString().contains("Creating scheduled retention job foo with cron * * * * * ? *")
+        log.toString().contains("Sending retention job foo to be scheduled every second")
+        and: "scheduler does not schedule the job"
+        await().until { log.toString().contains("Scheduled retention job foo already exists. Job won't be scheduled") }
+    }
+
+    def "retention job can be cancelled"() {
+        given: "scheduled job"
+        def config = new CollectionConfig("foo", null, "P2D", POSTGRES, [])
+        2 * retentionServiceMock.getCronExpression() >> "* * * * * ? *"
+        collectionSchedulerService.createRetentionJob(config)
+        with().pollDelay(2, SECONDS).await().until { true }
+
+        when: "job is cancelled"
+        collectionSchedulerService.cancelRetentionJob(config)
+
+        then: "cancellation logs are printed"
+        log.toString().contains("Sending retention job foo to be cancelled")
+        and: "scheduler cancels the job"
+        await().until { log.toString().contains("Cancelled scheduled retention job foo") }
+    }
+
 }

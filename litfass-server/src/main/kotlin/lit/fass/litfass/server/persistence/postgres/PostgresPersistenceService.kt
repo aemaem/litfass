@@ -14,6 +14,7 @@ import org.jooq.SQLDialect
 import org.jooq.impl.DSL.*
 import org.jooq.impl.DefaultConfiguration
 import org.slf4j.LoggerFactory
+import java.time.OffsetDateTime
 import java.time.OffsetDateTime.now
 import java.time.ZoneOffset.UTC
 
@@ -62,6 +63,12 @@ class PostgresPersistenceService(private val dataSource: JdbcDataSource, private
             insertOrUpdateCollection(collection, data, id, config)
         }
         log.debug("Saved collection $collection")
+    }
+
+    override fun deleteBefore(collection: String, timestamp: OffsetDateTime) {
+        jooq.delete(table(collection))
+            .where(field("updated").lt(timestamp))
+            .execute()
     }
 
     override fun saveConfig(collection: String, config: String) {

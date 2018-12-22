@@ -11,8 +11,11 @@ import spock.lang.Unroll
 
 import java.time.OffsetDateTime
 
+import static java.time.ZoneOffset.UTC
 import static lit.fass.litfass.server.persistence.CollectionConfigPersistenceService.Companion.COLLECTION_CONFIG_TABLE
 import static lit.fass.litfass.server.persistence.CollectionPersistenceService.Companion.ID_KEY
+import static org.jooq.impl.DSL.field
+import static org.jooq.impl.DSL.table
 
 /**
  * @author Michael Mair
@@ -89,6 +92,36 @@ class PostgresPersistenceServiceSpec extends Specification implements PostgresSu
         result.getValues("data", String)[0] == '{"id": "1", "bar": true, "foo": "blub", "blub": 100}'
         result.getValues("created", OffsetDateTime)[0]
         result.getValues("updated", OffsetDateTime)[0]
+        and: "no exception is thrown"
+        noExceptionThrown()
+    }
+
+    def "collection is deleted before a given timestamp"() {
+        given: "collection data in database"
+        def now = OffsetDateTime.now(UTC)
+        postgresPersistenceService.saveCollection("foo", [foo: "bar"], "1")
+        jooq.update(table("foo")).set(field("updated"), now.minusDays(1))
+                .where(field("id").eq("1")).execute()
+        postgresPersistenceService.saveCollection("foo", [foo: "bar"], "2")
+        jooq.update(table("foo")).set(field("updated"), now.minusDays(2))
+                .where(field("id").eq("2")).execute()
+        postgresPersistenceService.saveCollection("foo", [foo: "bar"], "3")
+        jooq.update(table("foo")).set(field("updated"), now.minusDays(3))
+                .where(field("id").eq("3")).execute()
+        postgresPersistenceService.saveCollection("foo", [foo: "bar"], "4")
+        jooq.update(table("foo")).set(field("updated"), now.minusDays(4))
+                .where(field("id").eq("4")).execute()
+        postgresPersistenceService.saveCollection("foo", [foo: "bar"], "5")
+        jooq.update(table("foo")).set(field("updated"), now.minusDays(5))
+                .where(field("id").eq("5")).execute()
+
+        when: "delete before is called"
+        postgresPersistenceService.deleteBefore("foo", now.minusHours(25))
+        def result = selectAllFromTable("foo")
+
+        then: "data is stored"
+        result.size() == 1
+        result.getValues("id", String)[0] == "1"
         and: "no exception is thrown"
         noExceptionThrown()
     }

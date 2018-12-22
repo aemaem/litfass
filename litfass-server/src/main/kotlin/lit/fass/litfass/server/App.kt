@@ -47,7 +47,6 @@ import io.ktor.routing.routing
 import io.ktor.util.date.GMTDate
 import io.ktor.util.getDigestFunction
 import lit.fass.litfass.server.config.yaml.YamlConfigService
-import lit.fass.litfass.server.config.yaml.model.CollectionConfig
 import lit.fass.litfass.server.execution.CollectionExecutionService
 import lit.fass.litfass.server.flow.CollectionFlowService
 import lit.fass.litfass.server.http.CollectionHttpService
@@ -55,6 +54,7 @@ import lit.fass.litfass.server.persistence.CollectionPersistenceService
 import lit.fass.litfass.server.persistence.JdbcDataSource
 import lit.fass.litfass.server.persistence.elasticsearch.ElasticsearchPersistenceService
 import lit.fass.litfass.server.persistence.postgres.PostgresPersistenceService
+import lit.fass.litfass.server.retention.CollectionRetentionService
 import lit.fass.litfass.server.schedule.CollectionSchedulerService
 import lit.fass.litfass.server.script.kts.KotlinScriptEngine
 import org.apache.http.HttpHost
@@ -71,7 +71,7 @@ import java.util.*
 
 fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)
 
-fun Application.module() {
+fun Application.litfassModule() {
     val testing = environment.config.propertyOrNull("testing")?.getString() == true.toString()
     if (testing) {
         log.warn("Application in test mode")
@@ -140,7 +140,6 @@ fun Application.module() {
         registerModule(JavaTimeModule())
         configure(WRITE_DATES_AS_TIMESTAMPS, false)
     }
-
     val persistenceServices = mutableListOf<CollectionPersistenceService>()
     log.info("Instantiating postgresql database connection")
     val postgresqlUrl = environment.config.property("litfass.postgresql.jdbc.url").getString()
@@ -151,7 +150,6 @@ fun Application.module() {
     log.info("Instantiating postgresql persistence service")
     val postgresqlPersistenceService = PostgresPersistenceService(postgresqlDatasource, jsonMapper)
     persistenceServices.add(postgresqlPersistenceService)
-
     if (environment.config.property("litfass.elasticsearch.enabled").getString() == true.toString()) {
         log.info("Instantiating elasticsearch client")
         val elasticsearch = RestHighLevelClient(RestClient.builder(*environment.config
@@ -166,13 +164,7 @@ fun Application.module() {
         val elasticsearchPersistenceService = ElasticsearchPersistenceService(elasticsearch, jsonMapper)
         persistenceServices.add(elasticsearchPersistenceService)
     }
-
-    log.info("Instantiating config service")
-    val configService = YamlConfigService(postgresqlPersistenceService)
-    val configCollectionPath = environment.config.propertyOrNull("litfass.config.collection.path")
-    if (configCollectionPath != null) {
-        configService.readRecursively(File(configCollectionPath.getString()))
-    }
+    log.info("Instantiating http service")
     val httpService = CollectionHttpService(HttpClient(Apache) {
         install(JsonFeature) {
             serializer = JacksonSerializer()
@@ -184,22 +176,25 @@ fun Application.module() {
             followRedirects = true
         }
     })
+    log.info("Instantiating script engines")
     val scriptEngines = listOf(KotlinScriptEngine())
+    log.info("Instantiating flow service")
     val flowService = CollectionFlowService(httpService, scriptEngines)
-
     log.info("Instantiating execution service")
-    val executionService = CollectionExecutionService(configService, flowService, persistenceServices)
+    val executionService = CollectionExecutionService(flowService, persistenceServices)
+    log.info("Instantiating retention service")
+    val retentionService = CollectionRetentionService(
+        environment.config.property("litfass.config.retention.scheduled").getString(),
+        persistenceServices
+    )
     log.info("Instantiating scheduler service")
-    val schedulerService = CollectionSchedulerService(executionService)
-    configService.getConfigs()
-        .filter { it.scheduled != null }
-        .forEach { config ->
-            try {
-                schedulerService.createJob(config.collection, config.scheduled!!)
-            } catch (ex: Exception) {
-                log.error("Unable to schedule config ${config.collection}", ex)
-            }
-        }
+    val schedulerService = CollectionSchedulerService(executionService, retentionService)
+    log.info("Instantiating config service")
+    val configService = YamlConfigService(postgresqlPersistenceService, schedulerService)
+    val configCollectionPath = environment.config.propertyOrNull("litfass.config.collection.path")
+    if (configCollectionPath != null) {
+        configService.readRecursively(File(configCollectionPath.getString()))
+    }
 
     routing {
         get("/health") {
@@ -228,7 +223,7 @@ fun Application.module() {
             data.putAll(collectionData)
 
             try {
-                executionService.execute(collection, data)
+                executionService.execute(configService.getConfig(collection), data)
             } catch (ex: Exception) {
                 log.error("Exception during execution of collection $collection", ex)
                 call.respond(InternalServerError, "{\"error\":\"${ex.message}\"}")
@@ -246,6 +241,7 @@ fun Application.module() {
                 )
             }
             get("/configs") {
+                // todo: implement pagination
                 val principal = call.principal<UserIdPrincipal>()!!
                 log.debug("Getting all configs for user ${principal.name}")
                 call.respond(jsonMapper.writeValueAsString(configService.getConfigs()))
@@ -274,26 +270,12 @@ fun Application.module() {
             post("/configs") {
                 val principal = call.principal<UserIdPrincipal>()!!
                 log.info("Adding config for user ${principal.name}")
-                val config: CollectionConfig
                 try {
-                    config = configService.readConfig(call.receiveStream())
+                    configService.readConfig(call.receiveStream())
                 } catch (ex: Exception) {
                     log.error("Unable to read config", ex)
                     call.respond(BadRequest, "{\"error\":\"Unable to read config: ${ex.message}\"}")
                     return@post
-                }
-
-                if (config.scheduled != null) {
-                    try {
-                        schedulerService.createJob(config.collection, config.scheduled)
-                    } catch (ex: Exception) {
-                        log.error("Unable to schedule config ${config.collection}", ex)
-                        call.respond(
-                            BadRequest,
-                            "{\"error\":\"Unable to schedule config ${config.collection}: ${ex.message}\"}"
-                        )
-                        return@post
-                    }
                 }
                 call.respond(OK)
             }

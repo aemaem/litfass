@@ -3,11 +3,13 @@ package lit.fass.litfass.server.config.yaml
 import lit.fass.litfass.server.config.yaml.model.CollectionConfig
 import lit.fass.litfass.server.helper.UnitTest
 import lit.fass.litfass.server.persistence.CollectionConfigPersistenceService
+import lit.fass.litfass.server.schedule.SchedulerService
 import org.junit.experimental.categories.Category
 import spock.lang.Specification
 import spock.lang.Subject
 import spock.lang.Unroll
 
+import static java.io.File.createTempFile
 import static lit.fass.litfass.server.persistence.Datastore.ELASTICSEARCH
 import static lit.fass.litfass.server.persistence.Datastore.POSTGRES
 
@@ -21,10 +23,12 @@ class YamlConfigServiceSpec extends Specification {
     YamlConfigService yamlConfigService
 
     CollectionConfigPersistenceService configPersistenceServiceMock
+    SchedulerService schedulerServiceMock
 
     def setup() {
         configPersistenceServiceMock = Mock()
-        yamlConfigService = new YamlConfigService(configPersistenceServiceMock)
+        schedulerServiceMock = Mock()
+        yamlConfigService = new YamlConfigService(configPersistenceServiceMock, schedulerServiceMock)
     }
 
     def "config file can be parsed"() {
@@ -38,9 +42,11 @@ class YamlConfigServiceSpec extends Specification {
         then: "config is available"
         1 * configPersistenceServiceMock.saveConfig("foo", _)
         0 * configPersistenceServiceMock.findConfig(_) // because it is cached
+        1 * schedulerServiceMock.createRetentionJob(_)
         yamlConfigService.getConfigs().size() == 1
         result.collection == "foo"
         result.scheduled == "*/30 * * * * * *"
+        result.retention == "P7DT0H0M"
         result.datastore == ELASTICSEARCH
         result.flows.size() == 2
         result.flows[0].name == "Flow 1"
@@ -67,7 +73,7 @@ class YamlConfigServiceSpec extends Specification {
     @Unroll
     def "config file throws exception for invalid collection name '#collectionName'"() {
         given: "a config file with invalid collection name"
-        def configFile = File.createTempFile("config", ".yml")
+        def configFile = createTempFile("config", ".yml")
         configFile.text = """
         collection: $collectionName
         flows:
@@ -84,10 +90,39 @@ class YamlConfigServiceSpec extends Specification {
 
         then: "exception is thrown"
         0 * configPersistenceServiceMock._
+        0 * schedulerServiceMock._
         thrown(ConfigException)
 
         where:
         collectionName << ["a", "abc d", "abcö", "a,c", "abcdefghijklmnopqrstuvwxyz0123456789101112113141516"]
+    }
+
+    @Unroll
+    def "config file throws exception for invalid retention '#retention'"() {
+        given: "a config file with invalid collection name"
+        def configFile = createTempFile("config", ".yml")
+        configFile.text = """
+        collection: foo
+        retention: "$retention"
+        flows:
+          - flow:
+              steps:
+                - script:
+                    description: "Transform something"
+                    extension: kts
+                    code: bindings["data"]
+        """.stripIndent()
+
+        when: "file is parsed"
+        yamlConfigService.readConfig(configFile)
+
+        then: "exception is thrown"
+        0 * configPersistenceServiceMock._
+        0 * schedulerServiceMock._
+        thrown(ConfigException)
+
+        where:
+        retention << ["1", "P7", "T15M"]
     }
 
     def "files in directory can be parsed"() {
@@ -101,9 +136,11 @@ class YamlConfigServiceSpec extends Specification {
         then: "configs are available"
         3 * configPersistenceServiceMock.saveConfig(_, _)
         0 * configPersistenceServiceMock.findConfig(_) // because it is cached
+        1 * schedulerServiceMock.createRetentionJob(_)
         result.size() == 3
         def fooResult = result.find { it.collection == "foo" }
         fooResult.scheduled == "*/30 * * * * * *"
+        fooResult.retention == "P7DT0H0M"
         fooResult.datastore == ELASTICSEARCH
         fooResult.flows.size() == 2
         fooResult.flows[0].name == "Flow 1"
@@ -127,6 +164,7 @@ class YamlConfigServiceSpec extends Specification {
         fooResult.flows[1].steps[0].code == """println("foo")"""
         def barResult = result.find { it.collection == "bar" }
         barResult.scheduled == null
+        barResult.retention == null
         barResult.datastore == POSTGRES
         barResult.flows.size() == 1
         barResult.flows[0].name == null
@@ -137,6 +175,7 @@ class YamlConfigServiceSpec extends Specification {
         barResult.flows[0].steps[0].code == """println("bar")"""
         def subResult = result.find { it.collection == "sub" }
         subResult.scheduled == null
+        subResult.retention == null
         subResult.datastore == POSTGRES
         subResult.flows.size() == 1
         subResult.flows[0].name == null
@@ -162,13 +201,14 @@ class YamlConfigServiceSpec extends Specification {
         then: "only the given file is read"
         1 * configPersistenceServiceMock.saveConfig("foo", _)
         0 * configPersistenceServiceMock.findConfig(_) // because it is cached
+        1 * schedulerServiceMock.createRetentionJob(_)
         result.size() == 1
         result[0].collection == "foo"
     }
 
     def "config can be removed"() {
         given: "a config foo"
-        yamlConfigService.configCache.put("foo", new CollectionConfig("foo", null, POSTGRES, []))
+        yamlConfigService.configCache.put("foo", new CollectionConfig("foo", null, null, POSTGRES, []))
 
         when: "config foo is removed"
         yamlConfigService.removeConfig("foo")
@@ -177,6 +217,8 @@ class YamlConfigServiceSpec extends Specification {
         1 * configPersistenceServiceMock.deleteConfig("foo")
         0 * configPersistenceServiceMock.saveConfig(_, _)
         0 * configPersistenceServiceMock.findConfig(_) // because it is cached
+        1 * schedulerServiceMock.cancelCollectionJob(_)
+        1 * schedulerServiceMock.cancelRetentionJob(_)
         yamlConfigService.configCache.size() == 0
     }
 }

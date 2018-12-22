@@ -6,6 +6,7 @@ import org.jooq.Record
 import org.jooq.Result
 import org.jooq.SQLDialect
 
+import static org.jooq.impl.DSL.table
 import static org.jooq.impl.DSL.using
 
 /**
@@ -22,6 +23,8 @@ trait PostgresSupport {
     }
 
     Result<Record> selectAllFromTable(String tableName) {
-        return jooq.fetch("SELECT * FROM $tableName")
+        return jooq.select()
+                .from(table(tableName))
+                .fetch()
     }
 }

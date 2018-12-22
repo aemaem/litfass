@@ -17,6 +17,7 @@ import lit.fass.litfass.server.persistence.Datastore
 data class CollectionConfig @JsonCreator constructor(
     val collection: String,
     val scheduled: String?,
+    val retention: String?,
     @JsonSerialize(using = DatastoreSerializer::class)
     @JsonDeserialize(using = DatastoreDeserializer::class)
     val datastore: Datastore = Datastore.POSTGRES,

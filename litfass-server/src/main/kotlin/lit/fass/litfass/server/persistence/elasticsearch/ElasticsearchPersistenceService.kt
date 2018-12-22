@@ -1,10 +1,10 @@
 package lit.fass.litfass.server.persistence.elasticsearch
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import lit.fass.litfass.server.persistence.CollectionPersistenceService
 import lit.fass.litfass.server.persistence.Datastore
 import lit.fass.litfass.server.persistence.Datastore.ELASTICSEARCH
 import lit.fass.litfass.server.persistence.PersistenceException
-import lit.fass.litfass.server.persistence.CollectionPersistenceService
 import org.elasticsearch.action.ActionListener
 import org.elasticsearch.action.index.IndexRequest
 import org.elasticsearch.action.index.IndexResponse
@@ -12,6 +12,7 @@ import org.elasticsearch.client.RequestOptions.DEFAULT
 import org.elasticsearch.client.RestHighLevelClient
 import org.elasticsearch.common.xcontent.XContentType.JSON
 import org.slf4j.LoggerFactory
+import java.time.OffsetDateTime
 
 /**
  * @author Michael Mair
@@ -37,6 +38,10 @@ class ElasticsearchPersistenceService(
         val indexRequest = IndexRequest(collection, "doc", id)
         indexRequest.source(jsonMapper.writeValueAsString(data), JSON)
         save(indexRequest)
+    }
+
+    override fun deleteBefore(collection: String, timestamp: OffsetDateTime) {
+        throw UnsupportedOperationException("Elasticsearch retention handling not yet supported")
     }
 
     private fun save(indexRequest: IndexRequest) {
