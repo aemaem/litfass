@@ -1,0 +1,17 @@
+collection: foo1
+flows:
+  - flow:
+      steps:
+        - script:
+            description: "Transform something"
+            extension: kts
+            code: bindings["data"]
+---
+collection: foo2
+flows:
+  - flow:
+      steps:
+        - script:
+            description: "Transform something"
+            extension: kts
+            code: bindings["data"]

@@ -47,13 +47,19 @@ class YamlConfigService(
             .forEach { readConfig(it) }
     }
 
-    override fun readConfig(file: File): CollectionConfig {
+    override fun readConfig(file: File) {
         log.debug("Reading config from file ${file.absolutePath}")
         return readConfig(file.inputStream())
     }
 
-    override fun readConfig(inputStream: InputStream): CollectionConfig {
-        val config = yamlMapper.readValue(inputStream, CollectionConfig::class.java)
+    override fun readConfig(inputStream: InputStream) {
+        val configs = yamlMapper.readValues(YAMLFactory().createParser(inputStream), CollectionConfig::class.java)
+            .readAll()
+
+        configs.forEach { readSingleConfig(it) }
+    }
+
+    private fun readSingleConfig(config: CollectionConfig) {
         if (!collectionNameRegex.matches(config.collection)) {
             throw ConfigException("Collection name ${config.collection} must match regex ${collectionNameRegex.pattern}")
         }
@@ -68,9 +74,6 @@ class YamlConfigService(
         }
 
         log.info("Adding config ${config.collection}")
-        if (config == null) {
-            throw ConfigException("Config must not be null")
-        }
         try {
             scheduleConfig(config)
             configPersistenceService.saveConfig(config.collection, yamlMapper.writeValueAsString(config))
@@ -79,7 +82,6 @@ class YamlConfigService(
             throw ConfigException("Unable to save config ${config.collection} in database: ${ex.message}")
         }
         configCache.put(config.collection, config)
-        return config
     }
 
     override fun getConfig(name: String): CollectionConfig {

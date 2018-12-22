@@ -70,6 +70,33 @@ class YamlConfigServiceSpec extends Specification {
         result.flows[1].steps[0].code == """println("foo")"""
     }
 
+    def "config file with multiple configs can be parsed"() {
+        given: "a config file"
+        def configFile = new File(this.class.getResource("/multiple-configs.yml").file)
+
+        when: "file is parsed"
+        yamlConfigService.readConfig(configFile)
+        def result1 = yamlConfigService.getConfig("foo1")
+        def result2 = yamlConfigService.getConfig("foo2")
+
+        then: "config is available"
+        1 * configPersistenceServiceMock.saveConfig("foo1", _)
+        1 * configPersistenceServiceMock.saveConfig("foo2", _)
+        0 * configPersistenceServiceMock.findConfig(_) // because it is cached
+        0 * schedulerServiceMock.createRetentionJob(_)
+        yamlConfigService.getConfigs().size() == 2
+        result1.collection == "foo1"
+        result1.scheduled == null
+        result1.retention == null
+        result1.datastore == POSTGRES
+        result1.flows.size() == 1
+        result2.collection == "foo2"
+        result2.scheduled == null
+        result2.retention == null
+        result2.datastore == POSTGRES
+        result2.flows.size() == 1
+    }
+
     @Unroll
     def "config file throws exception for invalid collection name '#collectionName'"() {
         given: "a config file with invalid collection name"
