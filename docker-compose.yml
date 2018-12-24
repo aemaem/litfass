@@ -1,7 +1,7 @@
 version: "2"
 services:
   litfass-server:
-    image: aemaem/litfass:0.7.0
+    image: aemaem/litfass:0.7.2
     depends_on:
       - litfass-postgres
       - litfass-elasticsearch
@@ -38,13 +38,14 @@ services:
     networks:
       - litfass
   litfass-grafana:
-    image: grafana/grafana:5.3.4
+    image: grafana/grafana:5.4.2
     restart: always
     container_name: "litfass-grafana"
     hostname: "litfass-grafana"
     ports:
       - "3000:3000"
     environment:
+      GF_INSTALL_PLUGINS: "vonage-status-panel,jdbranham-diagram-panel,grafana-piechart-panel"
       GF_SECURITY_ADMIN_PASSWORD: "admin"
     networks:
       - litfass

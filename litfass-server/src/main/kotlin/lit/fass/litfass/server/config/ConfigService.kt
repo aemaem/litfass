@@ -11,6 +11,7 @@ interface ConfigService {
     fun readRecursively(file: File)
     fun readConfig(file: File)
     fun readConfig(inputStream: InputStream)
+    fun readConfigsFromDatabase()
     fun getConfig(name: String): CollectionConfig
     fun getConfigs(): Collection<CollectionConfig>
     fun removeConfig(name: String)

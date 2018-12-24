@@ -94,6 +94,13 @@ class PostgresPersistenceService(private val dataSource: JdbcDataSource, private
         return found[0].toString()
     }
 
+    override fun findConfigs(): List<String?> {
+        return jooq.select(field("config"))
+            .from(table(COLLECTION_CONFIG_TABLE))
+            .fetch()
+            .map { it[0].toString() }
+    }
+
     override fun deleteConfig(collection: String) {
         jooq.delete(table(COLLECTION_CONFIG_TABLE))
             .where(field("collection").eq(collection))

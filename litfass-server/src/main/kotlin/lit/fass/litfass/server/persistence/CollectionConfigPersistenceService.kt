@@ -10,5 +10,6 @@ interface CollectionConfigPersistenceService {
 
     fun saveConfig(collection: String, config: String)
     fun findConfig(collection: String): String?
+    fun findConfigs(): List<String?>
     fun deleteConfig(collection: String)
 }

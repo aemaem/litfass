@@ -248,4 +248,45 @@ class YamlConfigServiceSpec extends Specification {
         1 * schedulerServiceMock.cancelRetentionJob(_)
         yamlConfigService.configCache.size() == 0
     }
+
+    def "configs are read from database"() {
+        given: "3 configs in database"
+        def config1 = """
+        collection: foo1
+        flows:
+          - flow:
+              steps:
+                - script:
+                    description: "Transform something"
+                    extension: kts
+                    code: bindings["data"]
+        """.stripIndent()
+        def config2 = """
+        collection: foo2
+        flows:
+          - flow:
+              steps:
+                - script:
+                    description: "Transform something"
+                    extension: kts
+                    code: bindings["data"]
+        """.stripIndent()
+        def config3 = """
+        collection: foo3
+        flows:
+          - flow:
+              steps:
+                - script:
+                    description: "Transform something"
+                    extension: kts
+                    code: bindings["data"]
+        """.stripIndent()
+
+        when: "all configs are read"
+        yamlConfigService.readConfigsFromDatabase()
+
+        then: "persistence service returns all configs"
+        1 * configPersistenceServiceMock.findConfigs() >> [config1, config2, config3]
+        yamlConfigService.configCache.size() == 3
+    }
 }

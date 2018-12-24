@@ -195,6 +195,7 @@ fun Application.litfassModule() {
     if (configCollectionPath != null) {
         configService.readRecursively(File(configCollectionPath.getString()))
     }
+    configService.readConfigsFromDatabase()
 
     routing {
         get("/health") {

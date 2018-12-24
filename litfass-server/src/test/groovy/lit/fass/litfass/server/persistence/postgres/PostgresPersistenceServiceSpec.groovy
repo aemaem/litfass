@@ -212,6 +212,48 @@ class PostgresPersistenceServiceSpec extends Specification implements PostgresSu
         noExceptionThrown()
     }
 
+    def "all collection configs are found"() {
+        given: "several collection configs"
+        postgresPersistenceService.saveConfig("foo1", """
+        collection: foo1
+        flows:
+          - flow:
+              steps:
+                - script:
+                    description: "Transform something"
+                    extension: kts
+                    code: bindings["data"]
+        """.stripIndent())
+        postgresPersistenceService.saveConfig("foo2", """
+        collection: foo2
+        flows:
+          - flow:
+              steps:
+                - script:
+                    description: "Transform something"
+                    extension: kts
+                    code: bindings["data"]
+        """.stripIndent())
+        postgresPersistenceService.saveConfig("foo3", """
+        collection: foo3
+        flows:
+          - flow:
+              steps:
+                - script:
+                    description: "Transform something"
+                    extension: kts
+                    code: bindings["data"]
+        """.stripIndent())
+
+        when: "find all is called"
+        def result = postgresPersistenceService.findConfigs()
+
+        then: "configs are found"
+        result.size() == 3
+        and: "no exception is thrown"
+        noExceptionThrown()
+    }
+
     def "collection config is deleted"() {
         given: "a collection config"
         def collection = "foo"
