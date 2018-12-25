@@ -210,13 +210,13 @@ fun Application.litfassModule() {
 
             val collectionHeaders = call.request.headers.entries()
                 .associateBy({ entry -> entry.key }, { entry -> entry.value.joinToString(",") })
-            log.debug("Got headers $collectionHeaders for collection $collection")
+            log.trace("Got headers $collectionHeaders for collection $collection")
             val collectionMetaData = call.request.queryParameters.entries()
                 .associateBy({ entry -> entry.key }, { entry -> entry.value.joinToString(",") })
-            log.debug("Got collection $collection and meta data $collectionMetaData")
+            log.trace("Got collection $collection and meta data $collectionMetaData")
             val collectionData: Map<String, Any?> =
                 jsonMapper.readValue(call.receiveStream(), object : TypeReference<Map<String, Any?>>() {})
-            log.debug("Payload received: $collectionData")
+            log.trace("Payload received: $collectionData")
 
             val data = mutableMapOf<String, Any?>("timestamp" to OffsetDateTime.now(UTC))
             data.putAll(collectionHeaders)
@@ -240,6 +240,27 @@ fun Application.litfassModule() {
                         "description" to "Lightweight Integrated Tailorable Flow Aware Software Service"
                     )
                 )
+            }
+            get("/collections/{collection}/{id}") {
+                val collection = call.parameters["collection"]
+                if (collection.isNullOrBlank()) {
+                    call.respond(BadRequest, "{\"error\":\"Collection must not be blank\"}")
+                    return@get
+                }
+                val id = call.parameters["id"]
+                if (id.isNullOrBlank()) {
+                    call.respond(BadRequest, "{\"error\":\"Id must not be blank\"}")
+                    return@get
+                }
+                val principal = call.principal<UserIdPrincipal>()!!
+                log.debug("Getting collection data for $collection with id $id for user ${principal.name}")
+                val config = configService.getConfig(collection)
+                val persistenceService = persistenceServices.find { it.isApplicable(config.datastore) }
+                if (persistenceService == null) {
+                    call.respond(BadRequest, "{\"error\":\"Persistence service for ${config.datastore} not found\"}")
+                    return@get
+                }
+                call.respond(jsonMapper.writeValueAsString(persistenceService.findCollectionData(collection, id)))
             }
             get("/configs") {
                 // todo: implement pagination

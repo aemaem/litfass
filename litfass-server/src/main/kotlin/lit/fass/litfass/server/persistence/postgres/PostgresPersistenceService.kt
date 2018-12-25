@@ -1,5 +1,6 @@
 package lit.fass.litfass.server.persistence.postgres
 
+import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.common.base.Charsets.UTF_8
 import com.google.common.hash.Hashing.murmur3_128
@@ -63,6 +64,15 @@ class PostgresPersistenceService(private val dataSource: JdbcDataSource, private
             insertOrUpdateCollection(collection, data, id, config)
         }
         log.debug("Saved collection $collection")
+    }
+
+    override fun findCollectionData(collection: String, id: String): Map<String, Any?> {
+        val found = jooq.select()
+            .from(table(collection))
+            .where(field(ID_KEY).eq(id))
+            .fetch().firstOrNull() ?: return emptyMap()
+        return jsonMapper.readValue(found.getValue("data", ByteArray::class.java),
+            object : TypeReference<Map<String, Any?>>() {})
     }
 
     override fun deleteBefore(collection: String, timestamp: OffsetDateTime) {

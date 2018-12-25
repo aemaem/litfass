@@ -96,6 +96,20 @@ class PostgresPersistenceServiceSpec extends Specification implements PostgresSu
         noExceptionThrown()
     }
 
+    def "collection and data is retrieved"() {
+        given: "a collection and data"
+        postgresPersistenceService.saveCollection("foo", [foo: "bar"], "1")
+        postgresPersistenceService.saveCollection("foo", [bar: true], "2")
+
+        when: "find is called"
+        def result = postgresPersistenceService.findCollectionData("foo", "2")
+
+        then: "data is stored"
+        result["bar"] == true
+        and: "no exception is thrown"
+        noExceptionThrown()
+    }
+
     def "collection is deleted before a given timestamp"() {
         given: "collection data in database"
         def now = OffsetDateTime.now(UTC)

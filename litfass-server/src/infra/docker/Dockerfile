@@ -7,8 +7,8 @@ VOLUME /var/litfass/ext
 
 WORKDIR /var/litfass
 
-ENV PORT=8080
-ENV JAVA_OPTS="-server -ea -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:InitialRAMFraction=2 -XX:MinRAMFraction=2 -XX:MaxRAMFraction=2 -XX:+UseG1GC -XX:MaxGCPauseMillis=100 -XX:+UseStringDeduplication"
+ENV PORT=8080 \
+    JAVA_OPTS="-server -ea -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:+UseG1GC -XX:MaxGCPauseMillis=100 -XX:+UseStringDeduplication"
 
 EXPOSE $PORT
 

@@ -12,5 +12,6 @@ interface CollectionPersistenceService {
 
     fun isApplicable(datastore: Datastore): Boolean
     fun saveCollection(collection: String, data: Map<String, Any?>, id: Any? = null)
+    fun findCollectionData(collection: String, id: String): Map<String, Any?>
     fun deleteBefore(collection: String, timestamp: OffsetDateTime)
 }

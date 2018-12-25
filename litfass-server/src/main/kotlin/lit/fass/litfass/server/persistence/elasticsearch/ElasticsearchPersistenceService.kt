@@ -40,6 +40,10 @@ class ElasticsearchPersistenceService(
         save(indexRequest)
     }
 
+    override fun findCollectionData(collection: String, id: String): Map<String, Any?> {
+        throw UnsupportedOperationException("Elasticsearch find collection data not yet supported")
+    }
+
     override fun deleteBefore(collection: String, timestamp: OffsetDateTime) {
         throw UnsupportedOperationException("Elasticsearch retention handling not yet supported")
     }
