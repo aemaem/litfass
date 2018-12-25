@@ -58,7 +58,7 @@ class CollectionSchedulerService(
                             }
                             collectionJobs[message.config.collection] = SchedulerJob(
                                 message.cron,
-                                launch(coroutineContext) jobLaunch@{
+                                launch collectionJobLaunch@{
                                     while (true) {
                                         log.trace("Executing collection job ${message.config.collection}")
                                         val executionDelay =
@@ -66,7 +66,7 @@ class CollectionSchedulerService(
                                         if (executionDelay < 0) {
                                             cancel()
                                             log.info("Collection job ${message.config.collection} cancelled because there is no upcoming execution")
-                                            return@jobLaunch
+                                            return@collectionJobLaunch
                                         } else {
                                             delay(executionDelay)
                                             executionService.execute(
@@ -90,7 +90,7 @@ class CollectionSchedulerService(
                             }
                             retentionJobs[message.config.collection] = SchedulerJob(
                                 message.cron,
-                                launch(coroutineContext) jobLaunch@{
+                                launch retentionJobLaunch@{
                                     while (true) {
                                         log.trace("Executing retention job ${message.config.collection}")
                                         val executionDelay =
@@ -98,7 +98,7 @@ class CollectionSchedulerService(
                                         if (executionDelay < 0) {
                                             cancel()
                                             log.info("Retention job ${message.config.collection} cancelled because there is no upcoming execution")
-                                            return@jobLaunch
+                                            return@retentionJobLaunch
                                         } else {
                                             delay(executionDelay)
                                             retentionService.clean(message.config)
