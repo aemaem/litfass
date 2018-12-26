@@ -1,4 +1,4 @@
-FROM openjdk:8-jre-alpine
+FROM openjdk:8-jre-slim
 
 RUN mkdir /var/litfass
 
@@ -8,7 +8,7 @@ VOLUME /var/litfass/ext
 WORKDIR /var/litfass
 
 ENV PORT=8080 \
-    JAVA_OPTS="-server -ea -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:MaxDirectMemorySize=256m -XX:InitialRAMFraction=2 -XX:MinRAMFraction=2 -XX:MaxRAMFraction=2 -XX:+UseG1GC -XX:MaxGCPauseMillis=100 -XX:+UseStringDeduplication"
+    JAVA_OPTS="-server -ea -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:InitialRAMFraction=2 -XX:MinRAMFraction=2 -XX:MaxRAMFraction=2 -XX:+UseG1GC -XX:MaxGCPauseMillis=100 -XX:+UseStringDeduplication"
 
 EXPOSE $PORT
 
