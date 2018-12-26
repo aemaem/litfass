@@ -1,15 +1,21 @@
 version: "2"
 services:
   litfass-server:
-    image: aemaem/litfass:0.7.6
+    image: aemaem/litfass:0.7.7
     depends_on:
       - litfass-postgres
       - litfass-elasticsearch
     restart: always
     container_name: "litfass-server"
     hostname: "litfass-server"
+    volumes:
+      - /home/mmair/Downloads/litfass/conf:/var/litfass/conf
+      - /home/mmair/Downloads/litfass/ext:/var/litfass/ext
     ports:
       - "8080:8080"
+    environment:
+      AWS_ACCESS_KEY_ID: "AKIAQDJZAQLNDQ2JXKEK"
+      AWS_SECRET_ACCESS_KEY: "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"
     networks:
       - litfass
   litfass-postgres:

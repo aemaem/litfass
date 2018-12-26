@@ -41,7 +41,7 @@ class KotlinScriptEngine : ScriptEngine {
     }
 
     override fun invoke(script: String, data: Map<String, Any?>): Map<String, Any?> {
-        log.debug("Invoking script:\n$script\nwith data \n$data")
+        log.trace("Invoking script:\n$script\nwith data \n$data")
         val (elapsedTime, result) = measureTimeMillisWithResult {
             with(ScriptEngineManager().getEngineByExtension(EXTENSION)) {
                 @Suppress("UNCHECKED_CAST")
