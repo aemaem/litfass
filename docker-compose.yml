@@ -1,7 +1,7 @@
-version: "2"
+version: "3"
 services:
   litfass-server:
-    image: aemaem/litfass:0.7.7
+    image: aemaem/litfass:0.7.8
     depends_on:
       - litfass-postgres
       - litfass-elasticsearch
@@ -10,6 +10,8 @@ services:
     hostname: "litfass-server"
     ports:
       - "8080:8080"
+    environment:
+      - "JAVA_OPTS=-XX:+PrintGCDetails -Xloggc:gc-log.vgc -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:InitialRAMFraction=2 -XX:MinRAMFraction=2 -XX:MaxRAMFraction=2 -XX:+UseG1GC -XX:MaxGCPauseMillis=100 -XX:+UseStringDeduplication -Xmx256m"
     networks:
       - litfass
   litfass-postgres:
@@ -20,9 +22,9 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_USER: "admin"
-      POSTGRES_PASSWORD: "admin"
-      POSTGRES_DB: litfass
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin
+      - POSTGRES_DB=litfass
     networks:
       - litfass
   litfass-elasticsearch:
@@ -33,8 +35,8 @@ services:
       - "9200:9200"
       - "9300:9300"
     environment:
-      ES_JAVA_OPTS: "-Xmx256m -Xms256m"
-      "discovery.type": "single-node"
+      - "ES_JAVA_OPTS=-Xmx256m -Xms256m"
+      - "discovery.type=single-node"
     networks:
       - litfass
   litfass-grafana:
@@ -45,8 +47,8 @@ services:
     ports:
       - "3000:3000"
     environment:
-      GF_INSTALL_PLUGINS: "vonage-status-panel,jdbranham-diagram-panel,grafana-piechart-panel"
-      GF_SECURITY_ADMIN_PASSWORD: "admin"
+      - GF_INSTALL_PLUGINS=vonage-status-panel,jdbranham-diagram-panel,grafana-piechart-panel
+      - GF_SECURITY_ADMIN_PASSWORD=admin
     networks:
       - litfass
 
