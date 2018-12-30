@@ -1,4 +1,4 @@
-package lit.fass.litfass.server.script.kts
+package lit.fass.litfass.server.script.groovy
 
 import lit.fass.litfass.server.helper.UnitTest
 import org.junit.experimental.categories.Category
@@ -14,37 +14,37 @@ import static lit.fass.litfass.server.script.ScriptLanguage.KOTLIN
  * @author Michael Mair
  */
 @Category(UnitTest)
-class KotlinScriptEngineSpec extends Specification {
+class GroovyScriptEngineSpec extends Specification {
 
     @Subject
     @Shared
-    KotlinScriptEngine kotlinScriptEngine
+    GroovyScriptEngine groovyScriptEngine
 
     def setupSpec() {
-        kotlinScriptEngine = new KotlinScriptEngine()
+        groovyScriptEngine = new GroovyScriptEngine()
     }
 
     @Unroll
-    def "kotlin script engine is applicable for #language: #expected"() {
+    def "groovy script engine is applicable for #language: #expected"() {
         when: "script engine is requested for #language"
-        def result = kotlinScriptEngine.isApplicable(language)
+        def result = groovyScriptEngine.isApplicable(language)
 
         then: "it is #expected"
         result == expected
 
         where:
         language || expected
-        KOTLIN   || true
-        GROOVY   || false
+        KOTLIN   || false
+        GROOVY   || true
     }
 
-    def "kotlin script engine returns result"() {
+    def "groovy script engine returns result"() {
         given: "a script and an input"
-        def script = """mapOf("bar" to bindings["data"])"""
+        def script = """[bar: binding["data"]]"""
         def input = [foo: 1]
 
         when: "the script is invoked"
-        def result = kotlinScriptEngine.invoke(script, input)
+        def result = groovyScriptEngine.invoke(script, input)
 
         then: "result is returned"
         result == [bar: [foo: 1]]

@@ -28,10 +28,10 @@ class ScriptRouteSpec extends Specification implements KtorSupport {
     def cleanupSpec() {
         stopApp(app)
     }
-    
+
     def "/script/{extension}/test POST endpoint is secured"() {
-        when: "requesting /script/{extension}/test unauthorized"
-        def result = handleRequest(app, Post, "/script/kts/test", {}).response
+        when: "requesting /script/{language}/test unauthorized"
+        def result = handleRequest(app, Post, "/script/kotlin/test", {}).response
 
         then: "access is forbidden"
         result.status() == Unauthorized
@@ -39,8 +39,8 @@ class ScriptRouteSpec extends Specification implements KtorSupport {
     }
 
     def "/script/{extension}/test POST endpoint returns result"() {
-        when: "requesting /script/{extension}/test"
-        def result = handleRequest(app, Post, "/script/kts/test", {
+        when: "requesting /script/{language}/test"
+        def result = handleRequest(app, Post, "/script/kotlin/test", {
             withBasicAuth("admin", "admin", it)
             withBody([
                     script: """bindings["data"]""",

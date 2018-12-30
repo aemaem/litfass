@@ -54,7 +54,7 @@ flows:
       steps:
         - script:
             description: "Transform something"
-            extension: kts
+            language: kotlin
             code: println("bar")
             """, it)
             withBasicAuth("admin", "admin", it)
@@ -76,7 +76,7 @@ flows:
       steps:
         - script:
             description: "Transform something"
-            extension: kts
+            language: KOTLIN
             code: println("bar")
             """, it)
             withBasicAuth("admin", "admin", it)

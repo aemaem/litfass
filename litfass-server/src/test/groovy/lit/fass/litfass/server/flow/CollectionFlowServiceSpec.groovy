@@ -13,6 +13,7 @@ import spock.lang.Subject
 import spock.lang.Unroll
 
 import static lit.fass.litfass.server.persistence.Datastore.POSTGRES
+import static lit.fass.litfass.server.script.ScriptLanguage.KOTLIN
 
 /**
  * @author Michael Mair
@@ -29,7 +30,7 @@ class CollectionFlowServiceSpec extends Specification {
     def setup() {
         httpServiceMock = Mock()
         scriptEngineMock = Mock()
-        scriptEngineMock.isApplicable("kts") >> true
+        scriptEngineMock.isApplicable(KOTLIN) >> true
         scriptEngineMock.invoke("""bindings["data"]""", _ as Map) >> { args -> return args[1] }
         collectionFlowService = new CollectionFlowService(httpServiceMock, [scriptEngineMock])
     }
@@ -42,7 +43,7 @@ class CollectionFlowServiceSpec extends Specification {
                 bar      : true
         ]
         def config = new CollectionConfig("foo", null, null, POSTGRES, [new CollectionFlowConfig(null, null, [:], [
-                new CollectionFlowStepScriptConfig(null, "kts", """bindings["data"]""")
+                new CollectionFlowStepScriptConfig(null, KOTLIN, """bindings["data"]""")
         ])])
 
         when: "flow is executed"

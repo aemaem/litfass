@@ -56,6 +56,8 @@ import lit.fass.litfass.server.persistence.elasticsearch.ElasticsearchPersistenc
 import lit.fass.litfass.server.persistence.postgres.PostgresPersistenceService
 import lit.fass.litfass.server.retention.CollectionRetentionService
 import lit.fass.litfass.server.schedule.CollectionSchedulerService
+import lit.fass.litfass.server.script.ScriptLanguage
+import lit.fass.litfass.server.script.groovy.GroovyScriptEngine
 import lit.fass.litfass.server.script.kts.KotlinScriptEngine
 import org.apache.http.HttpHost
 import org.elasticsearch.client.RestClient
@@ -177,7 +179,7 @@ fun Application.litfassModule() {
         }
     })
     log.info("Instantiating script engines")
-    val scriptEngines = listOf(KotlinScriptEngine())
+    val scriptEngines = listOf(KotlinScriptEngine(), GroovyScriptEngine())
     log.info("Instantiating flow service")
     val flowService = CollectionFlowService(httpService, scriptEngines)
     log.info("Instantiating execution service")
@@ -301,17 +303,24 @@ fun Application.litfassModule() {
                 }
                 call.respond(OK)
             }
-            post("/script/{extension}/test") {
+            post("/script/{language}/test") {
                 val principal = call.principal<UserIdPrincipal>()!!
-                val extension = call.parameters["extension"]
-                log.info("Trying $extension script for user ${principal.name}")
-                if (extension.isNullOrBlank()) {
-                    call.respond(BadRequest, "{\"error\":\"Extension must not be blank\"}")
+                val language = call.parameters["language"]
+                log.info("Trying $language script for user ${principal.name}")
+                val scriptLanguage: ScriptLanguage
+                try {
+                    scriptLanguage = ScriptLanguage.valueOf(language?.toUpperCase().toString())
+                } catch (ex: Exception) {
+                    call.respond(
+                        BadRequest,
+                        "{\"error\":\"Language must be one of ${ScriptLanguage.values().joinToString { it.name.toLowerCase() }}\"}"
+                    )
                     return@post
                 }
-                val scriptEngine = scriptEngines.find { it.isApplicable(extension) }
+
+                val scriptEngine = scriptEngines.find { it.isApplicable(scriptLanguage) }
                 if (scriptEngine == null) {
-                    call.respond(BadRequest, "{\"error\":\"No script engine available for extension $extension\"}")
+                    call.respond(BadRequest, "{\"error\":\"No script engine available for language $language\"}")
                     return@post
                 }
 

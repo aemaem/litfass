@@ -11,18 +11,18 @@ flows:
         bar: true
       steps:
         - script:
-            extension: kts
+            language: kotlin
             code: println("foo")
         - http:
             url: https://some.url/foo?bar=true
             username: user
             password: secret
         - script:
-            extension: kts
+            language: kotlin
             code: println("bar")
   - flow:
       steps:
         - script:
             description: "First step"
-            extension: kts
+            language: kotlin
             code: println("foo")

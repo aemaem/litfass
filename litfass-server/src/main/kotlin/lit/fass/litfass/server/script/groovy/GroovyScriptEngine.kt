@@ -1,8 +1,9 @@
-package lit.fass.litfass.server.script.kts
+package lit.fass.litfass.server.script.groovy
 
+import  groovy.lang.GroovyClassLoader
 import lit.fass.litfass.server.script.ScriptEngine
 import lit.fass.litfass.server.script.ScriptLanguage
-import lit.fass.litfass.server.script.ScriptLanguage.KOTLIN
+import lit.fass.litfass.server.script.ScriptLanguage.GROOVY
 import org.apache.commons.lang3.time.DurationFormatUtils.formatDurationHMS
 import org.jetbrains.kotlin.utils.addToStdlib.measureTimeMillisWithResult
 import org.slf4j.LoggerFactory
@@ -13,13 +14,11 @@ import java.time.format.DateTimeFormatter.ISO_DATE_TIME
 import javax.script.ScriptEngineManager
 
 /**
- * WARNING: This implementation causes a memory leak. Use the Groovy script engine instead. todo: fix memory leak
- *
  * @author Michael Mair
  */
-class KotlinScriptEngine : ScriptEngine {
+class GroovyScriptEngine : ScriptEngine {
     companion object {
-        private val lang = KOTLIN
+        private val lang = GROOVY
         private val log = LoggerFactory.getLogger(this::class.java.enclosingClass)
         private val scriptLog = LoggerFactory.getLogger("$lang.Script")
         private val scriptTimestampFormatter = ISO_DATE_TIME.withZone(UTC)
@@ -29,9 +28,7 @@ class KotlinScriptEngine : ScriptEngine {
         .splitToSequence(":")
         .filter {
             !it.contains("*") && (
-                    it.contains("kotlin-script-util") ||
-                            it.contains("kotlin-script-runtime") ||
-                            it.contains("kotlin-stdlib") ||
+                    it.contains("groovy") ||
                             it.contains("slf4j-api") ||
                             it.contains("ext/")
                     )
@@ -40,7 +37,6 @@ class KotlinScriptEngine : ScriptEngine {
 
     init {
         log.debug("Adding classpath $classPath")
-        System.setProperty("kotlin.script.classpath", classPath.joinToString(":"))
     }
 
     override fun isApplicable(language: ScriptLanguage): Boolean {
@@ -51,7 +47,7 @@ class KotlinScriptEngine : ScriptEngine {
         log.trace("Invoking script:\n$script\nwith data \n$data")
         val (elapsedTime, result) = measureTimeMillisWithResult {
             var result: Map<String, Any?> = emptyMap()
-            URLClassLoader(classPath.map { URL("file:$it") }.toTypedArray()).use { classLoader ->
+            GroovyClassLoader(URLClassLoader(classPath.map { URL("file:$it") }.toTypedArray())).use { classLoader ->
                 result = with(ScriptEngineManager(classLoader).getEngineByName(lang.name.toLowerCase())) {
                     @Suppress("UNCHECKED_CAST")
                     eval(script, createBindings().apply {

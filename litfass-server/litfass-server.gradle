@@ -38,6 +38,10 @@ dependencies {
     compile "org.jooq:jooq:$jooqVersion"
     compile "org.postgresql:postgresql:$postgresqlVersion"
     compile "org.elasticsearch.client:elasticsearch-rest-high-level-client:$elasticSearchVersion"
+    compile "org.codehaus.groovy:groovy:$groovyVersion"
+    compile "org.codehaus.groovy:groovy-jsr223:$groovyVersion"
+    compile "org.codehaus.groovy:groovy-json:$groovyVersion"
+    compile "org.codehaus.groovy:groovy-xml:$groovyVersion"
 
     testCompile "io.ktor:ktor-server-tests:$ktorVersion"
     testCompile "org.spockframework:spock-core:$spockVersion"

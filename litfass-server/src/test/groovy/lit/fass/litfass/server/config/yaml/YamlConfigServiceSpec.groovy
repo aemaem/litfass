@@ -12,6 +12,8 @@ import spock.lang.Unroll
 import static java.io.File.createTempFile
 import static lit.fass.litfass.server.persistence.Datastore.ELASTICSEARCH
 import static lit.fass.litfass.server.persistence.Datastore.POSTGRES
+import static lit.fass.litfass.server.script.ScriptLanguage.GROOVY
+import static lit.fass.litfass.server.script.ScriptLanguage.KOTLIN
 
 /**
  * @author Michael Mair
@@ -53,20 +55,20 @@ class YamlConfigServiceSpec extends Specification {
         result.flows[0].description == "Flow description 1"
         result.flows[0].steps.size() == 3
         result.flows[0].steps[0].description == null
-        result.flows[0].steps[0].extension == "kts"
+        result.flows[0].steps[0].language == KOTLIN
         result.flows[0].steps[0].code == """println("foo")"""
         result.flows[0].steps[1].description == null
         result.flows[0].steps[1].url == "https://some.url/foo?bar=true"
         result.flows[0].steps[1].username == "user"
         result.flows[0].steps[1].password == "secret"
         result.flows[0].steps[2].description == null
-        result.flows[0].steps[2].extension == "kts"
+        result.flows[0].steps[2].language == KOTLIN
         result.flows[0].steps[2].code == """println("bar")"""
         result.flows[1].name == null
         result.flows[1].description == null
         result.flows[1].steps.size() == 1
         result.flows[1].steps[0].description == "First step"
-        result.flows[1].steps[0].extension == "kts"
+        result.flows[1].steps[0].language == KOTLIN
         result.flows[1].steps[0].code == """println("foo")"""
     }
 
@@ -108,7 +110,7 @@ class YamlConfigServiceSpec extends Specification {
               steps:
                 - script:
                     description: "Transform something"
-                    extension: kts
+                    language: kotlin
                     code: bindings["data"]
         """.stripIndent()
 
@@ -136,7 +138,7 @@ class YamlConfigServiceSpec extends Specification {
               steps:
                 - script:
                     description: "Transform something"
-                    extension: kts
+                    language: kotlin
                     code: bindings["data"]
         """.stripIndent()
 
@@ -174,20 +176,20 @@ class YamlConfigServiceSpec extends Specification {
         fooResult.flows[0].description == "Flow description 1"
         fooResult.flows[0].steps.size() == 3
         fooResult.flows[0].steps[0].description == null
-        fooResult.flows[0].steps[0].extension == "kts"
+        fooResult.flows[0].steps[0].language == KOTLIN
         fooResult.flows[0].steps[0].code == """println("foo")"""
         fooResult.flows[0].steps[1].description == null
         fooResult.flows[0].steps[1].url == "https://some.url/foo?bar=true"
         fooResult.flows[0].steps[1].username == "user"
         fooResult.flows[0].steps[1].password == "secret"
         fooResult.flows[0].steps[2].description == null
-        fooResult.flows[0].steps[2].extension == "kts"
+        fooResult.flows[0].steps[2].language == KOTLIN
         fooResult.flows[0].steps[2].code == """println("bar")"""
         fooResult.flows[1].name == null
         fooResult.flows[1].description == null
         fooResult.flows[1].steps.size() == 1
         fooResult.flows[1].steps[0].description == "First step"
-        fooResult.flows[1].steps[0].extension == "kts"
+        fooResult.flows[1].steps[0].language == KOTLIN
         fooResult.flows[1].steps[0].code == """println("foo")"""
         def barResult = result.find { it.collection == "bar" }
         barResult.scheduled == null
@@ -198,7 +200,7 @@ class YamlConfigServiceSpec extends Specification {
         barResult.flows[0].description == null
         barResult.flows[0].steps.size() == 1
         barResult.flows[0].steps[0].description == null
-        barResult.flows[0].steps[0].extension == "kts"
+        barResult.flows[0].steps[0].language == GROOVY
         barResult.flows[0].steps[0].code == """println("bar")"""
         def subResult = result.find { it.collection == "sub" }
         subResult.scheduled == null
@@ -213,7 +215,7 @@ class YamlConfigServiceSpec extends Specification {
         subResult.flows[0].steps[0].username == null
         subResult.flows[0].steps[0].password == null
         subResult.flows[0].steps[1].description == null
-        subResult.flows[0].steps[1].extension == "kts"
+        subResult.flows[0].steps[1].language == KOTLIN
         subResult.flows[0].steps[1].code == """println("bar")"""
     }
 
@@ -258,7 +260,7 @@ class YamlConfigServiceSpec extends Specification {
               steps:
                 - script:
                     description: "Transform something"
-                    extension: kts
+                    language: kotlin
                     code: bindings["data"]
         """.stripIndent()
         def config2 = """
@@ -268,7 +270,7 @@ class YamlConfigServiceSpec extends Specification {
               steps:
                 - script:
                     description: "Transform something"
-                    extension: kts
+                    language: kotlin
                     code: bindings["data"]
         """.stripIndent()
         def config3 = """
@@ -278,7 +280,7 @@ class YamlConfigServiceSpec extends Specification {
               steps:
                 - script:
                     description: "Transform something"
-                    extension: kts
+                    language: kotlin
                     code: bindings["data"]
         """.stripIndent()
 

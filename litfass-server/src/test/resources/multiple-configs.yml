@@ -4,7 +4,7 @@ flows:
       steps:
         - script:
             description: "Transform something"
-            extension: kts
+            language: kotlin
             code: bindings["data"]
 ---
 collection: foo2
@@ -13,5 +13,5 @@ flows:
       steps:
         - script:
             description: "Transform something"
-            extension: kts
-            code: bindings["data"]
+            language: groovy
+            code: binding["data"]

@@ -47,8 +47,8 @@ class CollectionFlowService(
                 return data + httpResult
             }
             is CollectionFlowStepScriptConfig -> {
-                val scriptEngine = scriptEngines.find { it.isApplicable(flowStepConfig.extension) }
-                    ?: throw FlowException("No script engine available for extension ${flowStepConfig.extension}")
+                val scriptEngine = scriptEngines.find { it.isApplicable(flowStepConfig.language) }
+                    ?: throw FlowException("No script engine available for language ${flowStepConfig.language}")
                 return scriptEngine.invoke(flowStepConfig.code, data)
             }
             else -> throw FlowException("Unknown component config ${flowStepConfig::class}")
@@ -70,7 +70,7 @@ class CollectionFlowService(
         }
         val variables = variableRegex.findAll(string)
         if (variables.none()) {
-            log.debug("No variables found in string $string")
+            log.trace("No variables found in string $string")
             return string
         }
 
@@ -78,7 +78,7 @@ class CollectionFlowService(
         variables.forEach {
             replacedString = replacedString.replace(it.value, values[it.groupValues[1]].toString())
         }
-        log.debug("Replaced $string with variables ${variables.joinToString { it.groupValues[1] }} to string $replacedString")
+        log.trace("Replaced $string with variables ${variables.joinToString { it.groupValues[1] }} to string $replacedString")
         return replacedString
     }
 }

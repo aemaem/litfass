@@ -166,7 +166,7 @@ class PostgresPersistenceServiceSpec extends Specification implements PostgresSu
               steps:
                 - script:
                     description: "Transform something"
-                    extension: kts
+                    language: kts
                     code: bindings["data"]
         """.stripIndent()
 
@@ -184,7 +184,7 @@ class PostgresPersistenceServiceSpec extends Specification implements PostgresSu
               steps:
                 - script:
                     description: "Transform something"
-                    extension: kts
+                    language: kts
                     code: bindings["data"]
         """.stripIndent()
         result.getValues("created", OffsetDateTime)[0]
@@ -203,7 +203,7 @@ class PostgresPersistenceServiceSpec extends Specification implements PostgresSu
               steps:
                 - script:
                     description: "Transform something"
-                    extension: kts
+                    language: kts
                     code: bindings["data"]
         """.stripIndent()
         postgresPersistenceService.saveConfig(collection, config)
@@ -219,7 +219,7 @@ class PostgresPersistenceServiceSpec extends Specification implements PostgresSu
               steps:
                 - script:
                     description: "Transform something"
-                    extension: kts
+                    language: kts
                     code: bindings["data"]
         """.stripIndent()
         and: "no exception is thrown"
@@ -235,7 +235,7 @@ class PostgresPersistenceServiceSpec extends Specification implements PostgresSu
               steps:
                 - script:
                     description: "Transform something"
-                    extension: kts
+                    language: kts
                     code: bindings["data"]
         """.stripIndent())
         postgresPersistenceService.saveConfig("foo2", """
@@ -245,7 +245,7 @@ class PostgresPersistenceServiceSpec extends Specification implements PostgresSu
               steps:
                 - script:
                     description: "Transform something"
-                    extension: kts
+                    language: kts
                     code: bindings["data"]
         """.stripIndent())
         postgresPersistenceService.saveConfig("foo3", """
@@ -255,7 +255,7 @@ class PostgresPersistenceServiceSpec extends Specification implements PostgresSu
               steps:
                 - script:
                     description: "Transform something"
-                    extension: kts
+                    language: kts
                     code: bindings["data"]
         """.stripIndent())
 
@@ -278,7 +278,7 @@ class PostgresPersistenceServiceSpec extends Specification implements PostgresSu
               steps:
                 - script:
                     description: "Transform something"
-                    extension: kts
+                    language: kts
                     code: bindings["data"]
         """.stripIndent()
         postgresPersistenceService.saveConfig(collection, config)

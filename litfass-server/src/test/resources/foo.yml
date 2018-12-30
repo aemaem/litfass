@@ -4,5 +4,5 @@ flows:
       steps:
         - script:
             description: "Transform something"
-            extension: kts
+            language: kotlin
             code: bindings["data"]

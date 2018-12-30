@@ -5,5 +5,5 @@ flows:
         - http:
             url: https://some.url/foo?bar=true
         - script:
-            extension: kts
+            language: kotlin
             code: println("bar")

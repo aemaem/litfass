@@ -3,5 +3,5 @@ flows:
   - flow:
       steps:
         - script:
-            extension: kts
+            language: groovy
             code: println("bar")
