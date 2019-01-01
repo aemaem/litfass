@@ -23,7 +23,10 @@ class RootRouteSpec extends Specification implements KtorSupport {
     def app
 
     def setupSpec() {
-        app = initializeApp([testing: true])
+        app = initializeApp([
+                testing                : true,
+                "litfass.jdbc.poolSize": 2
+        ])
     }
 
     def cleanupSpec() {

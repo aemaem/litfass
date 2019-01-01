@@ -28,7 +28,10 @@ class ConfigsRouteSpec extends Specification implements KtorSupport {
     LogCapture log = new LogCapture()
 
     def setupSpec() {
-        app = initializeApp([testing: true])
+        app = initializeApp([
+                testing                : true,
+                "litfass.jdbc.poolSize": 2
+        ])
     }
 
     def cleanupSpec() {

@@ -35,6 +35,7 @@ class CollectionsRouteSpec extends Specification implements KtorSupport, Postgre
     def setupSpec() {
         app = initializeApp([
                 "testing"                       : true,
+                "litfass.jdbc.poolSize"         : 2,
                 "litfass.config.collection.path": this.class.getResource("/foo.yml").file
         ])
         dropTable("foo")
