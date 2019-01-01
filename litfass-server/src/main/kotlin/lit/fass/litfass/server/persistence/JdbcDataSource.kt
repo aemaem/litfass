@@ -13,6 +13,7 @@ class JdbcDataSource(
     private val database: String,
     username: String,
     password: String,
+    poolSize: Int,
     properties: Map<String, Any> = emptyMap()
 ) {
     private val dataSource = HikariDataSource(HikariConfig().apply {
@@ -20,7 +21,7 @@ class JdbcDataSource(
         this.username = username
         this.password = password
         this.isAutoCommit = true
-        this.maximumPoolSize = 3
+        this.maximumPoolSize = poolSize
         properties.forEach { name, value ->
             addDataSourceProperty(name, value)
         }

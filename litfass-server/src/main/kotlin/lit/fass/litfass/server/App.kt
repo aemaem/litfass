@@ -148,7 +148,9 @@ fun Application.litfassModule() {
     val postgresqlDatabase = environment.config.property("litfass.postgresql.jdbc.database").getString()
     val postgresqlUser = environment.config.property("litfass.postgresql.jdbc.user").getString()
     val postgresqlPassword = environment.config.property("litfass.postgresql.jdbc.password").getString()
-    val postgresqlDatasource = JdbcDataSource(postgresqlUrl, postgresqlDatabase, postgresqlUser, postgresqlPassword)
+    val jdbcPoolSize = environment.config.property("litfass.jdbc.poolSize").getString().toInt()
+    val postgresqlDatasource =
+        JdbcDataSource(postgresqlUrl, postgresqlDatabase, postgresqlUser, postgresqlPassword, jdbcPoolSize)
     log.info("Instantiating postgresql persistence service")
     val postgresqlPersistenceService = PostgresPersistenceService(postgresqlDatasource, jsonMapper)
     persistenceServices.add(postgresqlPersistenceService)
