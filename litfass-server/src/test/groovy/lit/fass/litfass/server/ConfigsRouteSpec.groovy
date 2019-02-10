@@ -87,9 +87,9 @@ flows:
 
         then: "configs are created and scheduled"
         log.toString().contains("Creating scheduled collection job foo with cron * * * * * ? *")
-        log.toString().contains("Sending collection job foo to be scheduled every second")
+        log.toString().contains("Collection job foo to be scheduled every second")
         log.toString().contains("Creating scheduled retention job foo with cron 0 0 0 ? * SUN *")
-        log.toString().contains("Sending retention job foo to be scheduled at 00:00 at Sunday day")
+        log.toString().contains("Retention job foo to be scheduled at 00:00 at Sunday day")
         result.status() == OK
     }
 
