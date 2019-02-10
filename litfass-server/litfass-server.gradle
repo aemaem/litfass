@@ -35,6 +35,8 @@ dependencies {
     compile "com.google.guava:guava:$guavaVersion"
     compile "com.cronutils:cron-utils:$cronUtilsVersion"
     compile "com.zaxxer:HikariCP:$hikariCpVersion"
+    compile "org.quartz-scheduler:quartz:$quartzSchedulerVersion"
+    compile "org.quartz-scheduler:quartz-jobs:$quartzSchedulerVersion"
     compile "org.jooq:jooq:$jooqVersion"
     compile "org.postgresql:postgresql:$postgresqlVersion"
     compile "org.elasticsearch.client:elasticsearch-rest-high-level-client:$elasticSearchVersion"

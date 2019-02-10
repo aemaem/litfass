@@ -55,7 +55,7 @@ import lit.fass.litfass.server.persistence.JdbcDataSource
 import lit.fass.litfass.server.persistence.elasticsearch.ElasticsearchPersistenceService
 import lit.fass.litfass.server.persistence.postgres.PostgresPersistenceService
 import lit.fass.litfass.server.retention.CollectionRetentionService
-import lit.fass.litfass.server.schedule.CollectionSchedulerService
+import lit.fass.litfass.server.schedule.QuartzCollectionSchedulerService
 import lit.fass.litfass.server.script.ScriptLanguage
 import lit.fass.litfass.server.script.groovy.GroovyScriptEngine
 import lit.fass.litfass.server.script.kts.KotlinScriptEngine
@@ -192,7 +192,7 @@ fun Application.litfassModule() {
         persistenceServices
     )
     log.info("Instantiating scheduler service")
-    val schedulerService = CollectionSchedulerService(executionService, retentionService)
+    val schedulerService = QuartzCollectionSchedulerService(executionService, retentionService)
     log.info("Instantiating config service")
     val configService = YamlConfigService(postgresqlPersistenceService, schedulerService)
     val configCollectionPath = environment.config.propertyOrNull("litfass.config.collection.path")
