@@ -7,7 +7,6 @@ import lit.fass.litfass.server.helper.UnitTest
 import lit.fass.litfass.server.retention.RetentionService
 import org.junit.Rule
 import org.junit.experimental.categories.Category
-import org.quartz.ObjectAlreadyExistsException
 import spock.lang.Specification
 import spock.lang.Subject
 import spock.util.concurrent.BlockingVariable
@@ -75,7 +74,7 @@ class QuartzCollectionSchedulerServiceSpec extends Specification {
         thrown(SchedulerException)
     }
 
-    def "collection job cannot be created if it already exists"() {
+    def "collection job is overwritten if it already exists"() {
         given: "a config and a cron expression"
         def config = new CollectionConfig("foo", "0 0 * * * ? *", null, POSTGRES, [])
 
@@ -84,8 +83,8 @@ class QuartzCollectionSchedulerServiceSpec extends Specification {
         and: "the same job should be created again"
         collectionSchedulerService.createCollectionJob(new CollectionConfig("foo", "* * * * * ? *", null, POSTGRES, []))
 
-        then: "scheduler does not schedule the job"
-        thrown(ObjectAlreadyExistsException)
+        then: "scheduler does schedule the job"
+        noExceptionThrown()
     }
 
     def "collection job is cancelled immediately if next execution is in the past"() {
@@ -134,7 +133,7 @@ class QuartzCollectionSchedulerServiceSpec extends Specification {
         await().until { log.toString().contains("Executed retention job foo") }
     }
 
-    def "retention job cannot be created if it already exists"() {
+    def "retention job is overwritten if it already exists"() {
         given: "a config and a retention duration"
         def config = new CollectionConfig("foo", null, "P2D", POSTGRES, [])
         (4..6) * retentionServiceMock.getCronExpression() >> "* * * * * ? *"
@@ -144,8 +143,8 @@ class QuartzCollectionSchedulerServiceSpec extends Specification {
         and: "the same job should be created again"
         collectionSchedulerService.createRetentionJob(new CollectionConfig("foo", null, "P3D", POSTGRES, []))
 
-        then: "scheduler does not schedule the job"
-        thrown(ObjectAlreadyExistsException)
+        then: "scheduler does schedule the job"
+        noExceptionThrown()
     }
 
     def "retention job can be cancelled"() {
