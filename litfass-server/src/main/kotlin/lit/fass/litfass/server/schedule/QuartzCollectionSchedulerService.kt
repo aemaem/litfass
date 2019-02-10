@@ -64,6 +64,9 @@ class QuartzCollectionSchedulerService(
             QuartzCollectionJob::class.java,
             mapOf("executionService" to executionService, "collectionConfig" to config)
         )
+        if (scheduler.checkExists(triggerKey(config.collection, QuartzCollectionJob.getType()))) {
+            cancelCollectionJob(config)
+        }
         scheduler.scheduleJob(
             job,
             jobTrigger(
@@ -94,6 +97,9 @@ class QuartzCollectionSchedulerService(
             QuartzRetentionJob::class.java,
             mapOf("retentionService" to retentionService, "collectionConfig" to config)
         )
+        if (scheduler.checkExists(triggerKey(config.collection, QuartzRetentionJob.getType()))) {
+            cancelRetentionJob(config)
+        }
         scheduler.scheduleJob(
             job,
             jobTrigger(
