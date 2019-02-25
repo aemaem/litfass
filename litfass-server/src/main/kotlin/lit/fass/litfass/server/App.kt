@@ -19,8 +19,8 @@ import io.ktor.client.HttpClient
 import io.ktor.client.engine.apache.Apache
 import io.ktor.client.features.json.JacksonSerializer
 import io.ktor.client.features.json.JsonFeature
+import io.ktor.client.features.logging.LogLevel
 import io.ktor.client.features.logging.LogLevel.ALL
-import io.ktor.client.features.logging.LogLevel.NONE
 import io.ktor.client.features.logging.Logging
 import io.ktor.features.*
 import io.ktor.http.CacheControl
@@ -174,7 +174,7 @@ fun Application.litfassModule() {
             serializer = JacksonSerializer()
         }
         install(Logging) {
-            level = if (testing) ALL else NONE
+            level = if (testing) ALL else LogLevel.INFO
         }
         engine {
             followRedirects = true
