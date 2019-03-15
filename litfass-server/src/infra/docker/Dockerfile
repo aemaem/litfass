@@ -1,4 +1,4 @@
-FROM openjdk:8-jre-slim
+FROM openjdk:11-jre-slim
 
 RUN mkdir /var/litfass
 
@@ -8,7 +8,7 @@ VOLUME /var/litfass/ext
 WORKDIR /var/litfass
 
 ENV PORT=8080 \
-    JAVA_OPTS="-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:InitialRAMFraction=2 -XX:MinRAMFraction=2 -XX:MaxRAMFraction=2 -XX:+UseG1GC -XX:MaxGCPauseMillis=100 -XX:+UseStringDeduplication -XX:+HeapDumpOnOutOfMemoryError"
+    JAVA_OPTS="-XX:+UseG1GC -XX:+UseStringDeduplication -XX:+HeapDumpOnOutOfMemoryError"
 
 EXPOSE $PORT
 
