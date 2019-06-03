@@ -5,6 +5,7 @@ import io.ktor.server.testing.TestApplicationEngine
 import lit.fass.litfass.server.helper.IntegrationTest
 import lit.fass.litfass.server.helper.KtorSupport
 import org.junit.experimental.categories.Category
+import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -25,6 +26,7 @@ class EnvVarConfigSpec extends Specification implements KtorSupport {
         stopApp(app)
     }
 
+    @Ignore
     def "env vars are available"() {
         expect:
         app.environment.config.configList("litfass.config.security.users").collectEntries {
