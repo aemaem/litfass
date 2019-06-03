@@ -22,6 +22,10 @@ jobs:
       - run:
           name: "Prepare"
           command: mkdir -p build/circleci/test-results
+      - run: export LITFASS_CONFIG_SECURITY_USER_NAME_1=foo
+      - run: export LITFASS_CONFIG_SECURITY_USER_PASSWORD_1=foo
+      - run: export LITFASS_CONFIG_SECURITY_USER_NAME_2=bar
+      - run: export LITFASS_CONFIG_SECURITY_USER_PASSWORD_2=bar
       - run:
           name: "Build"
           command: ./gradlew build --stacktrace
