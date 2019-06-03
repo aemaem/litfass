@@ -80,10 +80,24 @@ fun Application.litfassModule() {
     }
 
     val digestFunction = getDigestFunction("SHA-256", salt = "lit.fass")
-    var users = environment.config.configList("litfass.config.security.users")
-        .associateBy({ it.property("name").getString() }, {
-            digestFunction.invoke(it.property("password").getString())
-        })
+    var users: Map<String, ByteArray> = emptyMap()
+    val userConfigured = environment.config.configList("litfass.config.security.users").all {
+        val name = it.propertyOrNull("name")
+        if (name == null) false
+        else if (name.getString().isBlank()) false
+        else true
+    }
+    if (userConfigured) {
+        users = environment.config.configList("litfass.config.security.users")
+            .associateBy({
+                log.info("Configuring user")
+                log.info("User ${it.property("name").getString()} configured")
+                it.property("name").getString()
+            }, {
+                log.info("Digesting password")
+                digestFunction.invoke(it.property("password").getString())
+            })
+    }
     if (!users.containsKey("admin")) {
         log.warn("No user defined with name admin. Generating admin user")
         val adminPassword: String

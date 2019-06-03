@@ -7,5 +7,5 @@
     <root level="INFO">
         <appender-ref ref="STDOUT"/>
     </root>
-    <logger name="lit.fass.litfass" level="DEBUG"/>
+    <logger name="lit.fass.litfass" level="INFO"/>
 </configuration>
