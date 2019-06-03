@@ -60,6 +60,10 @@ jobs:
       - setup_remote_docker
       - restore_cache:
           key: cache-{{ checksum "build.gradle" }}
+      - run: export LITFASS_CONFIG_SECURITY_USER_NAME_1=foo
+      - run: export LITFASS_CONFIG_SECURITY_USER_PASSWORD_1=foo
+      - run: export LITFASS_CONFIG_SECURITY_USER_NAME_2=bar
+      - run: export LITFASS_CONFIG_SECURITY_USER_PASSWORD_2=bar
       - run:
           name: "Build, release and publish"
           command: ./gradlew final -Prelease.useLastTag=true pushImage --stacktrace
