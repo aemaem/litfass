@@ -1,23 +1,19 @@
 package lit.fass.litfass.server
 
-
 import groovy.json.JsonSlurper
 import lit.fass.litfass.server.helper.IntegrationTest
-import lit.fass.litfass.server.helper.KtorSupport
 import org.junit.experimental.categories.Category
+import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
 
-import static io.ktor.http.HttpMethod.Get
-import static io.ktor.http.HttpStatusCode.OK
-import static io.ktor.http.HttpStatusCode.Unauthorized
-import static io.ktor.server.testing.TestEngineKt.handleRequest
 
 /**
  * @author Michael Mair
  */
+@Ignore
 @Category(IntegrationTest)
-class RootRouteSpec extends Specification implements KtorSupport {
+class RootRouteSpec extends Specification {
 
     @Shared
     def app

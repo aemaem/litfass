@@ -152,10 +152,10 @@ fun Application.litfassModule() {
     install(DataConversion)
 
     log.info("Instantiating JSON mapper")
-    val jsonMapper = jacksonObjectMapper().apply {
-        registerModule(JavaTimeModule())
-        configure(WRITE_DATES_AS_TIMESTAMPS, false)
-    }
+    //val jsonMapper = jacksonObjectMapper().apply {
+    //    registerModule(JavaTimeModule())
+    //    configure(WRITE_DATES_AS_TIMESTAMPS, false)
+    //}
     val persistenceServices = mutableListOf<CollectionPersistenceService>()
     log.info("Instantiating postgresql database connection")
     val postgresqlUrl = environment.config.property("litfass.postgresql.jdbc.url").getString()

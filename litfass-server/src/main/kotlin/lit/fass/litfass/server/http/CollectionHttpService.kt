@@ -1,28 +1,30 @@
 package lit.fass.litfass.server.http
 
-import io.ktor.client.HttpClient
-import io.ktor.client.request.get
-import io.ktor.client.request.header
-import io.ktor.http.HttpHeaders.Authorization
-import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
+import org.springframework.core.ParameterizedTypeReference
+import org.springframework.http.HttpHeaders.AUTHORIZATION
+import org.springframework.stereotype.Service
+import org.springframework.web.reactive.function.client.WebClient
+import reactor.core.publisher.Mono
 import java.util.*
 
 /**
  * @author Michael Mair
  */
-class CollectionHttpService(private val httpClient: HttpClient) : HttpService {
+@Service
+class CollectionHttpService(private val httpClient: WebClient) : HttpService {
     companion object {
         private val log = LoggerFactory.getLogger(this::class.java.enclosingClass)
     }
 
-    override fun get(url: String, username: String?, password: String?): Map<String, Any?> = runBlocking {
+    override fun get(url: String, username: String?, password: String?): Map<String, Any?> {
         log.info("Executing http get request on $url")
-        httpClient.get<Map<String, Any?>>(url) {
-            if (!username.isNullOrBlank()) {
-                header(Authorization, "Basic ${base64Encode("$username:$password")}")
-            }
-        }
+        return httpClient.get()
+            .header(AUTHORIZATION, "Basic ${base64Encode("$username:$password")}")
+            .retrieve()
+            .bodyToMono(object : ParameterizedTypeReference<Map<String, Any?>>() {})
+            .switchIfEmpty(Mono.just(emptyMap()))
+            .block()!!
     }
 
     private fun base64Encode(data: String): String {

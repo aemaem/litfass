@@ -20,6 +20,8 @@ import org.quartz.TriggerBuilder.newTrigger
 import org.quartz.TriggerKey.triggerKey
 import org.quartz.impl.StdSchedulerFactory
 import org.slf4j.LoggerFactory
+import org.springframework.stereotype.Service
+import javax.annotation.PreDestroy
 
 
 /**
@@ -29,6 +31,7 @@ import org.slf4j.LoggerFactory
  *
  * @author Michael Mair
  */
+@Service
 class QuartzCollectionSchedulerService(
     private val executionService: ExecutionService,
     private val retentionService: RetentionService
@@ -46,6 +49,7 @@ class QuartzCollectionSchedulerService(
         scheduler.start()
     }
 
+    @PreDestroy
     fun stop() {
         scheduler.shutdown()
     }

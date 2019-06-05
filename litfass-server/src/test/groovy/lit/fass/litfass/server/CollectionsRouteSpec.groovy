@@ -2,19 +2,15 @@ package lit.fass.litfass.server
 
 import groovy.json.JsonSlurper
 import lit.fass.litfass.server.helper.IntegrationTest
-import lit.fass.litfass.server.helper.KtorSupport
 import lit.fass.litfass.server.helper.LogCapture
 import lit.fass.litfass.server.helper.PostgresSupport
 import org.junit.Rule
 import org.junit.experimental.categories.Category
+import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Stepwise
 
-import static io.ktor.http.HttpMethod.Get
-import static io.ktor.http.HttpMethod.Post
-import static io.ktor.http.HttpStatusCode.OK
-import static io.ktor.server.testing.TestEngineKt.handleRequest
 import static java.util.concurrent.TimeUnit.SECONDS
 import static org.awaitility.Awaitility.await
 import static org.awaitility.Awaitility.with
@@ -22,9 +18,10 @@ import static org.awaitility.Awaitility.with
 /**
  * @author Michael Mair
  */
+@Ignore
 @Category(IntegrationTest)
 @Stepwise
-class CollectionsRouteSpec extends Specification implements KtorSupport, PostgresSupport {
+class CollectionsRouteSpec extends Specification implements PostgresSupport {
 
     @Shared
     def app

@@ -4,10 +4,12 @@ import lit.fass.litfass.server.config.yaml.model.*
 import lit.fass.litfass.server.http.HttpService
 import lit.fass.litfass.server.script.ScriptEngine
 import org.slf4j.LoggerFactory
+import org.springframework.stereotype.Service
 
 /**
  * @author Michael Mair
  */
+@Service
 class CollectionFlowService(
     private val httpService: HttpService,
     private val scriptEngines: List<ScriptEngine>

@@ -4,13 +4,13 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.google.common.cache.CacheBuilder
-import kotlinx.io.core.toByteArray
 import lit.fass.litfass.server.config.ConfigService
 import lit.fass.litfass.server.config.yaml.model.CollectionConfig
 import lit.fass.litfass.server.persistence.CollectionConfigPersistenceService
 import lit.fass.litfass.server.schedule.SchedulerService
 import org.apache.commons.lang3.time.DurationFormatUtils.formatDurationHMS
 import org.slf4j.LoggerFactory
+import org.springframework.stereotype.Service
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.InputStream
@@ -20,6 +20,7 @@ import java.util.concurrent.Callable
 /**
  * @author Michael Mair
  */
+@Service
 class YamlConfigService(
     private val configPersistenceService: CollectionConfigPersistenceService,
     private val schedulerService: SchedulerService

@@ -3,6 +3,7 @@ package lit.fass.litfass.server.retention
 import lit.fass.litfass.server.config.yaml.model.CollectionConfig
 import lit.fass.litfass.server.persistence.CollectionPersistenceService
 import org.slf4j.LoggerFactory
+import org.springframework.stereotype.Service
 import java.time.Duration
 import java.time.OffsetDateTime.now
 import java.time.ZoneOffset.UTC
@@ -10,6 +11,7 @@ import java.time.ZoneOffset.UTC
 /**
  * @author Michael Mair
  */
+@Service
 class CollectionRetentionService(
     private val retentionCronExpression: String,
     private val collectionPersistenceServices: List<CollectionPersistenceService>

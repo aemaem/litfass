@@ -2,24 +2,21 @@ package lit.fass.litfass.server
 
 import groovy.json.JsonSlurper
 import lit.fass.litfass.server.helper.IntegrationTest
-import lit.fass.litfass.server.helper.KtorSupport
 import lit.fass.litfass.server.helper.LogCapture
 import org.junit.Rule
 import org.junit.experimental.categories.Category
+import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Stepwise
 
-import static io.ktor.http.HttpMethod.*
-import static io.ktor.http.HttpStatusCode.*
-import static io.ktor.server.testing.TestEngineKt.handleRequest
-
 /**
  * @author Michael Mair
  */
+@Ignore
 @Category(IntegrationTest)
 @Stepwise
-class ConfigsRouteSpec extends Specification implements KtorSupport {
+class ConfigsRouteSpec extends Specification  {
 
     @Shared
     def app

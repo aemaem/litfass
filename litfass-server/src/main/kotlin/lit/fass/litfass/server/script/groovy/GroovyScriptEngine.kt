@@ -5,17 +5,19 @@ import lit.fass.litfass.server.script.ScriptEngine
 import lit.fass.litfass.server.script.ScriptLanguage
 import lit.fass.litfass.server.script.ScriptLanguage.GROOVY
 import org.apache.commons.lang3.time.DurationFormatUtils.formatDurationHMS
-import org.jetbrains.kotlin.utils.addToStdlib.measureTimeMillisWithResult
 import org.slf4j.LoggerFactory
+import org.springframework.stereotype.Component
 import java.net.URL
 import java.net.URLClassLoader
 import java.time.ZoneOffset.UTC
 import java.time.format.DateTimeFormatter.ISO_DATE_TIME
 import javax.script.ScriptEngineManager
+import kotlin.system.measureTimeMillis
 
 /**
  * @author Michael Mair
  */
+@Component
 class GroovyScriptEngine : ScriptEngine {
     companion object {
         private val lang = GROOVY
@@ -45,8 +47,8 @@ class GroovyScriptEngine : ScriptEngine {
 
     override fun invoke(script: String, data: Map<String, Any?>): Map<String, Any?> {
         log.trace("Invoking script:\n$script\nwith data \n$data")
-        val (elapsedTime, result) = measureTimeMillisWithResult {
-            var result: Map<String, Any?> = emptyMap()
+        var result: Map<String, Any?> = emptyMap()
+        val elapsedTime = measureTimeMillis {
             GroovyClassLoader(URLClassLoader(classPath.map { URL("file:$it") }.toTypedArray())).use { classLoader ->
                 result = with(ScriptEngineManager(classLoader).getEngineByName(lang.name.toLowerCase())) {
                     @Suppress("UNCHECKED_CAST")
@@ -57,7 +59,6 @@ class GroovyScriptEngine : ScriptEngine {
                     }) as Map<String, Any?>
                 }
             }
-            return@measureTimeMillisWithResult result
         }
         log.debug("Script executed in ${formatDurationHMS(elapsedTime)}")
         return result

@@ -4,13 +4,13 @@ import lit.fass.litfass.server.script.ScriptEngine
 import lit.fass.litfass.server.script.ScriptLanguage
 import lit.fass.litfass.server.script.ScriptLanguage.KOTLIN
 import org.apache.commons.lang3.time.DurationFormatUtils.formatDurationHMS
-import org.jetbrains.kotlin.utils.addToStdlib.measureTimeMillisWithResult
 import org.slf4j.LoggerFactory
 import java.net.URL
 import java.net.URLClassLoader
 import java.time.ZoneOffset.UTC
 import java.time.format.DateTimeFormatter.ISO_DATE_TIME
 import javax.script.ScriptEngineManager
+import kotlin.system.measureTimeMillis
 
 /**
  * WARNING: This implementation causes a memory leak. Use the Groovy script engine instead. todo: fix memory leak
@@ -49,8 +49,8 @@ class KotlinScriptEngine : ScriptEngine {
 
     override fun invoke(script: String, data: Map<String, Any?>): Map<String, Any?> {
         log.trace("Invoking script:\n$script\nwith data \n$data")
-        val (elapsedTime, result) = measureTimeMillisWithResult {
-            var result: Map<String, Any?> = emptyMap()
+        var result: Map<String, Any?> = emptyMap()
+        val elapsedTime = measureTimeMillis {
             URLClassLoader(classPath.map { URL("file:$it") }.toTypedArray()).use { classLoader ->
                 result = with(ScriptEngineManager(classLoader).getEngineByName(lang.name.toLowerCase())) {
                     @Suppress("UNCHECKED_CAST")
@@ -61,7 +61,6 @@ class KotlinScriptEngine : ScriptEngine {
                     }) as Map<String, Any?>
                 }
             }
-            return@measureTimeMillisWithResult result
         }
         log.debug("Script executed in ${formatDurationHMS(elapsedTime)}")
         return result
