@@ -4,14 +4,16 @@ import com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMEST
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import lit.fass.litfass.server.ServerConfigurationAnchor
-import lit.fass.litfass.server.script.groovy.GroovyScriptEngine
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.ComponentScan
 import org.springframework.context.annotation.Configuration
+import org.springframework.web.reactive.config.EnableWebFlux
+
 
 @Configuration
 @ComponentScan(basePackageClasses = [ServerConfigurationAnchor::class])
-class ServerApplicationConfiguration {
+@EnableWebFlux
+class ServerConfiguration {
 
     @Bean
     fun jsonMapper() = jacksonObjectMapper().apply {
