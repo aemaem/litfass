@@ -1,111 +1,128 @@
 package lit.fass.litfass.server
 
-import groovy.json.JsonSlurper
+
 import lit.fass.litfass.server.helper.IntegrationTest
 import lit.fass.litfass.server.helper.LogCapture
 import org.junit.Rule
 import org.junit.experimental.categories.Category
-import spock.lang.Ignore
-import spock.lang.Shared
+import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.web.server.LocalServerPort
+import org.springframework.test.context.ActiveProfiles
 import spock.lang.Specification
 import spock.lang.Stepwise
+
+import static lit.fass.config.Profiles.POSTGRES
+import static lit.fass.config.Profiles.TEST
+import static org.awaitility.Awaitility.await
+import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT
+import static org.springframework.http.HttpStatus.UNAUTHORIZED
+import static org.springframework.http.MediaType.TEXT_PLAIN
+import static org.springframework.web.reactive.function.BodyInserters.fromObject
+import static org.springframework.web.reactive.function.client.ExchangeFilterFunctions.basicAuthentication
+import static org.springframework.web.reactive.function.client.WebClient.builder
 
 /**
  * @author Michael Mair
  */
-@Ignore
 @Category(IntegrationTest)
+@SpringBootTest(classes = ServerApplication, webEnvironment = RANDOM_PORT)
+@ActiveProfiles([TEST, POSTGRES])
 @Stepwise
-class ConfigsRouteSpec extends Specification  {
+class ConfigsRouteSpec extends Specification {
 
-    @Shared
-    def app
+    @LocalServerPort
+    int port
 
     @Rule
     LogCapture log = new LogCapture()
 
-    def setupSpec() {
-        app = initializeApp([
-                testing                : true,
-                "litfass.jdbc.poolSize": 2
-        ])
-    }
-
-    def cleanupSpec() {
-        stopApp(app)
-    }
-
     def "/configs POST endpoint is secured"() {
         when: "requesting /configs unauthorized"
-        def result = handleRequest(app, Post, "/configs", {}).response
-
+        def result = builder().baseUrl("http://localhost:${port}/configs")
+                .build()
+                .get()
+                .exchange()
+                .block()
         then: "access is forbidden"
-        result.status() == Unauthorized
-        result.content == null
+        result.statusCode() == UNAUTHORIZED
     }
 
     def "/configs POST endpoint"() {
         when: "requesting /configs"
-        def result = handleRequest(app, Post, "/configs", {
-            withBody("""
-collection: foo
-flows:
-  - flow:
-      steps:
-        - script:
-            description: "Transform something"
-            language: kotlin
-            code: println("bar")
-            """, it)
-            withBasicAuth("admin", "admin", it)
-        }).response
-
+        def result = builder().baseUrl("http://localhost:${port}/configs")
+                .filter(basicAuthentication("admin", "admin"))
+                .build()
+                .post()
+                .contentType(TEXT_PLAIN)
+                .body(fromObject("""
+                collection: foo
+                flows:
+                  - flow:
+                      steps:
+                        - script:
+                            description: "Transform something"
+                            language: kotlin
+                            code: println("bar")
+                """.stripIndent()))
+                .exchange()
+                .block()
         then: "configs are created"
-        result.status() == OK
+        result.statusCode().is2xxSuccessful()
     }
 
     def "/configs POST endpoint schedules config"() {
         when: "requesting /configs"
-        def result = handleRequest(app, Post, "/configs", {
-            withBody("""
-collection: foo
-scheduled: "* * * * * ? *"
-retention: "P7D"
-flows:
-  - flow:
-      steps:
-        - script:
-            description: "Transform something"
-            language: KOTLIN
-            code: println("bar")
-            """, it)
-            withBasicAuth("admin", "admin", it)
-        }).response
-
+        def result = builder().baseUrl("http://localhost:${port}/configs")
+                .filter(basicAuthentication("admin", "admin"))
+                .build()
+                .post()
+                .contentType(TEXT_PLAIN)
+                .body(fromObject("""
+                collection: foo
+                scheduled: "* * * * * ? *"
+                retention: "P7D"
+                flows:
+                  - flow:
+                      steps:
+                        - script:
+                            description: "Transform something"
+                            language: KOTLIN
+                            code: println("bar")
+                """.stripIndent()))
+                .exchange()
+                .block()
         then: "configs are created and scheduled"
-        log.toString().contains("Creating scheduled collection job foo with cron * * * * * ? *")
-        log.toString().contains("Collection job foo to be scheduled every second")
-        log.toString().contains("Creating scheduled retention job foo with cron 0 0 0 ? * SUN *")
-        log.toString().contains("Retention job foo to be scheduled at 00:00 at Sunday day")
-        result.status() == OK
+        await().until {
+            log.toString().contains("Creating scheduled collection job foo with cron * * * * * ? *")
+            log.toString().contains("Collection job foo to be scheduled every second")
+            log.toString().contains("Creating scheduled retention job foo with cron 0 0 0 ? * SUN *")
+            log.toString().contains("Retention job foo to be scheduled at 00:00 at Sunday day")
+        }
+        result.statusCode().is2xxSuccessful()
     }
 
     def "/configs GET endpoint is secured"() {
         when: "requesting /configs unauthorized"
-        def result = handleRequest(app, Get, "/configs", {}).response
-
+        def result = builder().baseUrl("http://localhost:${port}/configs")
+                .build()
+                .get()
+                .exchange()
+                .block()
         then: "access is forbidden"
-        result.status() == Unauthorized
-        result.content == null
+        result.statusCode() == UNAUTHORIZED
     }
 
     def "/configs GET endpoint"() {
         when: "requesting /configs"
-        def result = handleRequest(app, Get, "/configs", { withBasicAuth("admin", "admin", it) }).response
-        def resultContent = new JsonSlurper().parse(result.byteContent)
-
+        def result = builder().baseUrl("http://localhost:${port}/configs")
+                .filter(basicAuthentication("admin", "admin"))
+                .build()
+                .get()
+                .exchange()
+                .block()
+        def resultContent = result.bodyToMono(Collection).block()
         then: "configs are returned"
-        result.status() == OK
+        result.statusCode().is2xxSuccessful()
         resultContent.size() == 1
         resultContent[0].collection == "foo"
         resultContent[0].flows.size() == 1
@@ -113,20 +130,28 @@ flows:
 
     def "/configs/{collection} GET endpoint"() {
         when: "requesting /configs/{collection}"
-        def result = handleRequest(app, Get, "/configs/foo", { withBasicAuth("admin", "admin", it) }).response
-        def resultContent = new JsonSlurper().parse(result.byteContent)
-
-        then: "configs are returned"
-        result.status() == OK
+        def result = builder().baseUrl("http://localhost:${port}/configs/foo")
+                .filter(basicAuthentication("admin", "admin"))
+                .build()
+                .get()
+                .exchange()
+                .block()
+        def resultContent = result.bodyToMono(Map).block().body
+        then: "config is returned"
+        result.statusCode().is2xxSuccessful()
         resultContent.collection == "foo"
         resultContent.flows.size() == 1
     }
 
     def "/configs/{collection} DELETE endpoint"() {
         when: "requesting /configs/{collection}"
-        def result = handleRequest(app, Delete, "/configs/foo", { withBasicAuth("admin", "admin", it) }).response
-
-        then: "configs are returned"
-        result.status() == NoContent
+        def result = builder().baseUrl("http://localhost:${port}/configs/foo")
+                .filter(basicAuthentication("admin", "admin"))
+                .build()
+                .delete()
+                .exchange()
+                .block()
+        then: "response is successful"
+        result.statusCode().is2xxSuccessful()
     }
 }

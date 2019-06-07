@@ -1,55 +1,61 @@
 package lit.fass.litfass.server
 
-import groovy.json.JsonSlurper
+
 import lit.fass.litfass.server.helper.IntegrationTest
 import org.junit.experimental.categories.Category
-import spock.lang.Ignore
-import spock.lang.Shared
+import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.web.server.LocalServerPort
+import org.springframework.test.context.ActiveProfiles
 import spock.lang.Specification
+
+import static lit.fass.config.Profiles.POSTGRES
+import static lit.fass.config.Profiles.TEST
+import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT
+import static org.springframework.http.HttpStatus.UNAUTHORIZED
+import static org.springframework.http.MediaType.APPLICATION_JSON_UTF8
+import static org.springframework.web.reactive.function.BodyInserters.fromObject
+import static org.springframework.web.reactive.function.client.ExchangeFilterFunctions.basicAuthentication
+import static org.springframework.web.reactive.function.client.WebClient.builder
 
 /**
  * @author Michael Mair
  */
-@Ignore
 @Category(IntegrationTest)
+@SpringBootTest(classes = ServerApplication, webEnvironment = RANDOM_PORT)
+@ActiveProfiles([TEST, POSTGRES])
 class ScriptRouteSpec extends Specification {
 
-    @Shared
-    def app
-
-    def setupSpec() {
-        app = initializeApp([
-                testing                : true,
-                "litfass.jdbc.poolSize": 2
-        ])
-    }
-
-    def cleanupSpec() {
-        stopApp(app)
-    }
+    @LocalServerPort
+    int port
 
     def "/script/{extension}/test POST endpoint is secured"() {
         when: "requesting /script/{language}/test unauthorized"
-        def result = handleRequest(app, Post, "/script/kotlin/test", {}).response
-
+        def result = builder().baseUrl("http://localhost:${port}/script/kotlin/test")
+                .build()
+                .post()
+                .exchange()
+                .block()
         then: "access is forbidden"
-        result.status() == Unauthorized
-        result.content == null
+        result.statusCode() == UNAUTHORIZED
     }
 
     def "/script/{extension}/test POST endpoint returns result"() {
         when: "requesting /script/{language}/test"
-        def result = handleRequest(app, Post, "/script/kotlin/test", {
-            withBasicAuth("admin", "admin", it)
-            withBody([
-                    script: """bindings["data"]""",
-                    data  : [foo: "bar", bar: true]
-            ], it)
-        }).response
-        def resultContent = new JsonSlurper().parse(result.byteContent)
+        def result = builder().baseUrl("http://localhost:${port}/script/kotlin/test")
+                .filter(basicAuthentication("admin", "admin"))
+                .build()
+                .post()
+                .contentType(APPLICATION_JSON_UTF8)
+                .body(fromObject([
+                        script: """bindings["data"]""",
+                        data  : [foo: "bar", bar: true]
+                ]))
+                .exchange()
+                .block()
+        def resultContent = result.bodyToMono(Map).block()
 
         then: "result is returned"
-        result.status() == OK
+        result.statusCode().is2xxSuccessful()
         resultContent.foo == "bar"
         resultContent.bar == true
     }

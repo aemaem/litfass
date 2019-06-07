@@ -5,6 +5,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import lit.fass.litfass.server.ServerConfigurationAnchor
 import lit.fass.litfass.server.persistence.JdbcDataSource
+import lit.fass.litfass.server.persistence.JdbcProperties
 import org.springframework.boot.actuate.autoconfigure.elasticsearch.ElasticSearchRestHealthIndicatorAutoConfiguration
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
 import org.springframework.boot.autoconfigure.data.elasticsearch.ElasticsearchAutoConfiguration
@@ -37,11 +38,16 @@ class ServerConfiguration {
     }
 
     @Bean
-    fun webClient() = WebClient.builder().build()
+    fun webClient() = WebClient.create()
 
-    //todo: make ds configurable
     @Bean
-    fun jdbcDataSource() = JdbcDataSource("jdbc:postgresql://localhost:5432", "litfass", "admin", "admin", 1)
+    fun jdbcDataSource(jdbcProperties: JdbcProperties) = JdbcDataSource(
+        jdbcProperties.url,
+        jdbcProperties.database,
+        jdbcProperties.username,
+        jdbcProperties.password,
+        jdbcProperties.poolSize
+    )
 
     //todo: create es client
     //@Bean

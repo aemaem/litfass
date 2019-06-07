@@ -20,7 +20,7 @@ class CollectionRetentionService(
         private val log = LoggerFactory.getLogger(this::class.java.enclosingClass)
     }
 
-    private var retentionCronExpression: String = "* * 0 * * ?"
+    private var retentionCronExpression: String = "0 0 0 ? * SUN *"
 
     override fun clean(config: CollectionConfig) {
         val persistenceService = collectionPersistenceServices.find { it.isApplicable(config.datastore) }

@@ -5,6 +5,7 @@ import lit.fass.litfass.server.script.ScriptLanguage
 import lit.fass.litfass.server.script.ScriptLanguage.KOTLIN
 import org.apache.commons.lang3.time.DurationFormatUtils.formatDurationHMS
 import org.slf4j.LoggerFactory
+import org.springframework.stereotype.Component
 import java.net.URL
 import java.net.URLClassLoader
 import java.time.ZoneOffset.UTC
@@ -17,6 +18,7 @@ import kotlin.system.measureTimeMillis
  *
  * @author Michael Mair
  */
+@Component
 class KotlinScriptEngine : ScriptEngine {
     companion object {
         private val lang = KOTLIN

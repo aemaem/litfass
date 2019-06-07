@@ -3,12 +3,12 @@ package lit.fass.litfass.server.rest
 import lit.fass.litfass.server.script.ScriptEngine
 import lit.fass.litfass.server.script.ScriptLanguage
 import org.slf4j.LoggerFactory
+import org.springframework.http.ResponseEntity
+import org.springframework.http.ResponseEntity.badRequest
+import org.springframework.http.ResponseEntity.ok
 import org.springframework.web.bind.annotation.*
-import org.springframework.web.reactive.function.BodyInserters.fromObject
-import org.springframework.web.reactive.function.server.ServerResponse
-import org.springframework.web.reactive.function.server.ServerResponse.badRequest
-import org.springframework.web.reactive.function.server.ServerResponse.ok
 import reactor.core.publisher.Mono
+import reactor.core.publisher.Mono.just
 import java.security.Principal
 
 /**
@@ -23,19 +23,19 @@ class ScriptController(private val scriptEngines: List<ScriptEngine>) {
     }
 
     @PostMapping("/{language}/test")
-    fun addConfig(@PathVariable language: String, @RequestBody body: Map<String, Any?>, principal: Principal): Mono<ServerResponse> {
+    fun addConfig(@PathVariable language: String, @RequestBody body: Map<String, Any?>, principal: Principal): Mono<ResponseEntity<Map<String, Any?>>> {
 
         log.info("Trying $language script for user ${principal.name}")
         val scriptLanguage: ScriptLanguage
         try {
             scriptLanguage = ScriptLanguage.valueOf(language.toUpperCase())
         } catch (ex: Exception) {
-            return badRequest().body(fromObject(mapOf("error" to "Language must be one of ${ScriptLanguage.values().joinToString { it.name.toLowerCase() }}")))
+            return just(badRequest().body(mapOf<String, Any?>("error" to "Language must be one of ${ScriptLanguage.values().joinToString { it.name.toLowerCase() }}")))
         }
 
         val scriptEngine = scriptEngines.find { it.isApplicable(scriptLanguage) }
         if (scriptEngine == null) {
-            return badRequest().body(fromObject(mapOf("error" to "No script engine available for language $language")))
+            return just(badRequest().body(mapOf<String, Any?>("error" to "No script engine available for language $language")))
         }
 
         val script = body["script"] as String
@@ -43,9 +43,9 @@ class ScriptController(private val scriptEngines: List<ScriptEngine>) {
         val data = body["data"] as Map<String, Any?>
         try {
             val result = scriptEngine.invoke(script, data)
-            return ok().body(fromObject(result))
+            return just(ok().body(result))
         } catch (ex: Exception) {
-            return badRequest().body(fromObject(mapOf("error" to ex.message)))
+            return just(badRequest().body(mapOf<String, Any?>("error" to ex.message)))
         }
     }
 }

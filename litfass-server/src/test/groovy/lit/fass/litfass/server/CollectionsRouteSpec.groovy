@@ -53,10 +53,9 @@ class CollectionsRouteSpec extends Specification implements PostgresSupport {
 
     def "/collections/{collection} POST endpoint"() {
         when: "requesting /collections/foo?param1=foo&param1=bar&param2=true"
-        def result = builder().baseUrl("http://localhost:${port}")
+        def result = builder().baseUrl("http://localhost:${port}/collections/foo?param1=foo&param1=bar&param2=true")
                 .build()
                 .post()
-                .uri("/collections/foo?param1=foo&param1=bar&param2=true")
                 .contentType(APPLICATION_JSON_UTF8)
                 .body(fromObject([id: "1", foo: "bar"]))
                 .exchange()
@@ -70,11 +69,10 @@ class CollectionsRouteSpec extends Specification implements PostgresSupport {
 
     def "/collections/{collection}/{id} GET endpoint"() {
         when: "requesting /collections/foo/1"
-        def result = builder().baseUrl("http://localhost:${port}")
+        def result = builder().baseUrl("http://localhost:${port}/collections/foo/1")
                 .filter(basicAuthentication("admin", "admin"))
                 .build()
                 .get()
-                .uri("/collections/foo/1")
                 .exchange()
                 .block()
         def resultBody = result.bodyToMono(Map).block()
