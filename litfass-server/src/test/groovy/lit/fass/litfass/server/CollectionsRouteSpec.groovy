@@ -1,56 +1,68 @@
 package lit.fass.litfass.server
 
-import groovy.json.JsonSlurper
+import lit.fass.litfass.server.config.ConfigService
 import lit.fass.litfass.server.helper.IntegrationTest
 import lit.fass.litfass.server.helper.LogCapture
 import lit.fass.litfass.server.helper.PostgresSupport
 import org.junit.Rule
 import org.junit.experimental.categories.Category
-import spock.lang.Ignore
-import spock.lang.Shared
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.web.server.LocalServerPort
+import org.springframework.core.io.ClassPathResource
+import org.springframework.test.context.ActiveProfiles
 import spock.lang.Specification
 import spock.lang.Stepwise
 
 import static java.util.concurrent.TimeUnit.SECONDS
+import static lit.fass.config.Profiles.POSTGRES
+import static lit.fass.config.Profiles.TEST
 import static org.awaitility.Awaitility.await
 import static org.awaitility.Awaitility.with
+import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT
+import static org.springframework.http.MediaType.APPLICATION_JSON_UTF8
+import static org.springframework.web.reactive.function.BodyInserters.fromObject
+import static org.springframework.web.reactive.function.client.ExchangeFilterFunctions.basicAuthentication
+import static org.springframework.web.reactive.function.client.WebClient.builder
 
 /**
  * @author Michael Mair
  */
-@Ignore
 @Category(IntegrationTest)
+@SpringBootTest(classes = ServerApplication, webEnvironment = RANDOM_PORT)
+@ActiveProfiles([TEST, POSTGRES])
 @Stepwise
 class CollectionsRouteSpec extends Specification implements PostgresSupport {
 
-    @Shared
-    def app
+    @LocalServerPort
+    int port
 
     @Rule
     LogCapture log = new LogCapture()
 
+    @Autowired
+    ConfigService configService
+
     def setupSpec() {
-        app = initializeApp([
-                "testing"                       : true,
-                "litfass.jdbc.poolSize"         : 2,
-                "litfass.config.collection.path": this.class.getResource("/foo.yml").file
-        ])
         dropTable("foo")
     }
 
-    def cleanupSpec() {
-        stopApp(app)
+    def setup() {
+        configService.readRecursively(new ClassPathResource("foo.yml").getFile())
     }
 
     def "/collections/{collection} POST endpoint"() {
         when: "requesting /collections/foo?param1=foo&param1=bar&param2=true"
-        def result = handleRequest(app, Post, "/collections/foo?param1=foo&param1=bar&param2=true", {
-            withBody(["id": "1", "foo": "bar"], it)
-        }).response
-
+        def result = builder().baseUrl("http://localhost:${port}")
+                .build()
+                .post()
+                .uri("/collections/foo?param1=foo&param1=bar&param2=true")
+                .contentType(APPLICATION_JSON_UTF8)
+                .body(fromObject([id: "1", foo: "bar"]))
+                .exchange()
+                .block()
         then: "status is OK"
-        result.status() == OK
-        result.content == null
+        result.statusCode().is2xxSuccessful()
         await().until { log.toString().contains("Saved collection foo") }
         and: "data is stored in database"
         with().pollDelay(3, SECONDS).await().until { selectAllFromTable("foo").size() == 1 }
@@ -58,11 +70,17 @@ class CollectionsRouteSpec extends Specification implements PostgresSupport {
 
     def "/collections/{collection}/{id} GET endpoint"() {
         when: "requesting /collections/foo/1"
-        def result = handleRequest(app, Get, "/collections/foo/1", { withBasicAuth("admin", "admin", it) }).response
-        def resultBody = new JsonSlurper().parseText(result.content)
-
+        def result = builder().baseUrl("http://localhost:${port}")
+                .filter(basicAuthentication("admin", "admin"))
+                .build()
+                .get()
+                .uri("/collections/foo/1")
+                .exchange()
+                .block()
+        def resultBody = result.bodyToMono(Map).block()
         then: "status is OK"
-        result.status() == OK
+        result.statusCode().is2xxSuccessful()
+        await().until { log.toString().contains("Getting collection data for foo with id 1 for user admin") }
         resultBody.id == "1"
         resultBody.foo == "bar"
         resultBody.param1 == "foo,bar"

@@ -1,9 +1,7 @@
 package lit.fass.config
 
-import lit.fass.config.Profiles.Companion.SECURITY
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.context.annotation.Profile
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity
 import org.springframework.security.config.web.server.ServerHttpSecurity
 import org.springframework.security.core.userdetails.MapReactiveUserDetailsService
@@ -15,18 +13,18 @@ import org.springframework.security.web.server.SecurityWebFilterChain
 
 @Configuration
 @EnableWebFluxSecurity
-@Profile(SECURITY)
 class SecurityConfiguration {
 
     @Bean
     fun securityWebFilterChain(http: ServerHttpSecurity): SecurityWebFilterChain {
-        return http.authorizeExchange()
-            .pathMatchers("/health").permitAll()
+        http
+            .csrf().disable()
+            .authorizeExchange()
             .pathMatchers("/collections/*").permitAll()
-            .anyExchange()
-            .authenticated()
+            .anyExchange().authenticated()
             .and()
-            .build()
+            .httpBasic()
+        return http.build()
     }
 
     @Bean

@@ -13,12 +13,14 @@ import java.time.ZoneOffset.UTC
  */
 @Service
 class CollectionRetentionService(
-    private val retentionCronExpression: String,
     private val collectionPersistenceServices: List<CollectionPersistenceService>
 ) : RetentionService {
+
     companion object {
         private val log = LoggerFactory.getLogger(this::class.java.enclosingClass)
     }
+
+    private var retentionCronExpression: String = "* * 0 * * ?"
 
     override fun clean(config: CollectionConfig) {
         val persistenceService = collectionPersistenceServices.find { it.isApplicable(config.datastore) }
@@ -30,6 +32,10 @@ class CollectionRetentionService(
         }
         val duration = Duration.parse(config.retention)
         persistenceService.deleteBefore(config.collection, now(UTC).minus(duration))
+    }
+
+    override fun setCronExpression(cron: String) {
+        retentionCronExpression = cron
     }
 
     override fun getCronExpression(): String {

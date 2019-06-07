@@ -27,7 +27,8 @@ class CollectionRetentionServiceTest extends Specification {
 
     def setup() {
         persistenceServiceMock = Mock()
-        collectionRetentionService = new CollectionRetentionService("* * * * * ?", [persistenceServiceMock])
+        collectionRetentionService = new CollectionRetentionService([persistenceServiceMock])
+        collectionRetentionService.cronExpression = "* * * * * ?"
     }
 
     def "clean calls persistence service"() {

@@ -4,12 +4,15 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.google.common.cache.CacheBuilder
+import lit.fass.litfass.server.config.ConfigProperties
 import lit.fass.litfass.server.config.ConfigService
 import lit.fass.litfass.server.config.yaml.model.CollectionConfig
 import lit.fass.litfass.server.persistence.CollectionConfigPersistenceService
 import lit.fass.litfass.server.schedule.SchedulerService
 import org.apache.commons.lang3.time.DurationFormatUtils.formatDurationHMS
 import org.slf4j.LoggerFactory
+import org.springframework.context.event.ContextRefreshedEvent
+import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Service
 import java.io.ByteArrayInputStream
 import java.io.File
@@ -23,7 +26,8 @@ import java.util.concurrent.Callable
 @Service
 class YamlConfigService(
     private val configPersistenceService: CollectionConfigPersistenceService,
-    private val schedulerService: SchedulerService
+    private val schedulerService: SchedulerService,
+    private val configProperties: ConfigProperties
 ) : ConfigService {
     companion object {
         private val log = LoggerFactory.getLogger(this::class.java.enclosingClass)
@@ -34,6 +38,15 @@ class YamlConfigService(
         .maximumSize(1024)
         .build<String, CollectionConfig>()
     private val yamlMapper = ObjectMapper(YAMLFactory()).apply { registerModule(KotlinModule()) }
+
+    @EventListener(ContextRefreshedEvent::class)
+    fun initializeConfigs() {
+        if (configProperties.collectionPath.isBlank()) {
+            log.info("Collection path not set. Skipping read from file system.")
+            return
+        }
+        readRecursively(File(configProperties.collectionPath))
+    }
 
     override fun readRecursively(file: File) {
         log.debug("Reading recursively ${file.absolutePath}")

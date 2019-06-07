@@ -1,5 +1,6 @@
 package lit.fass.litfass.server.config.yaml
 
+import lit.fass.litfass.server.config.ConfigProperties
 import lit.fass.litfass.server.config.yaml.model.CollectionConfig
 import lit.fass.litfass.server.helper.UnitTest
 import lit.fass.litfass.server.persistence.CollectionConfigPersistenceService
@@ -30,7 +31,7 @@ class YamlConfigServiceSpec extends Specification {
     def setup() {
         configPersistenceServiceMock = Mock()
         schedulerServiceMock = Mock()
-        yamlConfigService = new YamlConfigService(configPersistenceServiceMock, schedulerServiceMock)
+        yamlConfigService = new YamlConfigService(configPersistenceServiceMock, schedulerServiceMock, new ConfigProperties())
     }
 
     def "config file can be parsed"() {

@@ -10,6 +10,3 @@ class ServerApplication
 fun main(args: Array<String>) {
     runApplication<ServerApplication>(*args)
 }
-
-//todo: define api routes
-//todo: define authentication

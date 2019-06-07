@@ -1,9 +1,6 @@
 spring:
   banner:
     location: classpath:config/banner.txt
-  jackson:
-    serialization:
-      FAIL_ON_EMPTY_BEANS: false
 management:
   endpoint:
     health:

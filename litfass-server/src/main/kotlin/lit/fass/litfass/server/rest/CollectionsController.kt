@@ -5,15 +5,16 @@ import lit.fass.litfass.server.execution.ExecutionService
 import lit.fass.litfass.server.persistence.CollectionPersistenceService
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR
+import org.springframework.http.MediaType.APPLICATION_JSON_UTF8_VALUE
+import org.springframework.http.ResponseEntity
+import org.springframework.http.ResponseEntity.*
+import org.springframework.http.server.reactive.ServerHttpRequest
 import org.springframework.web.bind.annotation.*
-import org.springframework.web.reactive.function.BodyInserters.fromObject
-import org.springframework.web.reactive.function.server.ServerRequest
-import org.springframework.web.reactive.function.server.ServerResponse
-import org.springframework.web.reactive.function.server.ServerResponse.*
 import reactor.core.publisher.Mono
+import reactor.core.publisher.Mono.just
 import java.security.Principal
-import java.time.OffsetDateTime
-import java.time.ZoneOffset
+import java.time.OffsetDateTime.now
+import java.time.ZoneOffset.UTC
 
 /**
  * @author Michael Mair
@@ -30,26 +31,25 @@ class CollectionsController(
         private val log = LoggerFactory.getLogger(this::class.java.enclosingClass)
     }
 
-    @PostMapping("/{collection}")
+    @PostMapping("/{collection}", consumes = [APPLICATION_JSON_UTF8_VALUE])
     fun addCollection(
         @PathVariable collection: String,
         @RequestBody body: Map<String, Any?>,
-        request: ServerRequest
-    ): Mono<ServerResponse> {
+        request: ServerHttpRequest
+    ): Mono<ResponseEntity<Map<String, Any?>>> {
 
         if (collection.isBlank()) {
-            return badRequest()
-                .body(fromObject(mapOf("error" to "Collection must not be blank")))
+            return just(badRequest().body(mapOf<String, Any?>("error" to "Collection must not be blank")))
         }
 
-        val collectionHeaders = request.headers().asHttpHeaders().entries
+        val collectionHeaders = request.headers.entries
             .associateBy({ entry -> entry.key }, { entry -> entry.value.joinToString(",") })
         log.trace("Got headers $collectionHeaders for collection $collection")
-        val collectionMetaData = request.queryParams().entries
+        val collectionMetaData = request.queryParams.entries
             .associateBy({ entry -> entry.key }, { entry -> entry.value.joinToString(",") })
         log.trace("Got collection $collection and meta data $collectionMetaData")
 
-        val data = mutableMapOf<String, Any?>("timestamp" to OffsetDateTime.now(ZoneOffset.UTC))
+        val data = mutableMapOf<String, Any?>("timestamp" to now(UTC))
         data.putAll(collectionHeaders)
         data.putAll(collectionMetaData)
         data.putAll(body)
@@ -58,33 +58,38 @@ class CollectionsController(
             executionService.execute(configService.getConfig(collection), data)
         } catch (ex: Exception) {
             log.error("Exception during execution of collection $collection", ex)
-            return status(INTERNAL_SERVER_ERROR).body(fromObject(mapOf("error" to ex.message)))
+            return just(status(INTERNAL_SERVER_ERROR).body(mapOf<String, Any?>("error" to ex.message)))
         }
 
-        return ok().build()
+        return just(ok().build())
     }
 
     @GetMapping("/{collection}/{id}")
-    fun getCollection(@PathVariable collection: String, @PathVariable id: String, principal: Principal): Mono<ServerResponse> {
+    fun getCollection(@PathVariable collection: String, @PathVariable id: String, principal: Principal): Mono<ResponseEntity<Map<String, Any?>>> {
 
         if (collection.isBlank()) {
-            return badRequest()
-                .body(fromObject(mapOf("error" to "Collection must not be blank")))
+            return just(
+                badRequest()
+                    .body(mapOf<String, Any?>("error" to "Collection must not be blank"))
+            )
         }
         if (id.isBlank()) {
-            return badRequest()
-                .body(fromObject(mapOf("error" to "Id must not be blank")))
+            return just(
+                badRequest()
+                    .body(mapOf<String, Any?>("error" to "Id must not be blank"))
+            )
         }
-
 
         val config = configService.getConfig(collection)
         val persistenceService = persistenceServices.find { it.isApplicable(config.datastore) }
         if (persistenceService == null) {
-            return badRequest()
-                .body(fromObject(mapOf("error" to "Persistence service for ${config.datastore} not found")))
+            return just(
+                badRequest()
+                    .body(mapOf<String, Any?>("error" to "Persistence service for ${config.datastore} not found"))
+            )
         }
 
         log.debug("Getting collection data for $collection with id $id for user ${principal.name}")
-        return ok().body(fromObject(persistenceService.findCollectionData(collection, id)))
+        return just(ok().body(persistenceService.findCollectionData(collection, id)))
     }
 }
