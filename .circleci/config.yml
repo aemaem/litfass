@@ -24,7 +24,13 @@ jobs:
           command: mkdir -p build/circleci/test-results
       - run:
           name: "Build"
-          command: ./gradlew build --stacktrace
+          command: ./gradlew assemble --stacktrace
+      - run:
+          name: "Unit test"
+          command: ./gradlew unitTest --stacktrace
+      - run:
+          name: "Integration test"
+          command: ./gradlew unitTest --stacktrace
       - run:
           name: "Collect test results"
           when: always

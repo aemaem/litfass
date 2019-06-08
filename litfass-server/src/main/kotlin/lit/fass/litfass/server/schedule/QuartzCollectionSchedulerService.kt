@@ -10,12 +10,9 @@ import lit.fass.litfass.server.execution.ExecutionService
 import lit.fass.litfass.server.retention.RetentionService
 import lit.fass.litfass.server.schedule.model.QuartzCollectionJob
 import lit.fass.litfass.server.schedule.model.QuartzRetentionJob
+import org.quartz.*
 import org.quartz.CronScheduleBuilder.cronSchedule
-import org.quartz.CronTrigger
-import org.quartz.Job
 import org.quartz.JobBuilder.newJob
-import org.quartz.JobDataMap
-import org.quartz.JobDetail
 import org.quartz.TriggerBuilder.newTrigger
 import org.quartz.TriggerKey.triggerKey
 import org.quartz.impl.StdSchedulerFactory
@@ -43,9 +40,11 @@ class QuartzCollectionSchedulerService(
         private val cronDescriptor = CronDescriptor.instance()
     }
 
-    private var scheduler = StdSchedulerFactory.getDefaultScheduler()
+    private val scheduler: Scheduler
 
     init {
+        System.setProperty("org.quartz.threadPool.threadCount", "1")
+        scheduler = StdSchedulerFactory.getDefaultScheduler()
         scheduler.start()
     }
 

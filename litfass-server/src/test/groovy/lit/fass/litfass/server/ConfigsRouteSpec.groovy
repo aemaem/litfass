@@ -136,7 +136,7 @@ class ConfigsRouteSpec extends Specification {
                 .get()
                 .exchange()
                 .block()
-        def resultContent = result.bodyToMono(Map).block().body
+        def resultContent = result.bodyToMono(Map).block()
         then: "config is returned"
         result.statusCode().is2xxSuccessful()
         resultContent.collection == "foo"
