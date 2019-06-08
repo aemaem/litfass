@@ -3,17 +3,9 @@ apply plugin: "kotlin-spring"
 apply plugin: "groovy"
 apply plugin: "org.springframework.boot"
 apply plugin: "io.spring.dependency-management"
+apply plugin: "distribution"
 apply plugin: "com.bmuschko.docker-remote-api"
 apply plugin: "idea"
-
-springBoot {
-    buildInfo()
-    mainClassName = "lit.fass.litfass.server.ServerApplicationKt"
-}
-
-bootJar {
-    enabled = true
-}
 
 sourceSets {
     infra {
@@ -76,6 +68,55 @@ compileTestKotlin {
     }
 }
 
+springBoot {
+    buildInfo()
+    mainClassName = "lit.fass.litfass.server.ServerApplicationKt"
+}
+bootJar {
+    enabled = false
+}
+jar {
+    enabled = true
+    baseName = project.name
+    manifest {
+        attributes "Implementation-Title": "LITFASS"
+        attributes "Implementation-Version": version
+        attributes "Main-Class": "lit.fass.litfass.server.ServerApplicationKt"
+    }
+}
+task allJar(type: Jar) {
+    classifier "all"
+    manifest {
+        attributes "Implementation-Title": "LITFASS"
+        attributes "Implementation-Version": version
+        attributes "Main-Class": "lit.fass.litfass.server.ServerApplicationKt"
+    }
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
+assembleDist.dependsOn allJar
+
+distributions {
+    def runFile
+    doFirst {
+        runFile = File.createTempFile("run", ".sh")
+        runFile.write """#!/bin/sh\njava -XX:+UseG1GC -XX:+UseStringDeduplication -XX:+HeapDumpOnOutOfMemoryError -server -ea -classpath "./*:./lib/*" lit.fass.litfass.server.ServerApplicationKt"""
+        runFile.executable = true
+        runFile.deleteOnExit()
+    }
+    main {
+        contents {
+            from(runFile) {
+                rename { "run.sh" }
+            }
+            from jar
+            into("lib") {
+                from configurations.compile
+            }
+        }
+    }
+}
+
 docker {
     registryCredentials {
         username = gradle.dockerHubUsername
@@ -83,16 +124,18 @@ docker {
         email = gradle.dockerHubEmail
     }
 }
-
 task prepareImage(type: Copy) {
-    dependsOn bootJar
-    from "${buildDir}/libs"
-    include "${project.name}-${version}.jar"
+    dependsOn distZip
+    from zipTree(distZip.archivePath)
+    include "${project.name}-${version}/lib/*"
+    include "${project.name}-${version}/${project.name}-${version}.jar"
     from sourceSets.infra.allSource.srcDirs
     include "Dockerfile"
     into "${buildDir}/docker/"
     doLast {
-        ant.move file: "${buildDir}/docker/${project.name}-${version}.jar", tofile: "${buildDir}/docker/app.jar"
+        ant.move file: "${buildDir}/docker/${project.name}-${version}/lib/", todir: "${buildDir}/docker/"
+        ant.move file: "${buildDir}/docker/${project.name}-${version}/${project.name}-${version}.jar", tofile: "${buildDir}/docker/app.jar"
+        ant.delete dir: "${buildDir}/docker/${project.name}-${version}/", quiet: true
     }
 }
 task buildImage(type: com.bmuschko.gradle.docker.tasks.image.DockerBuildImage) {

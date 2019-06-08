@@ -2,6 +2,8 @@ FROM openjdk:11-jre-slim
 
 RUN mkdir /var/litfass
 
+VOLUME /var/litfass/ext
+
 WORKDIR /var/litfass
 
 ENV PORT=8080 \
@@ -9,6 +11,7 @@ ENV PORT=8080 \
 
 EXPOSE $PORT
 
-ADD ./app.jar app.jar
+ADD ./app.jar app.jar \
+ADD ./lib lib
 
-ENTRYPOINT java $JAVA_OPTS -jar -ea app.jar
+ENTRYPOINT java $JAVA_OPTS -server -ea -classpath "app.jar:lib/*:ext/*" lit.fass.litfass.server.ServerApplicationKt
