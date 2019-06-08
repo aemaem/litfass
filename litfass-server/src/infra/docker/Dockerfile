@@ -11,7 +11,7 @@ ENV PORT=8080 \
 
 EXPOSE $PORT
 
-ADD ./app.jar app.jar \
+ADD ./app.jar app.jar
 ADD ./lib lib
 
 ENTRYPOINT java $JAVA_OPTS -server -ea -classpath "app.jar:lib/*:ext/*" lit.fass.litfass.server.ServerApplicationKt
