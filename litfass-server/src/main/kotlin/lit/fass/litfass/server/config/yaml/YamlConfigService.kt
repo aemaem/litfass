@@ -41,10 +41,14 @@ class YamlConfigService(
 
     @EventListener(ContextRefreshedEvent::class)
     fun initializeConfigs() {
+        log.info("Reading collection configs from database.")
+        readConfigsFromDatabase()
+
         if (configProperties.collectionPath.isBlank()) {
             log.info("Collection path not set. Skipping read from file system.")
             return
         }
+        log.info("Reading collection configs from path ${configProperties.collectionPath}.")
         readRecursively(File(configProperties.collectionPath))
     }
 
