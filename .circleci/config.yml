@@ -30,11 +30,11 @@ jobs:
           command: ./gradlew unitTest --stacktrace
       - run:
           name: "Integration test"
-          command: ./gradlew unitTest --stacktrace
+          command: ./gradlew integrationTest --stacktrace
       - run:
           name: "Collect test results"
           when: always
-          command: find . -type f -regex ".*/build/test-results/test/.*xml" -exec cp {} build/circleci/test-results \;
+          command: find . -type f -regex ".*/build/test-results/*Test/.*xml" -exec cp {} build/circleci/test-results \;
       - save_cache:
           paths:
             - ~/.gradle

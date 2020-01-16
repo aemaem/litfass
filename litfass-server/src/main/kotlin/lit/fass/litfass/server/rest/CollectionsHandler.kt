@@ -5,6 +5,7 @@ import lit.fass.litfass.server.execution.ExecutionService
 import lit.fass.litfass.server.persistence.CollectionPersistenceService
 import org.slf4j.LoggerFactory
 import org.springframework.core.ParameterizedTypeReference
+import org.springframework.http.HttpMethod.GET
 import org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.BodyInserters.fromObject
@@ -43,11 +44,22 @@ class CollectionsHandler(
             .associateBy({ entry -> entry.key }, { entry -> entry.value.joinToString(",") })
         log.trace("Got collection $collection and meta data $collectionMetaData")
 
+        val data = mutableMapOf<String, Any?>("timestamp" to now(UTC))
+        data.putAll(collectionHeaders)
+        data.putAll(collectionMetaData)
+
+        if (request.method() == GET) {
+            try {
+                executionService.execute(configService.getConfig(collection), data)
+            } catch (ex: Exception) {
+                log.error("Exception during execution of collection $collection", ex)
+                return status(INTERNAL_SERVER_ERROR).body(fromObject(mapOf("error" to ex.message)))
+            }
+            return ok().build()
+        }
+
         return request.bodyToMono(object : ParameterizedTypeReference<Map<String, Any?>>() {})
             .flatMap {
-                val data = mutableMapOf<String, Any?>("timestamp" to now(UTC))
-                data.putAll(collectionHeaders)
-                data.putAll(collectionMetaData)
                 data.putAll(it)
                 return@flatMap just(data)
             }

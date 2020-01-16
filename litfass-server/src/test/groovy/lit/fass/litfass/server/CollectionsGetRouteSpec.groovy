@@ -32,7 +32,7 @@ import static org.springframework.web.reactive.function.client.WebClient.builder
 @SpringBootTest(classes = ServerApplication, webEnvironment = RANDOM_PORT)
 @ActiveProfiles([TEST, POSTGRES])
 @Stepwise
-class CollectionsRouteSpec extends Specification implements PostgresSupport {
+class CollectionsGetRouteSpec extends Specification implements PostgresSupport {
 
     @LocalServerPort
     int port
@@ -51,13 +51,12 @@ class CollectionsRouteSpec extends Specification implements PostgresSupport {
         configService.readRecursively(new ClassPathResource("foo.yml").getFile())
     }
 
-    def "/collections/{collection} POST endpoint"() {
+
+    def "/collections/{collection} GET endpoint"() {
         when: "requesting /collections/foo?param1=foo&param1=bar&param2=true"
-        def result = builder().baseUrl("http://localhost:${port}/collections/foo?param1=foo&param1=bar&param2=true")
+        def result = builder().baseUrl("http://localhost:${port}/collections/foo?id=1&foo=bar&param1=foo&param1=bar&param2=true")
                 .build()
-                .post()
-                .contentType(APPLICATION_JSON_UTF8)
-                .body(fromObject([id: "1", foo: "bar"]))
+                .get()
                 .exchange()
                 .block()
         then: "status is OK"

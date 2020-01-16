@@ -74,6 +74,7 @@ class ServerConfiguration {
     @Bean
     fun collectionsRouter(handler: CollectionsHandler): RouterFunction<ServerResponse> = route()
         .POST("/collections/{collection}", accept(APPLICATION_JSON_UTF8), HandlerFunction(handler::addCollection))
+        .GET("/collections/{collection}", HandlerFunction(handler::addCollection))
         .GET("/collections/{collection}/{id}", HandlerFunction(handler::getCollection))
         .build()
 
