@@ -2,6 +2,7 @@ package lit.fass.litfass.server.http
 
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.exc.MismatchedInputException
 import org.apache.http.HttpHeaders.ACCEPT
 import org.apache.http.HttpHeaders.AUTHORIZATION
 import org.apache.http.client.methods.CloseableHttpResponse
@@ -42,12 +43,31 @@ class CollectionHttpService(private val jsonMapper: ObjectMapper) : HttpService 
         var response: CloseableHttpResponse? = null
         try {
             response = create().build().execute(request)
-            return jsonMapper.readValue(toByteArray(response.entity), object : TypeReference<Map<String, Any?>>() {})
+            return parse(toByteArray(response.entity))
         } catch (ex: Exception) {
             log.error("Exception occurred for HTTP request $url: ${ex.message}", ex)
             throw ex
         } finally {
             response?.close()
+        }
+    }
+
+    private fun parse(data: ByteArray): Map<String, Any?> {
+        try {
+            return jsonMapper.readValue(data, object : TypeReference<Map<String, Any?>>() {})
+        } catch (ex: MismatchedInputException) {
+            log.info("Unable to parse to map; trying to parse to list")
+            if (log.isDebugEnabled) ex.printStackTrace()
+            try {
+                val parsedValue = jsonMapper.readValue<List<Map<String, Any?>>>(
+                    data,
+                    object : TypeReference<List<Map<String, Any?>>?>() {}
+                )
+                return mapOf("http" to parsedValue)
+            } catch (e: Exception) {
+                log.error("Unable to parse response: ${e.message}", e)
+                throw e
+            }
         }
     }
 
