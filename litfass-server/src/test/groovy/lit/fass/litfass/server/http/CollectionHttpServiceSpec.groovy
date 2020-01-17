@@ -14,7 +14,7 @@ class CollectionHttpServiceSpec extends Specification {
     def "test"() {
         expect:
         def result = new CollectionHttpService(new ServerConfiguration().jsonMapper())
-                .get("https://circleci.com/api/v1.1/project/github/leftshiftone/keios-protocol/125", "553f9c18552c7314bdfdc7740b7febe05e0ea5a9", "")
+                .get("https://circleci.com/api/v1.1/project/github/leftshiftone/keios-protocol/125", [:], "553f9c18552c7314bdfdc7740b7febe05e0ea5a9", "")
         result
     }
 }

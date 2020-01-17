@@ -22,11 +22,22 @@ class CollectionHttpService(private val jsonMapper: ObjectMapper) : HttpService 
         private val log = LoggerFactory.getLogger(this::class.java.enclosingClass)
     }
 
-    override fun get(url: String, username: String?, password: String?): Map<String, Any?> {
+    override fun get(
+        url: String,
+        headers: Map<String, String?>,
+        username: String?,
+        password: String?
+    ): Map<String, Any?> {
         log.info("Executing http get request on $url")
         val request = HttpGet(url)
         request.addHeader(ACCEPT, APPLICATION_JSON_UTF8_VALUE)
-        request.addHeader(AUTHORIZATION, "Basic ${base64Encode("$username:$password")}")
+        if (!username.isNullOrBlank()) {
+            request.addHeader(AUTHORIZATION, "Basic ${base64Encode("$username:$password")}")
+        }
+        headers.entries.forEach { header ->
+            log.debug("Adding header with name ${header.key} and value ${header.value}")
+            request.addHeader(header.key, header.value)
+        }
 
         var response: CloseableHttpResponse? = null
         try {

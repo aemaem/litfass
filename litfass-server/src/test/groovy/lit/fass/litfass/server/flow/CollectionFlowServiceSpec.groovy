@@ -64,14 +64,14 @@ class CollectionFlowServiceSpec extends Specification {
                 bar      : true
         ]
         def config = new CollectionConfig("foo", null, null, POSTGRES, [new CollectionFlowConfig(null, null, [:], [
-                new CollectionFlowStepHttpConfig(null, "http://localhost/\${foo}", "admin", "admin")
+                new CollectionFlowStepHttpConfig(null, "http://localhost/\${foo}", null, "admin", "admin")
         ])])
 
         when: "flow is executed"
         def result = collectionFlowService.execute(data, config)
 
         then: "data is returned"
-        1 * httpServiceMock.get("http://localhost/bar", "admin", "admin") >> [some: "thing"]
+        1 * httpServiceMock.get("http://localhost/bar", _, "admin", "admin") >> [some: "thing"]
         result.timestamp == "0000-01-01T00:00:00Z"
         result.foo == "bar"
         result.bar == true

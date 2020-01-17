@@ -43,6 +43,9 @@ class CollectionFlowService(
             is CollectionFlowStepHttpConfig -> {
                 val httpResult = httpService.get(
                     replaceVariables(flowStepConfig.url, data),
+                    flowStepConfig.headers?.map {
+                        it.entries.first().key to replaceVariables(it.entries.first().value ?: "", data)
+                    }?.toMap() ?: emptyMap(),
                     replaceVariables(flowStepConfig.username ?: "", data),
                     replaceVariables(flowStepConfig.password ?: "", data)
                 )
