@@ -44,6 +44,12 @@ class ElasticsearchPersistenceService(
         save(indexRequest)
     }
 
+    override fun saveCollection(collection: String, data: Collection<Map<String, Any?>>) {
+        data.forEach { entry ->
+            saveCollection(collection, entry, entry["id"])
+        }
+    }
+
     override fun findCollectionData(collection: String, id: String): Map<String, Any?> {
         throw UnsupportedOperationException("Elasticsearch find collection data not yet supported")
     }

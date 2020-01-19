@@ -1,0 +1,12 @@
+collection: bar
+flows:
+  - flow:
+      steps:
+        - script:
+            description: "Transform something"
+            language: groovy
+            code: |
+              [
+                [id: "1", foo: binding.data, bar: true],
+                [id: "2", foo: [blub:"servus"], bar: false]
+              ]

@@ -22,7 +22,7 @@ class QuartzCollectionJob : Job {
         val collectionConfig = context.mergedJobDataMap["collectionConfig"] as CollectionConfig
         executionService.execute(
             collectionConfig,
-            mapOf<String, Any?>("timestamp" to OffsetDateTime.now(ZoneOffset.UTC))
+            listOf(mapOf<String, Any?>("timestamp" to OffsetDateTime.now(ZoneOffset.UTC)))
         )
         log.trace("Executed collection job ${collectionConfig.collection}")
     }

@@ -22,6 +22,11 @@ trait PostgresSupport {
                 .execute()
     }
 
+    void clearTable(String tableName) {
+        jooq.delete(table(tableName))
+                .execute()
+    }
+
     Result<Record> selectAllFromTable(String tableName) {
         return jooq.select()
                 .from(table(tableName))

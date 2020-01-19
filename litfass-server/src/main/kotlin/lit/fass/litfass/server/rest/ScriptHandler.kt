@@ -11,6 +11,7 @@ import org.springframework.web.reactive.function.server.ServerResponse
 import org.springframework.web.reactive.function.server.ServerResponse.badRequest
 import org.springframework.web.reactive.function.server.ServerResponse.ok
 import reactor.core.publisher.Mono
+import java.util.Collections.singletonList
 
 /**
  * @author Michael Mair
@@ -43,7 +44,7 @@ class ScriptHandler(private val scriptEngines: List<ScriptEngine>) {
                 @Suppress("UNCHECKED_CAST")
                 val data = body["data"] as Map<String, Any?>
                 try {
-                    val result = scriptEngine.invoke(script, data)
+                    val result = scriptEngine.invoke(script, singletonList(data))
                     ok().body(fromObject(result))
                 } catch (ex: Exception) {
                     badRequest().body(fromObject(mapOf("error" to ex.message)))

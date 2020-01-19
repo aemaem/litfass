@@ -52,11 +52,12 @@ class ScriptRouteSpec extends Specification {
                 ]))
                 .exchange()
                 .block()
-        def resultContent = result.bodyToMono(Map).block()
+        def resultContent = result.bodyToMono(List).block()
 
         then: "result is returned"
         result.statusCode().is2xxSuccessful()
-        resultContent.foo == "bar"
-        resultContent.bar == true
+        resultContent.size() == 1
+        resultContent.first().foo == "bar"
+        resultContent.first().bar == true
     }
 }

@@ -31,7 +31,7 @@ class CollectionFlowServiceSpec extends Specification {
         httpServiceMock = Mock()
         scriptEngineMock = Mock()
         scriptEngineMock.isApplicable(KOTLIN) >> true
-        scriptEngineMock.invoke("""bindings["data"]""", _ as Map) >> { args -> return args[1] }
+        scriptEngineMock.invoke("""bindings["data"]""", _ as Collection) >> { args -> return args[1] }
         collectionFlowService = new CollectionFlowService(httpServiceMock, [scriptEngineMock])
     }
 
@@ -47,12 +47,12 @@ class CollectionFlowServiceSpec extends Specification {
         ])])
 
         when: "flow is executed"
-        def result = collectionFlowService.execute(data, config)
+        def result = collectionFlowService.execute([data], config)
 
         then: "data is returned"
-        result.timestamp == "0000-01-01T00:00:00Z"
-        result.foo == "bar"
-        result.bar == true
+        result.first().timestamp == "0000-01-01T00:00:00Z"
+        result.first().foo == "bar"
+        result.first().bar == true
         0 * httpServiceMock._
     }
 
@@ -68,14 +68,40 @@ class CollectionFlowServiceSpec extends Specification {
         ])])
 
         when: "flow is executed"
+        def result = collectionFlowService.execute([data], config)
+
+        then: "data is returned"
+        1 * httpServiceMock.get("http://localhost/bar", _, "admin", "admin") >> [some: "thing"]
+        result.first().timestamp == "0000-01-01T00:00:00Z"
+        result.first().foo == "bar"
+        result.first().bar == true
+        result.first().some == "thing"
+    }
+
+    def "list of data is requested with http and script and returned according to flow config"() {
+        given: "some data and a config"
+        def data = [
+                [timestamp: "0000-01-01T00:00:00Z", foo: "bar", bar: true],
+                [timestamp: "0000-01-02T00:00:00Z", foo: null, bar: false]
+        ]
+        def config = new CollectionConfig("foo", null, null, POSTGRES, [new CollectionFlowConfig(null, null, [:], [
+                new CollectionFlowStepHttpConfig(null, "http://localhost/\${foo}", null, "admin", "admin"),
+                new CollectionFlowStepScriptConfig(null, KOTLIN, """bindings["data"]""")
+        ])])
+
+        when: "flow is executed"
         def result = collectionFlowService.execute(data, config)
 
         then: "data is returned"
         1 * httpServiceMock.get("http://localhost/bar", _, "admin", "admin") >> [some: "thing"]
-        result.timestamp == "0000-01-01T00:00:00Z"
-        result.foo == "bar"
-        result.bar == true
-        result.some == "thing"
+        result.size() == 3
+        result.first().timestamp == "0000-01-01T00:00:00Z"
+        result.first().foo == "bar"
+        result.first().bar == true
+        result[1].timestamp == "0000-01-02T00:00:00Z"
+        result[1].foo == null
+        result[1].bar == false
+        result.last().some == "thing"
     }
 
     @Unroll
@@ -100,7 +126,7 @@ class CollectionFlowServiceSpec extends Specification {
     @Unroll
     def "variable replacement for data #data results in #expected"() {
         expect:
-        collectionFlowService.replaceVariables(string, data) == expected
+        collectionFlowService.replaceVariables(string, [data]) == expected
 
         where:
         string                                       | data                 || expected

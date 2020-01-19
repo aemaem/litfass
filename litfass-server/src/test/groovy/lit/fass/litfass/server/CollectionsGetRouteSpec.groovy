@@ -20,8 +20,6 @@ import static lit.fass.config.Profiles.TEST
 import static org.awaitility.Awaitility.await
 import static org.awaitility.Awaitility.with
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT
-import static org.springframework.http.MediaType.APPLICATION_JSON_UTF8
-import static org.springframework.web.reactive.function.BodyInserters.fromObject
 import static org.springframework.web.reactive.function.client.ExchangeFilterFunctions.basicAuthentication
 import static org.springframework.web.reactive.function.client.WebClient.builder
 
@@ -44,31 +42,31 @@ class CollectionsGetRouteSpec extends Specification implements PostgresSupport {
     ConfigService configService
 
     def setupSpec() {
-        dropTable("foo")
+        dropTable("bar")
     }
 
     def setup() {
-        configService.readRecursively(new ClassPathResource("foo.yml").getFile())
+        configService.readRecursively(new ClassPathResource("bar.yml").getFile())
     }
 
 
     def "/collections/{collection} GET endpoint"() {
-        when: "requesting /collections/foo?param1=foo&param1=bar&param2=true"
-        def result = builder().baseUrl("http://localhost:${port}/collections/foo?id=1&foo=bar&param1=foo&param1=bar&param2=true")
+        when: "requesting /collections/bar?param1=foo&param1=bar&param2=true"
+        def result = builder().baseUrl("http://localhost:${port}/collections/bar?foo=bar&param1=foo&param1=bar&param2=true")
                 .build()
                 .get()
                 .exchange()
                 .block()
         then: "status is OK"
         result.statusCode().is2xxSuccessful()
-        await().until { log.toString().contains("Saved collection foo") }
+        await().until { log.toString().contains("Saved collection bar") }
         and: "data is stored in database"
-        with().pollDelay(3, SECONDS).await().until { selectAllFromTable("foo").size() == 1 }
+        with().pollDelay(3, SECONDS).await().until { selectAllFromTable("bar").size() == 2 }
     }
 
     def "/collections/{collection}/{id} GET endpoint"() {
-        when: "requesting /collections/foo/1"
-        def result = builder().baseUrl("http://localhost:${port}/collections/foo/1")
+        when: "requesting /collections/bar/1"
+        def result = builder().baseUrl("http://localhost:${port}/collections/bar/1")
                 .filter(basicAuthentication("admin", "admin"))
                 .build()
                 .get()
@@ -77,11 +75,29 @@ class CollectionsGetRouteSpec extends Specification implements PostgresSupport {
         def resultBody = result.bodyToMono(Map).block()
         then: "status is OK"
         result.statusCode().is2xxSuccessful()
-        await().until { log.toString().contains("Getting collection data for foo with id 1 for user admin") }
+        await().until { log.toString().contains("Getting collection data for bar with id 1 for user admin") }
         resultBody.id == "1"
-        resultBody.foo == "bar"
-        resultBody.param1 == "foo,bar"
-        resultBody.param2 == "true"
-        resultBody.timestamp
+        resultBody.bar == true
+        resultBody.foo.foo == "bar"
+        resultBody.foo.param1 == "foo,bar"
+        resultBody.foo.param2 == "true"
+        resultBody.foo.timestamp
+    }
+
+    def "/collections/{collection}/{id} GET endpoint for second entry"() {
+        when: "requesting /collections/bar/2"
+        def result = builder().baseUrl("http://localhost:${port}/collections/bar/2")
+                .filter(basicAuthentication("admin", "admin"))
+                .build()
+                .get()
+                .exchange()
+                .block()
+        def resultBody = result.bodyToMono(Map).block()
+        then: "status is OK"
+        result.statusCode().is2xxSuccessful()
+        await().until { log.toString().contains("Getting collection data for bar with id 2 for user admin") }
+        resultBody.id == "2"
+        resultBody.bar == false
+        resultBody.foo.blub == "servus"
     }
 }

@@ -70,6 +70,12 @@ class PostgresPersistenceService(private val dataSource: JdbcDataSource, private
         log.debug("Saved collection $collection")
     }
 
+    override fun saveCollection(collection: String, data: Collection<Map<String, Any?>>) {
+        data.forEach { entry ->
+            saveCollection(collection, entry, entry["id"])
+        }
+    }
+
     override fun findCollectionData(collection: String, id: String): Map<String, Any?> {
         val found = jooq.select()
             .from(table(collection))

@@ -50,7 +50,7 @@ class CollectionsHandler(
 
         if (request.method() == GET) {
             try {
-                executionService.execute(configService.getConfig(collection), data)
+                executionService.execute(configService.getConfig(collection), listOf(data))
             } catch (ex: Exception) {
                 log.error("Exception during execution of collection $collection", ex)
                 return status(INTERNAL_SERVER_ERROR).body(fromObject(mapOf("error" to ex.message)))
@@ -65,7 +65,7 @@ class CollectionsHandler(
             }
             .flatMap {
                 try {
-                    executionService.execute(configService.getConfig(collection), it)
+                    executionService.execute(configService.getConfig(collection), listOf(it))
                 } catch (ex: Exception) {
                     log.error("Exception during execution of collection $collection", ex)
                     return@flatMap status(INTERNAL_SERVER_ERROR).body(fromObject(mapOf("error" to ex.message)))

@@ -7,5 +7,5 @@ import lit.fass.litfass.server.config.yaml.model.CollectionConfig
  */
 interface FlowService {
 
-    fun execute(data: Map<String, Any?>, config: CollectionConfig): Map<String, Any?>
+    fun execute(data: Collection<Map<String, Any?>>, config: CollectionConfig): Collection<Map<String, Any?>>
 }

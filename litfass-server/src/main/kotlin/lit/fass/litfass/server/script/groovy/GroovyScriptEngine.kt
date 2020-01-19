@@ -45,18 +45,29 @@ class GroovyScriptEngine : ScriptEngine {
         return lang == language
     }
 
-    override fun invoke(script: String, data: Map<String, Any?>): Map<String, Any?> {
+    override fun invoke(script: String, data: Collection<Map<String, Any?>>): Collection<Map<String, Any?>> {
         log.trace("Invoking script:\n$script\nwith data \n$data")
-        var result: Map<String, Any?> = emptyMap()
+        var result: Collection<Map<String, Any?>> = listOf(emptyMap())
         val elapsedTime = measureTimeMillis {
             GroovyClassLoader(URLClassLoader(classPath.map { URL("file:$it") }.toTypedArray())).use { classLoader ->
                 result = with(ScriptEngineManager(classLoader).getEngineByName(lang.name.toLowerCase())) {
-                    @Suppress("UNCHECKED_CAST")
-                    eval(script, createBindings().apply {
+                    val evalResult = eval(script, createBindings().apply {
                         put("log", scriptLog)
                         put("timestampFormatter", scriptTimestampFormatter)
-                        put("data", data)
-                    }) as Map<String, Any?>
+                        if (data.size == 1) {
+                            put("data", data.first())
+                        } else {
+                            put("data", data)
+                        }
+                    })
+
+                    if (evalResult is Collection<*>) {
+                        @Suppress("UNCHECKED_CAST")
+                        evalResult as Collection<Map<String, Any?>>
+                    } else {
+                        @Suppress("UNCHECKED_CAST")
+                        listOf(evalResult as Map<String, Any?>)
+                    }
                 }
             }
         }

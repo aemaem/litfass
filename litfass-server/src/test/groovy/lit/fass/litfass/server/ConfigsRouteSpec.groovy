@@ -49,7 +49,7 @@ class ConfigsRouteSpec extends Specification {
 
     def "/configs POST endpoint"() {
         when: "requesting /configs"
-        def result = builder().baseUrl("http://localhost:${port}/configs")
+        def result1 = builder().baseUrl("http://localhost:${port}/configs")
                 .filter(basicAuthentication("admin", "admin"))
                 .build()
                 .post()
@@ -66,8 +66,27 @@ class ConfigsRouteSpec extends Specification {
                 """.stripIndent()))
                 .exchange()
                 .block()
+        and:
+        def result2 = builder().baseUrl("http://localhost:${port}/configs")
+                .filter(basicAuthentication("admin", "admin"))
+                .build()
+                .post()
+                .contentType(TEXT_PLAIN)
+                .body(fromObject("""
+                collection: bar
+                flows:
+                  - flow:
+                      steps:
+                        - script:
+                            description: "Transform something"
+                            language: kotlin
+                            code: println("bar")
+                """.stripIndent()))
+                .exchange()
+                .block()
         then: "configs are created"
-        result.statusCode().is2xxSuccessful()
+        result1.statusCode().is2xxSuccessful()
+        result2.statusCode().is2xxSuccessful()
     }
 
     def "/configs POST endpoint schedules config"() {
@@ -123,9 +142,11 @@ class ConfigsRouteSpec extends Specification {
         def resultContent = result.bodyToMono(Collection).block()
         then: "configs are returned"
         result.statusCode().is2xxSuccessful()
-        resultContent.size() == 1
+        resultContent.size() == 2
         resultContent[0].collection == "foo"
         resultContent[0].flows.size() == 1
+        resultContent[1].collection == "bar"
+        resultContent[1].flows.size() == 1
     }
 
     def "/configs/{collection} GET endpoint"() {
@@ -145,13 +166,21 @@ class ConfigsRouteSpec extends Specification {
 
     def "/configs/{collection} DELETE endpoint"() {
         when: "requesting /configs/{collection}"
-        def result = builder().baseUrl("http://localhost:${port}/configs/foo")
+        def result1 = builder().baseUrl("http://localhost:${port}/configs/foo")
+                .filter(basicAuthentication("admin", "admin"))
+                .build()
+                .delete()
+                .exchange()
+                .block()
+        and:
+        def result2 = builder().baseUrl("http://localhost:${port}/configs/bar")
                 .filter(basicAuthentication("admin", "admin"))
                 .build()
                 .delete()
                 .exchange()
                 .block()
         then: "response is successful"
-        result.statusCode().is2xxSuccessful()
+        result1.statusCode().is2xxSuccessful()
+        result2.statusCode().is2xxSuccessful()
     }
 }
