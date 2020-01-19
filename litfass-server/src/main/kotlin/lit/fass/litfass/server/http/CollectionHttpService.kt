@@ -56,7 +56,7 @@ class CollectionHttpService(private val jsonMapper: ObjectMapper) : HttpService 
         try {
             return jsonMapper.readValue(data, object : TypeReference<Map<String, Any?>>() {})
         } catch (ex: MismatchedInputException) {
-            log.info("Unable to parse to map; trying to parse to list")
+            log.debug("Unable to parse to map; trying to parse to list")
             if (log.isDebugEnabled) ex.printStackTrace()
             try {
                 val parsedValue = jsonMapper.readValue<List<Map<String, Any?>>>(
