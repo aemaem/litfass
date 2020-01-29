@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.exc.MismatchedInputException
 import org.apache.http.HttpHeaders.ACCEPT
 import org.apache.http.HttpHeaders.AUTHORIZATION
+import org.apache.http.client.config.CookieSpecs.DEFAULT
+import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.methods.CloseableHttpResponse
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.client.HttpClientBuilder.create
@@ -42,7 +44,11 @@ class CollectionHttpService(private val jsonMapper: ObjectMapper) : HttpService 
 
         var response: CloseableHttpResponse? = null
         try {
-            response = create().build().execute(request)
+            response = create()
+                .setDefaultRequestConfig(
+                    RequestConfig.custom().setCookieSpec(DEFAULT).build()
+                )
+                .build().execute(request)
             return parse(toByteArray(response.entity))
         } catch (ex: Exception) {
             log.error("Exception occurred for HTTP request $url: ${ex.message}", ex)
