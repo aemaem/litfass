@@ -18,6 +18,13 @@ class CollectionHttpServiceSpec extends Specification {
         result
     }
 
+    def "test with headers"() {
+        expect:
+        def result = new CollectionHttpService(new ServerConfiguration().jsonMapper())
+                .get("https://circleci.com/api/v1.1/project/github/leftshiftone/keios-protocol/125", ["X-foo": "bar"], "553f9c18552c7314bdfdc7740b7febe05e0ea5a9", "")
+        result["requestHeaders"] == ["X-foo": "bar"]
+    }
+
     def "response can be parsed for map"() {
         given:
         def response = '{"foo": "bar","email": "foo@bar"}'.bytes

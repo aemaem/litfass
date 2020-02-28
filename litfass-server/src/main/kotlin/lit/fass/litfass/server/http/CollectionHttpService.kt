@@ -49,7 +49,8 @@ class CollectionHttpService(private val jsonMapper: ObjectMapper) : HttpService 
                     RequestConfig.custom().setCookieSpec(DEFAULT).build()
                 )
                 .build().execute(request)
-            return parse(toByteArray(response.entity))
+            val data = parse(toByteArray(response.entity))
+            return data + mapOf("requestHeaders" to headers.entries.map { it.key to it.value }.toMap())
         } catch (ex: Exception) {
             log.error("Exception occurred for HTTP request $url: ${ex.message}", ex)
             throw ex
