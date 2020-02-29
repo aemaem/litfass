@@ -8,10 +8,10 @@ jobs:
           POSTGRES_USER: "admin"
           POSTGRES_PASSWORD: "admin"
           POSTGRES_DB: litfass
-      - image: elasticsearch:6.5.1
-        environment:
-          ES_JAVA_OPTS: "-Xmx256m -Xms256m"
-          "discovery.type": "single-node"
+      #- image: elasticsearch:6.5.1
+      #  environment:
+      #    ES_JAVA_OPTS: "-Xmx256m -Xms256m"
+      #    "discovery.type": "single-node"
     environment:
       TZ: "/usr/share/zoneinfo/Europe/Vienna"
       GRADLE_OPTS: '-Xmx128m -Dorg.gradle.jvmargs="-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:+HeapDumpOnOutOfMemoryError"'
@@ -24,11 +24,17 @@ jobs:
           command: mkdir -p build/circleci/test-results
       - run:
           name: "Build"
-          command: ./gradlew build --stacktrace
+          command: ./gradlew assemble --stacktrace
+      - run:
+          name: "Unit test"
+          command: ./gradlew unitTest --stacktrace
+      - run:
+          name: "Integration test"
+          command: ./gradlew integrationTest --stacktrace
       - run:
           name: "Collect test results"
           when: always
-          command: find . -type f -regex ".*/build/test-results/test/.*xml" -exec cp {} build/circleci/test-results \;
+          command: find . -type f -regex ".*/build/test-results/*Test/.*xml" -exec cp {} build/circleci/test-results \;
       - save_cache:
           paths:
             - ~/.gradle
@@ -43,10 +49,10 @@ jobs:
           POSTGRES_USER: "admin"
           POSTGRES_PASSWORD: "admin"
           POSTGRES_DB: litfass
-      - image: elasticsearch:6.5.1
-        environment:
-          ES_JAVA_OPTS: "-Xmx256m -Xms256m"
-          "discovery.type": "single-node"
+      #- image: elasticsearch:6.5.1
+      #  environment:
+      #    ES_JAVA_OPTS: "-Xmx256m -Xms256m"
+      #    "discovery.type": "single-node"
       - image: docker:stable-git
     environment:
       TZ: "/usr/share/zoneinfo/Europe/Vienna"

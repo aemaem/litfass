@@ -1,5 +1,6 @@
 package lit.fass.litfass.server.config.yaml
 
+import lit.fass.litfass.server.config.ConfigProperties
 import lit.fass.litfass.server.config.yaml.model.CollectionConfig
 import lit.fass.litfass.server.helper.UnitTest
 import lit.fass.litfass.server.persistence.CollectionConfigPersistenceService
@@ -30,7 +31,7 @@ class YamlConfigServiceSpec extends Specification {
     def setup() {
         configPersistenceServiceMock = Mock()
         schedulerServiceMock = Mock()
-        yamlConfigService = new YamlConfigService(configPersistenceServiceMock, schedulerServiceMock)
+        yamlConfigService = new YamlConfigService(configPersistenceServiceMock, schedulerServiceMock, new ConfigProperties())
     }
 
     def "config file can be parsed"() {
@@ -59,6 +60,9 @@ class YamlConfigServiceSpec extends Specification {
         result.flows[0].steps[0].code == """println("foo")"""
         result.flows[0].steps[1].description == null
         result.flows[0].steps[1].url == "https://some.url/foo?bar=true"
+        result.flows[0].steps[1].headers.size() == 1
+        result.flows[0].steps[1].headers[0].name == "foo"
+        result.flows[0].steps[1].headers[0].value == "bar"
         result.flows[0].steps[1].username == "user"
         result.flows[0].steps[1].password == "secret"
         result.flows[0].steps[2].description == null

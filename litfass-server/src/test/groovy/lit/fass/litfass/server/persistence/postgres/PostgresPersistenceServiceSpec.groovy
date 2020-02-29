@@ -39,18 +39,30 @@ class PostgresPersistenceServiceSpec extends Specification implements PostgresSu
     def "collection and data is saved"() {
         given: "a collection and data"
         def collection = "foo"
-        def data = [foo: "bar", bar: true]
+        def data = [
+                [foo: "bar", bar: true],
+                [foo: "blub", bar: false],
+                [(ID_KEY): "1", foo: 42, bar: true]
+        ]
 
         when: "saved is called"
-        postgresPersistenceService.saveCollection(collection, data, null)
+        postgresPersistenceService.saveCollection(collection, data)
         def result = selectAllFromTable(collection)
 
         then: "data is stored"
-        result.size() == 1
+        result.size() == 3
         result.getValues("id", String)[0] ==~ /[a-zA-Z0-9].+/
         result.getValues("data", String)[0] == '{"bar": true, "foo": "bar"}'
         result.getValues("created", OffsetDateTime)[0]
         result.getValues("updated", OffsetDateTime)[0]
+        result.getValues("id", String)[1] ==~ /[a-zA-Z0-9].+/
+        result.getValues("data", String)[1] == '{"bar": false, "foo": "blub"}'
+        result.getValues("created", OffsetDateTime)[1]
+        result.getValues("updated", OffsetDateTime)[1]
+        result.getValues("id", String)[2] == "1"
+        result.getValues("data", String)[2] == '{"id": "1", "bar": true, "foo": 42}'
+        result.getValues("created", OffsetDateTime)[2]
+        result.getValues("updated", OffsetDateTime)[2]
         and: "no exception is thrown"
         noExceptionThrown()
     }

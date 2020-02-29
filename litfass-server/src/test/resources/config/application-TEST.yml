@@ -1,0 +1,10 @@
+litfass:
+  security:
+    users:
+      admin: admin
+  jdbc:
+    url: jdbc:postgresql://localhost:5432
+    database: litfass
+    username: admin
+    password: admin
+    poolSize: 1

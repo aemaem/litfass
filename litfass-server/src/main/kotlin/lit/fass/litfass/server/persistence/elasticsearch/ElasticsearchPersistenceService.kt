@@ -1,9 +1,9 @@
 package lit.fass.litfass.server.persistence.elasticsearch
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import lit.fass.config.Profiles.Companion.ELASTICSEARCH
 import lit.fass.litfass.server.persistence.CollectionPersistenceService
 import lit.fass.litfass.server.persistence.Datastore
-import lit.fass.litfass.server.persistence.Datastore.ELASTICSEARCH
 import lit.fass.litfass.server.persistence.PersistenceException
 import org.elasticsearch.action.ActionListener
 import org.elasticsearch.action.index.IndexRequest
@@ -12,11 +12,15 @@ import org.elasticsearch.client.RequestOptions.DEFAULT
 import org.elasticsearch.client.RestHighLevelClient
 import org.elasticsearch.common.xcontent.XContentType.JSON
 import org.slf4j.LoggerFactory
+import org.springframework.context.annotation.Profile
+import org.springframework.stereotype.Service
 import java.time.OffsetDateTime
 
 /**
  * @author Michael Mair
  */
+@Service
+@Profile(ELASTICSEARCH)
 class ElasticsearchPersistenceService(
     private val elasticsearchClient: RestHighLevelClient,
     private val jsonMapper: ObjectMapper
@@ -26,7 +30,7 @@ class ElasticsearchPersistenceService(
     }
 
     override fun isApplicable(datastore: Datastore): Boolean {
-        return ELASTICSEARCH == datastore
+        return Datastore.ELASTICSEARCH == datastore
     }
 
     override fun saveCollection(collection: String, data: Map<String, Any?>, id: Any?) {
@@ -38,6 +42,12 @@ class ElasticsearchPersistenceService(
         val indexRequest = IndexRequest(collection, "doc", id)
         indexRequest.source(jsonMapper.writeValueAsString(data), JSON)
         save(indexRequest)
+    }
+
+    override fun saveCollection(collection: String, data: Collection<Map<String, Any?>>) {
+        data.forEach { entry ->
+            saveCollection(collection, entry, entry["id"])
+        }
     }
 
     override fun findCollectionData(collection: String, id: String): Map<String, Any?> {

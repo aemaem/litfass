@@ -46,7 +46,7 @@ class QuartzCollectionSchedulerServiceSpec extends Specification {
         def config = new CollectionConfig("foo", "* * * * * ? *", null, POSTGRES, [])
         def executionServiceCalled = new BlockingVariable<Boolean>(5)
         (1.._) * executionServiceMock.execute(config, _) >> { args ->
-            assert args[1].containsKey("timestamp")
+            assert args[1].first().containsKey("timestamp")
             executionServiceCalled.set(true)
         }
 

@@ -8,6 +8,7 @@ import org.apache.http.HttpHost
 import org.elasticsearch.client.RestClient
 import org.elasticsearch.client.RestHighLevelClient
 import org.junit.experimental.categories.Category
+import spock.lang.Ignore
 import spock.lang.Specification
 import spock.lang.Subject
 import spock.lang.Unroll
@@ -17,6 +18,7 @@ import static lit.fass.litfass.server.persistence.CollectionPersistenceService.C
 /**
  * @author Michael Mair
  */
+@Ignore("Ignored until needed")
 @Category(IntegrationTest)
 class ElasticsearchPersistenceServiceSpec extends Specification implements ElasticsearchSupport {
 

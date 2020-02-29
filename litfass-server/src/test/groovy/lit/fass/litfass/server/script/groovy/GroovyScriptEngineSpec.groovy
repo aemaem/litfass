@@ -44,9 +44,9 @@ class GroovyScriptEngineSpec extends Specification {
         def input = [foo: 1]
 
         when: "the script is invoked"
-        def result = groovyScriptEngine.invoke(script, input)
+        def result = groovyScriptEngine.invoke(script, [input])
 
         then: "result is returned"
-        result == [bar: [foo: 1]]
+        result.first() == [bar: [foo: 1]]
     }
 }
