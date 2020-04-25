@@ -8,5 +8,6 @@ import lit.fass.litfass.server.config.yaml.model.CollectionConfig
 interface RetentionService {
 
     fun clean(config: CollectionConfig)
+    fun setCronExpression(cron: String)
     fun getCronExpression(): String
 }

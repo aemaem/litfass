@@ -2,67 +2,73 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/openjdk:8-jdk-node-browsers
+      - image: circleci/openjdk:11-jdk-node-browsers
       - image: postgres:11.1-alpine
         environment:
           POSTGRES_USER: "admin"
           POSTGRES_PASSWORD: "admin"
           POSTGRES_DB: litfass
-      - image: elasticsearch:6.5.1
-        environment:
-          ES_JAVA_OPTS: "-Xmx256m -Xms256m"
-          "discovery.type": "single-node"
+      #- image: elasticsearch:6.5.1
+      #  environment:
+      #    ES_JAVA_OPTS: "-Xmx256m -Xms256m"
+      #    "discovery.type": "single-node"
     environment:
       TZ: "/usr/share/zoneinfo/Europe/Vienna"
-      GRADLE_OPTS: '-Xmx128m -Dorg.gradle.jvmargs="-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:+HeapDumpOnOutOfMemoryError"'
+      GRADLE_OPTS: '-Xmx128m -Dorg.gradle.jvmargs="-XX:+HeapDumpOnOutOfMemoryError"'
     steps:
       - checkout
       - restore_cache:
-          key: cache-{{ checksum "build.gradle" }}
+          key: cache-{{ checksum "build.gradle.kts" }}
       - run:
           name: "Prepare"
           command: mkdir -p build/circleci/test-results
       - run:
           name: "Build"
-          command: ./gradlew build --stacktrace
+          command: ./gradlew assemble --stacktrace
+      - run:
+          name: "Unit test"
+          command: ./gradlew unitTest --stacktrace
+      - run:
+          name: "Integration test"
+          command: ./gradlew integrationTest --stacktrace
       - run:
           name: "Collect test results"
           when: always
-          command: find . -type f -regex ".*/build/test-results/test/.*xml" -exec cp {} build/circleci/test-results \;
+          command: find . -type f -regex ".*/build/test-results/*Test/.*xml" -exec cp {} build/circleci/test-results \;
       - save_cache:
           paths:
             - ~/.gradle
-          key: cache-{{ checksum "build.gradle" }}
+          key: cache-{{ checksum "build.gradle.kts" }}
       - store_test_results:
           path: build/circleci/test-results
   release:
     docker:
-      - image: circleci/openjdk:8-jdk-node-browsers
+      - image: circleci/openjdk:11-jdk-node-browsers
       - image: postgres:11.1-alpine
         environment:
           POSTGRES_USER: "admin"
           POSTGRES_PASSWORD: "admin"
           POSTGRES_DB: litfass
-      - image: elasticsearch:6.5.1
-        environment:
-          ES_JAVA_OPTS: "-Xmx256m -Xms256m"
-          "discovery.type": "single-node"
+      #- image: elasticsearch:6.5.1
+      #  environment:
+      #    ES_JAVA_OPTS: "-Xmx256m -Xms256m"
+      #    "discovery.type": "single-node"
       - image: docker:stable-git
     environment:
       TZ: "/usr/share/zoneinfo/Europe/Vienna"
-      GRADLE_OPTS: '-Xmx128m -Dorg.gradle.jvmargs="-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:+HeapDumpOnOutOfMemoryError"'
+      GRADLE_OPTS: '-Xmx128m -Dorg.gradle.jvmargs="-XX:+HeapDumpOnOutOfMemoryError"'
     steps:
       - checkout
       - setup_remote_docker
       - restore_cache:
-          key: cache-{{ checksum "build.gradle" }}
+          key: cache-{{ checksum "build.gradle.kts" }}
       - run:
           name: "Build, release and publish"
           command: ./gradlew final -Prelease.useLastTag=true pushImage --stacktrace
       - save_cache:
           paths:
             - ~/.gradle
-          key: cache-{{ checksum "build.gradle" }}
+          key: cache-{{ checksum "build.gradle.kts" }}
 
 workflows:
   version: 2

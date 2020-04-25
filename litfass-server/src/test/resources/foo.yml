@@ -4,5 +4,5 @@ flows:
       steps:
         - script:
             description: "Transform something"
-            language: kotlin
-            code: bindings["data"]
+            language: groovy
+            code: binding.data

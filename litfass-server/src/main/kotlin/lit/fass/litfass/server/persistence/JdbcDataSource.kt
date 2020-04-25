@@ -34,4 +34,8 @@ class JdbcDataSource(
     fun database(): String {
         return database
     }
+
+    fun close() {
+        dataSource.close()
+    }
 }

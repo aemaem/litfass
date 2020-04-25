@@ -1,7 +1,7 @@
 collection: foo
 scheduled: "*/30 * * * * * *"
 retention: "P7DT0H0M"
-datastore: elasticsearch
+datastore: postgres
 flows:
   - flow:
       name: "Flow 1"
@@ -17,6 +17,9 @@ flows:
             url: https://some.url/foo?bar=true
             username: user
             password: secret
+            headers:
+              - name: foo
+                value: bar
         - script:
             language: kotlin
             code: println("bar")

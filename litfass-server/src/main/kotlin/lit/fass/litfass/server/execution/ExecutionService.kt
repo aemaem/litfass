@@ -7,5 +7,5 @@ import lit.fass.litfass.server.config.yaml.model.CollectionConfig
  */
 interface ExecutionService {
 
-    fun execute(config: CollectionConfig, data: Map<String, Any?>)
+    fun execute(config: CollectionConfig, data: Collection<Map<String, Any?>>)
 }

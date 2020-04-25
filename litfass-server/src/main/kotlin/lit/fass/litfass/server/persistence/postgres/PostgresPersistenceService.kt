@@ -4,10 +4,10 @@ import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.common.base.Charsets.UTF_8
 import com.google.common.hash.Hashing.murmur3_128
+import lit.fass.config.Profiles.Companion.POSTGRES
 import lit.fass.litfass.server.persistence.*
 import lit.fass.litfass.server.persistence.CollectionConfigPersistenceService.Companion.COLLECTION_CONFIG_TABLE
 import lit.fass.litfass.server.persistence.CollectionPersistenceService.Companion.ID_KEY
-import lit.fass.litfass.server.persistence.Datastore.POSTGRES
 import org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric
 import org.jooq.Configuration
 import org.jooq.DSLContext
@@ -15,6 +15,8 @@ import org.jooq.SQLDialect
 import org.jooq.impl.DSL.*
 import org.jooq.impl.DefaultConfiguration
 import org.slf4j.LoggerFactory
+import org.springframework.context.annotation.Profile
+import org.springframework.stereotype.Service
 import java.time.OffsetDateTime
 import java.time.OffsetDateTime.now
 import java.time.ZoneOffset.UTC
@@ -22,6 +24,8 @@ import java.time.ZoneOffset.UTC
 /**
  * @author Michael Mair
  */
+@Service
+@Profile(POSTGRES)
 class PostgresPersistenceService(private val dataSource: JdbcDataSource, private val jsonMapper: ObjectMapper) :
     CollectionConfigPersistenceService, CollectionPersistenceService {
     companion object {
@@ -51,7 +55,7 @@ class PostgresPersistenceService(private val dataSource: JdbcDataSource, private
     }
 
     override fun isApplicable(datastore: Datastore): Boolean {
-        return POSTGRES == datastore
+        return Datastore.POSTGRES == datastore
     }
 
     override fun saveCollection(collection: String, data: Map<String, Any?>, id: Any?) {
@@ -64,6 +68,12 @@ class PostgresPersistenceService(private val dataSource: JdbcDataSource, private
             insertOrUpdateCollection(collection, data, id, config)
         }
         log.debug("Saved collection $collection")
+    }
+
+    override fun saveCollection(collection: String, data: Collection<Map<String, Any?>>) {
+        data.forEach { entry ->
+            saveCollection(collection, entry, entry["id"])
+        }
     }
 
     override fun findCollectionData(collection: String, id: String): Map<String, Any?> {
