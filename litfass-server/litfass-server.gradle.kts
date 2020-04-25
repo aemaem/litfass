@@ -194,7 +194,7 @@ tasks.create("buildImage", DockerBuildImage::class) {
 tasks.create("pushImage", DockerPushImage::class) {
     dependsOn(tasks.named("buildImage"))
     images.add(
-        "${rootProject.extra["dockerHubUsername"]}/${project.name}/${project.version.toString().replace(
+        "${rootProject.extra["dockerHubUsername"]}/${rootProject.name}:${project.version.toString().replace(
             "\\+",
             "."
         )}"
