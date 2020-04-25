@@ -185,7 +185,7 @@ tasks.create("buildImage", DockerBuildImage::class) {
     dependsOn(tasks.named("prepareImage"))
     inputDir.set(file("${buildDir}/docker/"))
     images.add(
-        "${rootProject.extra["dockerHubUsername"]}/${project.name}/${project.version.toString().replace(
+        "${rootProject.extra["dockerHubUsername"]}/${rootProject.name}:${project.version.toString().replace(
             "\\+",
             "."
         )}"
