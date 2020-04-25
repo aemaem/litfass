@@ -8,11 +8,8 @@ import org.springframework.boot.gradle.dsl.SpringBootExtension
 import org.springframework.boot.gradle.tasks.bundling.BootJar
 
 plugins {
-    kotlin("jvm")
-    kotlin("plugin.allopen")
-    kotlin("plugin.spring")
+    scala
     distribution
-    id("org.springframework.boot")
     id("io.spring.dependency-management")
     id("com.bmuschko.docker-remote-api")
 }
@@ -75,13 +72,6 @@ sourceSets.create("infra") {
     java.srcDir("src/infra/docker")
 }
 
-tasks.withType<KotlinCompile> {
-    kotlinOptions {
-        freeCompilerArgs = listOf("-Xjsr305=strict")
-        jvmTarget = VERSION_11.toString()
-    }
-}
-
 tasks.withType<Test> {
     useJUnitPlatform()
 }
@@ -102,20 +92,13 @@ tasks.register<Test>("integrationTest") {
     }
 }
 
-configure<SpringBootExtension> {
-    buildInfo()
-    mainClassName = "lit.fass.litfass.server.ServerApplicationKt"
-}
-tasks.withType<BootJar> {
-    enabled = false
-}
 tasks.withType<Jar> {
     enabled = true
     archiveBaseName.set(project.name)
     manifest {
         attributes["Implementation-Title"] = "LITFASS"
         attributes["Implementation-Version"] = project.version
-        attributes["Main-Class"] = "lit.fass.litfass.server.ServerApplicationKt"
+        attributes["Main-Class"] = "lit.fass.litfass.server.ServerApplicationKt" //todo: change
     }
 }
 tasks.create("allJar", Jar::class) {
@@ -123,7 +106,7 @@ tasks.create("allJar", Jar::class) {
     manifest {
         attributes["Implementation-Title"] = "LITFASS"
         attributes["Implementation-Version"] = project.version
-        attributes["Main-Class"] = "lit.fass.litfass.server.ServerApplicationKt"
+        attributes["Main-Class"] = "lit.fass.litfass.server.ServerApplicationKt" //todo: change
     }
     from(project.configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
     with(tasks.named<Jar>("jar").get())
@@ -134,7 +117,7 @@ distributions {
     main {
         contents {
             val runFile = File.createTempFile("run", ".sh")
-            runFile.writeText("""!/bin/sh\njava -XX:+UseG1GC -XX:+UseStringDeduplication -XX:+HeapDumpOnOutOfMemoryError -server -ea -classpath "./*:./lib/*" lit.fass.litfass.server.ServerApplicationKt""")
+            runFile.writeText("""!/bin/sh\njava -XX:+UseG1GC -XX:+UseStringDeduplication -XX:+HeapDumpOnOutOfMemoryError -server -ea -classpath "./*:./lib/*" lit.fass.litfass.server.ServerApplicationKt""") //todo: change
             runFile.setExecutable(true)
             runFile.deleteOnExit()
             from(runFile) {
