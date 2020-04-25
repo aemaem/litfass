@@ -5,3 +5,8 @@ image:https://img.shields.io/github/license/mashape/apistatus.svg?style=flat-squ
 
 = LITFASS
 Lightweight Integrated Tailorable Flow Aware Software Service
+
+== TODO
+. Gradle -> refactor to kotlin
+. Refactor to Akka
+. Refactor to Coroutines

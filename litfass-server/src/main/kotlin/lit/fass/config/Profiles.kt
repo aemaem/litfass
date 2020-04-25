@@ -9,6 +9,5 @@ sealed class Profiles {
         const val TEST = "TEST"
         const val SECURITY = "SECURITY"
         const val POSTGRES = "POSTGRES"
-        const val ELASTICSEARCH = "ELASTICSEARCH"
     }
 }

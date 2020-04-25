@@ -1,7 +1,7 @@
 collection: foo
 scheduled: "*/30 * * * * * *"
 retention: "P7DT0H0M"
-datastore: elasticsearch
+datastore: postgres
 flows:
   - flow:
       name: "Flow 1"

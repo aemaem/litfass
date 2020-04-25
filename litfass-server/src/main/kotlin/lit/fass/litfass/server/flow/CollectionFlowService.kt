@@ -60,11 +60,11 @@ class CollectionFlowService(
         }
     }
 
-    private fun isApplicable(data: Map<String, Any?>, applyIfData: Map<String, Any?>): Boolean {
+    internal fun isApplicable(data: Map<String, Any?>, applyIfData: Map<String, Any?>): Boolean {
         return applyIfData.isEmpty() || applyIfData.any { data[it.key] != null && data[it.key] == it.value }
     }
 
-    private fun replaceVariables(string: String, values: Collection<Map<String, Any?>>): String {
+    internal fun replaceVariables(string: String, values: Collection<Map<String, Any?>>): String {
         if (string.isBlank()) {
             log.debug("Cannot replace any variables because string is empty")
             return string

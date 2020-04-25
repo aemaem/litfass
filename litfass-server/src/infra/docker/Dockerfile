@@ -7,7 +7,7 @@ VOLUME /var/litfass/ext
 WORKDIR /var/litfass
 
 ENV PORT=8080 \
-    JAVA_OPTS="-XX:+UseG1GC -XX:+UseStringDeduplication -XX:+HeapDumpOnOutOfMemoryError"
+    JAVA_OPTS="-XX:+UseG1GC -XX:+UseStringDeduplication -XX:+HeapDumpOnOutOfMemoryError --add-opens java.base/java.lang=ALL-UNNAMED"
 
 EXPOSE $PORT
 

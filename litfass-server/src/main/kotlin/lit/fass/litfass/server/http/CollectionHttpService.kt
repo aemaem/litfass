@@ -12,7 +12,7 @@ import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.client.HttpClientBuilder.create
 import org.apache.http.util.EntityUtils.toByteArray
 import org.slf4j.LoggerFactory
-import org.springframework.http.MediaType.APPLICATION_JSON_UTF8_VALUE
+import org.springframework.http.MediaType.APPLICATION_JSON_VALUE
 import org.springframework.stereotype.Service
 import java.util.*
 
@@ -33,7 +33,7 @@ class CollectionHttpService(private val jsonMapper: ObjectMapper) : HttpService 
     ): Map<String, Any?> {
         log.info("Executing http get request on $url")
         val request = HttpGet(url)
-        request.addHeader(ACCEPT, APPLICATION_JSON_UTF8_VALUE)
+        request.addHeader(ACCEPT, APPLICATION_JSON_VALUE)
         if (!username.isNullOrBlank()) {
             request.addHeader(AUTHORIZATION, "Basic ${base64Encode("$username:$password")}")
         }
@@ -59,7 +59,7 @@ class CollectionHttpService(private val jsonMapper: ObjectMapper) : HttpService 
         }
     }
 
-    private fun parse(data: ByteArray): Map<String, Any?> {
+    internal fun parse(data: ByteArray): Map<String, Any?> {
         try {
             return jsonMapper.readValue(data, object : TypeReference<Map<String, Any?>>() {})
         } catch (ex: MismatchedInputException) {

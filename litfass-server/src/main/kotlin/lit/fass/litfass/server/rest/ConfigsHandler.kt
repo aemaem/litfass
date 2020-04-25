@@ -4,6 +4,7 @@ import lit.fass.litfass.server.config.ConfigService
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.BodyInserters.fromObject
+import org.springframework.web.reactive.function.BodyInserters.fromValue
 import org.springframework.web.reactive.function.server.ServerRequest
 import org.springframework.web.reactive.function.server.ServerResponse
 import org.springframework.web.reactive.function.server.ServerResponse.*
@@ -24,25 +25,25 @@ class ConfigsHandler(private val configService: ConfigService) {
         // todo: implement pagination
         return request.principal().flatMap { principal ->
             log.debug("Getting all configs for user ${principal.name}")
-            ok().body(fromObject(configService.getConfigs()))
+            ok().body(fromValue(configService.getConfigs()))
         }
     }
 
     fun getConfig(request: ServerRequest): Mono<ServerResponse> {
         val collection = request.pathVariable("collection")
         if (collection.isBlank()) {
-            return badRequest().body(fromObject(mapOf("error" to "Collection must not be blank")))
+            return badRequest().body(fromValue(mapOf("error" to "Collection must not be blank")))
         }
         return request.principal().flatMap { principal ->
             log.debug("Getting config $collection for user ${principal.name}")
-            ok().body(fromObject(configService.getConfig(collection)))
+            ok().body(fromValue(configService.getConfig(collection)))
         }
     }
 
     fun deleteConfig(request: ServerRequest): Mono<ServerResponse> {
         val collection = request.pathVariable("collection")
         if (collection.isBlank()) {
-            return badRequest().body(fromObject(mapOf("error" to "Collection must not be blank")))
+            return badRequest().body(fromValue(mapOf("error" to "Collection must not be blank")))
         }
         return request.principal().flatMap { principal ->
             log.debug("Removing config $collection for user ${principal.name}")
@@ -57,7 +58,7 @@ class ConfigsHandler(private val configService: ConfigService) {
                 configService.readConfig(ByteArrayInputStream(body))
             } catch (ex: Exception) {
                 log.error("Unable to read config", ex)
-                return@flatMap badRequest().body(fromObject(mapOf("error" to "Unable to read config: ${ex.message}")))
+                return@flatMap badRequest().body(fromValue(mapOf("error" to "Unable to read config: ${ex.message}")))
             }
             noContent().build()
         }

@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/openjdk:8-jdk-node-browsers
+      - image: circleci/openjdk:11-jdk-node-browsers
       - image: postgres:11.1-alpine
         environment:
           POSTGRES_USER: "admin"
@@ -14,11 +14,11 @@ jobs:
       #    "discovery.type": "single-node"
     environment:
       TZ: "/usr/share/zoneinfo/Europe/Vienna"
-      GRADLE_OPTS: '-Xmx128m -Dorg.gradle.jvmargs="-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:+HeapDumpOnOutOfMemoryError"'
+      GRADLE_OPTS: '-Xmx128m -Dorg.gradle.jvmargs="-XX:+HeapDumpOnOutOfMemoryError"'
     steps:
       - checkout
       - restore_cache:
-          key: cache-{{ checksum "build.gradle" }}
+          key: cache-{{ checksum "build.gradle.kts" }}
       - run:
           name: "Prepare"
           command: mkdir -p build/circleci/test-results
@@ -38,12 +38,12 @@ jobs:
       - save_cache:
           paths:
             - ~/.gradle
-          key: cache-{{ checksum "build.gradle" }}
+          key: cache-{{ checksum "build.gradle.kts" }}
       - store_test_results:
           path: build/circleci/test-results
   release:
     docker:
-      - image: circleci/openjdk:8-jdk-node-browsers
+      - image: circleci/openjdk:11-jdk-node-browsers
       - image: postgres:11.1-alpine
         environment:
           POSTGRES_USER: "admin"
@@ -56,19 +56,19 @@ jobs:
       - image: docker:stable-git
     environment:
       TZ: "/usr/share/zoneinfo/Europe/Vienna"
-      GRADLE_OPTS: '-Xmx128m -Dorg.gradle.jvmargs="-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:+HeapDumpOnOutOfMemoryError"'
+      GRADLE_OPTS: '-Xmx128m -Dorg.gradle.jvmargs="-XX:+HeapDumpOnOutOfMemoryError"'
     steps:
       - checkout
       - setup_remote_docker
       - restore_cache:
-          key: cache-{{ checksum "build.gradle" }}
+          key: cache-{{ checksum "build.gradle.kts" }}
       - run:
           name: "Build, release and publish"
           command: ./gradlew final -Prelease.useLastTag=true pushImage --stacktrace
       - save_cache:
           paths:
             - ~/.gradle
-          key: cache-{{ checksum "build.gradle" }}
+          key: cache-{{ checksum "build.gradle.kts" }}
 
 workflows:
   version: 2

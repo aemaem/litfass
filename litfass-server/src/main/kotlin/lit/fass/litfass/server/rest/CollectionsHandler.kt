@@ -9,6 +9,7 @@ import org.springframework.http.HttpMethod.GET
 import org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.BodyInserters.fromObject
+import org.springframework.web.reactive.function.BodyInserters.fromValue
 import org.springframework.web.reactive.function.server.ServerRequest
 import org.springframework.web.reactive.function.server.ServerResponse
 import org.springframework.web.reactive.function.server.ServerResponse.*
@@ -34,7 +35,7 @@ class CollectionsHandler(
     fun addCollection(request: ServerRequest): Mono<ServerResponse> {
         val collection = request.pathVariable("collection")
         if (collection.isBlank()) {
-            return badRequest().body(fromObject(mapOf("error" to "Collection must not be blank")))
+            return badRequest().body(fromValue(mapOf("error" to "Collection must not be blank")))
         }
 
         val collectionHeaders = request.headers().asHttpHeaders().entries
@@ -53,7 +54,7 @@ class CollectionsHandler(
                 executionService.execute(configService.getConfig(collection), listOf(data))
             } catch (ex: Exception) {
                 log.error("Exception during execution of collection $collection", ex)
-                return status(INTERNAL_SERVER_ERROR).body(fromObject(mapOf("error" to ex.message)))
+                return status(INTERNAL_SERVER_ERROR).body(fromValue(mapOf("error" to ex.message)))
             }
             return ok().build()
         }
@@ -68,7 +69,7 @@ class CollectionsHandler(
                     executionService.execute(configService.getConfig(collection), listOf(it))
                 } catch (ex: Exception) {
                     log.error("Exception during execution of collection $collection", ex)
-                    return@flatMap status(INTERNAL_SERVER_ERROR).body(fromObject(mapOf("error" to ex.message)))
+                    return@flatMap status(INTERNAL_SERVER_ERROR).body(fromValue(mapOf("error" to ex.message)))
                 }
                 ok().build()
             }
@@ -77,22 +78,22 @@ class CollectionsHandler(
     fun getCollection(request: ServerRequest): Mono<ServerResponse> {
         val collection = request.pathVariable("collection")
         if (collection.isBlank()) {
-            return badRequest().body(fromObject(mapOf("error" to "Collection must not be blank")))
+            return badRequest().body(fromValue(mapOf("error" to "Collection must not be blank")))
         }
         val id = request.pathVariable("id")
         if (id.isBlank()) {
-            return badRequest().body(fromObject(mapOf("error" to "Id must not be blank")))
+            return badRequest().body(fromValue(mapOf("error" to "Id must not be blank")))
         }
 
         val config = configService.getConfig(collection)
         val persistenceService = persistenceServices.find { it.isApplicable(config.datastore) }
         if (persistenceService == null) {
-            return badRequest().body(fromObject(mapOf("error" to "Persistence service for ${config.datastore} not found")))
+            return badRequest().body(fromValue(mapOf("error" to "Persistence service for ${config.datastore} not found")))
         }
 
         return request.principal().flatMap { principal ->
             log.debug("Getting collection data for $collection with id $id for user ${principal.name}")
-            ok().body(fromObject(persistenceService.findCollectionData(collection, id)))
+            ok().body(fromValue(persistenceService.findCollectionData(collection, id)))
         }
     }
 }
