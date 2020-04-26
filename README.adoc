@@ -7,4 +7,8 @@ image:https://img.shields.io/github/license/mashape/apistatus.svg?style=flat-squ
 Lightweight Integrated Tailorable Flow Aware Software Service
 
 == TODO
-. Refactor to Akka
+. proper logging with slf4j
+. basic http endpoint
+. basic security with apache shiro
+. basic persistenc with akka and postgres
+. implement litfass functionality

@@ -3,66 +3,28 @@ import com.bmuschko.gradle.docker.tasks.image.DockerBuildImage
 import com.bmuschko.gradle.docker.tasks.image.DockerPushImage
 import org.gradle.api.JavaVersion.VERSION_11
 import org.gradle.jvm.tasks.Jar
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import org.springframework.boot.gradle.dsl.SpringBootExtension
-import org.springframework.boot.gradle.tasks.bundling.BootJar
 
 plugins {
     scala
+    `java-library`
     distribution
-    id("io.spring.dependency-management")
     id("com.bmuschko.docker-remote-api")
 }
 
 repositories {
-    mavenCentral()
-    maven { url = uri("https://repo.spring.io/milestone") }
-}
-
-dependencyManagement {
-    imports {
-        mavenBom("org.springframework.boot.experimental:spring-boot-bom-r2dbc:0.1.0.M3")
-    }
+    jcenter()
 }
 
 dependencies {
-    annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
+    implementation("org.scala-lang:scala-library:2.13.2")
+    implementation("com.typesafe.akka:akka-actor-typed_2.13:2.6.4")
+    implementation("ch.qos.logback:logback-classic:1.2.3")
 
-    implementation("org.springframework.boot:spring-boot-starter-actuator")
-    implementation("org.springframework.boot:spring-boot-starter-security")
-    implementation("org.springframework.boot:spring-boot-starter-webflux")
-    //implementation("org.springframework.boot.experimental:spring-boot-starter-data-r2dbc")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
-    implementation("org.jetbrains.kotlin:kotlin-stdlib")
-    implementation("org.jetbrains.kotlin:kotlin-reflect")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
-
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.9.9")
-    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.9.9")
-    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.9.9")
-    implementation("org.apache.httpcomponents:httpclient:4.5.11")
-    implementation("org.apache.commons:commons-lang3:3.8.1")
-    implementation("com.google.guava:guava:27.0.1-jre")
-    implementation("com.cronutils:cron-utils:8.0.0")
-    implementation("org.quartz-scheduler:quartz:2.3.0")
-    implementation("org.quartz-scheduler:quartz-jobs:2.3.0")
-    implementation("org.jooq:jooq:3.11.7")
-    implementation("org.postgresql:postgresql:42.2.5")
-    implementation("org.codehaus.groovy:groovy:2.5.5")
-    implementation("org.codehaus.groovy:groovy-jsr223:2.5.5")
-    implementation("org.codehaus.groovy:groovy-json:2.5.5")
-    implementation("org.codehaus.groovy:groovy-xml:2.5.5")
-
-    testImplementation("org.springframework.boot:spring-boot-starter-test") {
-        exclude(group = "org.junit.vintage", module = "junit-vintage-engine")
-    }
-    testImplementation("org.springframework.security:spring-security-test")
-    //testImplementation("org.springframework.boot.experimental:spring-boot-test-autoconfigure-r2dbc")
-    testImplementation("io.projectreactor:reactor-test")
-    testImplementation("io.projectreactor.kotlin:reactor-kotlin-extensions")
-    testImplementation("io.mockk:mockk:1.9.3")
-    testImplementation("org.awaitility:awaitility:3.1.3")
-    testImplementation("org.awaitility:awaitility-kotlin:3.1.3")
+    testImplementation("org.scalatest:scalatest_2.13:3.1.1")
+    testImplementation("org.scalatestplus:scalatestplus-junit_2.13:1.0.0-M2")
+    testImplementation("com.typesafe.akka:akka-actor-testkit-typed_2.13:2.6.4")
+    testImplementation("org.assertj:assertj-core:3.15.0")
+    testImplementation("org.awaitility:awaitility:4.0.2")
 }
 
 java.sourceCompatibility = VERSION_11
@@ -72,23 +34,14 @@ sourceSets.create("infra") {
     java.srcDir("src/infra/docker")
 }
 
-tasks.withType<Test> {
-    useJUnitPlatform()
-}
-object UnitTest
-object IntegrationTest
 tasks.register<Test>("unitTest") {
-    useJUnitPlatform {
-        filter {
-            includeTags(UnitTest::class.java.simpleName)
-        }
+    useJUnit {
+        includeCategories("lit.fass.litfass.helper.UnitTest")
     }
 }
 tasks.register<Test>("integrationTest") {
-    useJUnitPlatform {
-        filter {
-            includeTags(IntegrationTest::class.java.simpleName)
-        }
+    useJUnit {
+        includeCategories("lit.fass.litfass.helper.IntegrationTest")
     }
 }
 
@@ -98,7 +51,7 @@ tasks.withType<Jar> {
     manifest {
         attributes["Implementation-Title"] = "LITFASS"
         attributes["Implementation-Version"] = project.version
-        attributes["Main-Class"] = "lit.fass.litfass.server.ServerApplicationKt" //todo: change
+        attributes["Main-Class"] = "lit.fass.server.LitfassApplication"
     }
 }
 tasks.create("allJar", Jar::class) {
@@ -106,7 +59,7 @@ tasks.create("allJar", Jar::class) {
     manifest {
         attributes["Implementation-Title"] = "LITFASS"
         attributes["Implementation-Version"] = project.version
-        attributes["Main-Class"] = "lit.fass.litfass.server.ServerApplicationKt" //todo: change
+        attributes["Main-Class"] = "lit.fass.server.LitfassApplication"
     }
     from(project.configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
     with(tasks.named<Jar>("jar").get())
@@ -117,7 +70,7 @@ distributions {
     main {
         contents {
             val runFile = File.createTempFile("run", ".sh")
-            runFile.writeText("""!/bin/sh\njava -XX:+UseG1GC -XX:+UseStringDeduplication -XX:+HeapDumpOnOutOfMemoryError -server -ea -classpath "./*:./lib/*" lit.fass.litfass.server.ServerApplicationKt""") //todo: change
+            runFile.writeText("""!/bin/sh\njava -XX:+UseG1GC -XX:+UseStringDeduplication -XX:+HeapDumpOnOutOfMemoryError -server -ea -classpath "./*:./lib/*" lit.fass.server.LitfassApplication""")
             runFile.setExecutable(true)
             runFile.deleteOnExit()
             from(runFile) {

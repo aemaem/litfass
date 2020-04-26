@@ -1,8 +1,0 @@
-spring:
-  banner:
-    location: classpath:config/banner.txt
-management:
-  endpoint:
-    health:
-      enabled: true
-      show-details: when_authorized
