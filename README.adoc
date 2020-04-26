@@ -3,12 +3,13 @@ image:https://img.shields.io/github/issues/aemaem/litfass.svg?style=flat-square[
 image:https://img.shields.io/github/tag/aemaem/litfass.svg?style=flat-square["GitHub tag",link="https://github.com/aemaem/litfass/tags"]
 image:https://img.shields.io/github/license/mashape/apistatus.svg?style=flat-square["GitHub",link="https://github.com/aemaem/litfass/blob/master/LICENSE"]
 
-= LITFASS
+== LITFASS
 Lightweight Integrated Tailorable Flow Aware Software Service
 
-== TODO
-. proper logging with slf4j
-. basic http endpoint
-. basic security with apache shiro
-. basic persistenc with akka and postgres
+=== TODO
+. proper logging with slf4j: https://doc.akka.io/docs/akka/2.6/typed/logging.html#slf4j-backend
+. use akka streams: https://doc.akka.io/docs/akka/2.6/stream/index.html
+. basic http endpoint: https://doc.akka.io/docs/akka-http/current/
+. basic security with apache shiro: https://shiro.apache.org/
+. basic persistence with akka and postgres: https://doc.akka.io/docs/alpakka/current/slick.html
 . implement litfass functionality
