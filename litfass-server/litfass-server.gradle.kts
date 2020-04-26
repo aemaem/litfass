@@ -34,17 +34,6 @@ sourceSets.create("infra") {
     java.srcDir("src/infra/docker")
 }
 
-tasks.register<Test>("unitTest") {
-    useJUnit {
-        includeCategories("lit.fass.litfass.helper.UnitTest")
-    }
-}
-tasks.register<Test>("integrationTest") {
-    useJUnit {
-        includeCategories("lit.fass.litfass.helper.IntegrationTest")
-    }
-}
-
 tasks.withType<Jar> {
     enabled = true
     archiveBaseName.set(project.name)

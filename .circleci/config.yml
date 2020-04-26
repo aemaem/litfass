@@ -14,27 +14,21 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          key: cache-{{ checksum "build.gradle.kts" }}
+          key: cache-{{ checksum "build.gradle.kts" }}-{{ checksum "litfass-server/litfass-server.gradle.kts" }}
       - run:
-          name: "Prepare"
-          command: mkdir -p build/circleci/test-results
-      - run:
-          name: "Build"
-          command: ./gradlew assemble --stacktrace
-      - run:
-          name: "Unit test"
-          command: ./gradlew unitTest --stacktrace
-      - run:
-          name: "Integration test"
-          command: ./gradlew integrationTest --stacktrace
+          name: "Test"
+          command: ./gradlew test --stacktrace
       - run:
           name: "Collect test results"
           when: always
-          command: find . -type f -regex ".*/build/test-results/*Test/.*xml" -exec cp {} build/circleci/test-results \;
+          command: mkdir -p build/circleci/test-results && find . -type f -regex ".*/build/test-results/*Test/.*xml" -exec cp {} build/circleci/test-results \;
+      - run:
+          name: "Build"
+          command: ./gradlew assemble --stacktrace
       - save_cache:
           paths:
             - ~/.gradle
-          key: cache-{{ checksum "build.gradle.kts" }}
+          key: cache-{{ checksum "build.gradle.kts" }}-{{ checksum "litfass-server/litfass-server.gradle.kts" }}
       - store_test_results:
           path: build/circleci/test-results
   release:
@@ -45,10 +39,6 @@ jobs:
           POSTGRES_USER: "admin"
           POSTGRES_PASSWORD: "admin"
           POSTGRES_DB: litfass
-      #- image: elasticsearch:6.5.1
-      #  environment:
-      #    ES_JAVA_OPTS: "-Xmx256m -Xms256m"
-      #    "discovery.type": "single-node"
       - image: docker:stable-git
     environment:
       TZ: "/usr/share/zoneinfo/Europe/Vienna"
@@ -57,14 +47,14 @@ jobs:
       - checkout
       - setup_remote_docker
       - restore_cache:
-          key: cache-{{ checksum "build.gradle.kts" }}
+          key: cache-{{ checksum "build.gradle.kts" }}-{{ checksum "litfass-server/litfass-server.gradle.kts" }}
       - run:
           name: "Build, release and publish"
           command: ./gradlew final -Prelease.useLastTag=true pushImage --stacktrace
       - save_cache:
           paths:
             - ~/.gradle
-          key: cache-{{ checksum "build.gradle.kts" }}
+          key: cache-{{ checksum "build.gradle.kts" }}-{{ checksum "litfass-server/litfass-server.gradle.kts" }}
 
 workflows:
   version: 2
