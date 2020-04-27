@@ -29,11 +29,12 @@ dependencies {
     implementation("com.typesafe.akka:akka-http_${scalaVersion}:${versions["akka-http"]}")
     implementation("com.typesafe.akka:akka-http-spray-json_${scalaVersion}:${versions["akka-http"]}")
     implementation("ch.qos.logback:logback-classic:1.2.3")
+    implementation("org.apache.shiro:shiro-core:1.5.2")
 
     testImplementation("org.scalatest:scalatest_${scalaVersion}:3.1.1")
     testImplementation("org.scalatestplus:scalatestplus-junit_${scalaVersion}:1.0.0-M2")
     testImplementation("com.typesafe.akka:akka-actor-testkit-typed_${scalaVersion}:${versions["akka"]}")
-    implementation("com.typesafe.akka:akka-http-testkit_${scalaVersion}:${versions["akka-http"]}")
+    testImplementation("com.typesafe.akka:akka-http-testkit_${scalaVersion}:${versions["akka-http"]}")
     testImplementation("org.assertj:assertj-core:3.15.0")
     testImplementation("org.awaitility:awaitility:4.0.2")
 }

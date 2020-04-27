@@ -4,8 +4,11 @@ import akka.actor.testkit.typed.scaladsl.ActorTestKit
 import akka.actor.typed.scaladsl.adapter._
 import akka.actor.typed.{ActorRef, ActorSystem}
 import akka.http.scaladsl.marshalling.Marshal
-import akka.http.scaladsl.model.{ContentTypes, HttpRequest, MessageEntity, StatusCodes}
-import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.model.ContentTypes.`application/json`
+import akka.http.scaladsl.model.StatusCodes.{Created, OK}
+import akka.http.scaladsl.model.headers.BasicHttpCredentials
+import akka.http.scaladsl.model.{HttpRequest, MessageEntity}
+import akka.http.scaladsl.server.{AuthenticationFailedRejection, Route}
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import lit.fass.server.helper.UnitTest
 import org.junit.experimental.categories.Category
@@ -41,18 +44,37 @@ class HttpServerTest extends AnyWordSpec with Matchers with ScalaFutures with Sc
   import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 
   "UserRoutes" should {
+    "return unauthorized if not authenticated (GET /users/greet)" in {
+      Get("/users/greet") ~> routes ~> check {
+        rejection shouldBe an [AuthenticationFailedRejection]
+      }
+    }
+
+    "return unauthorized if authorization fails (GET /users/greet)" in {
+      Get("/users/greet") ~> addCredentials(BasicHttpCredentials("Sepp", "p4ffw0rd")) ~> routes ~> check {
+        rejection shouldBe an [AuthenticationFailedRejection]
+      }
+    }
+
+    "return greeting if authenticated (GET /users/greet)" in {
+      Get("/users/greet") ~> addCredentials(BasicHttpCredentials("Sepp", "p4ssw0rd")) ~> routes ~> check {
+        status shouldEqual OK
+        responseAs[String] shouldEqual "Servus Sepp!"
+      }
+    }
+
     "return no users if no present (GET /users)" in {
       // note that there's no need for the host part in the uri:
       val request = HttpRequest(uri = "/users")
 
       request ~> routes ~> check {
-        status should ===(StatusCodes.OK)
+        status shouldEqual OK
 
         // we expect the response to be json:
-        contentType should ===(ContentTypes.`application/json`)
+        contentType shouldEqual `application/json`
 
         // and no entries should be in the list:
-        entityAs[String] should ===("""{"users":[]}""")
+        entityAs[String] shouldEqual """{"users":[]}"""
       }
     }
 
@@ -64,13 +86,13 @@ class HttpServerTest extends AnyWordSpec with Matchers with ScalaFutures with Sc
       val request = Post("/users").withEntity(userEntity)
 
       request ~> routes ~> check {
-        status should ===(StatusCodes.Created)
+        status shouldEqual Created
 
         // we expect the response to be json:
-        contentType should ===(ContentTypes.`application/json`)
+        contentType shouldEqual `application/json`
 
         // and we know what message we're expecting back:
-        entityAs[String] should ===("""{"description":"User Kapi created."}""")
+        entityAs[String] shouldEqual """{"description":"User Kapi created."}"""
       }
     }
 
@@ -79,13 +101,13 @@ class HttpServerTest extends AnyWordSpec with Matchers with ScalaFutures with Sc
       val request = Delete(uri = "/users/Kapi")
 
       request ~> routes ~> check {
-        status should ===(StatusCodes.OK)
+        status shouldEqual OK
 
         // we expect the response to be json:
-        contentType should ===(ContentTypes.`application/json`)
+        contentType shouldEqual `application/json`
 
         // and no entries should be in the list:
-        entityAs[String] should ===("""{"description":"User Kapi deleted."}""")
+        entityAs[String] shouldEqual """{"description":"User Kapi deleted."}"""
       }
     }
   }
