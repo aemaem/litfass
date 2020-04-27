@@ -16,13 +16,24 @@ repositories {
 }
 
 dependencies {
-    implementation("org.scala-lang:scala-library:2.13.2")
-    implementation("com.typesafe.akka:akka-actor-typed_2.13:2.6.4")
+    val scalaVersion = "2.13"
+    val versions = mapOf(
+        "scala" to "${scalaVersion}.2",
+        "akka" to "2.6.4",
+        "akka-http" to "10.1.11"
+    )
+
+    implementation("org.scala-lang:scala-library:${versions["scala"]}")
+    implementation("com.typesafe.akka:akka-actor-typed_${scalaVersion}:${versions["akka"]}")
+    implementation("com.typesafe.akka:akka-stream_${scalaVersion}:${versions["akka"]}")
+    implementation("com.typesafe.akka:akka-http_${scalaVersion}:${versions["akka-http"]}")
+    implementation("com.typesafe.akka:akka-http-spray-json_${scalaVersion}:${versions["akka-http"]}")
     implementation("ch.qos.logback:logback-classic:1.2.3")
 
-    testImplementation("org.scalatest:scalatest_2.13:3.1.1")
-    testImplementation("org.scalatestplus:scalatestplus-junit_2.13:1.0.0-M2")
-    testImplementation("com.typesafe.akka:akka-actor-testkit-typed_2.13:2.6.4")
+    testImplementation("org.scalatest:scalatest_${scalaVersion}:3.1.1")
+    testImplementation("org.scalatestplus:scalatestplus-junit_${scalaVersion}:1.0.0-M2")
+    testImplementation("com.typesafe.akka:akka-actor-testkit-typed_${scalaVersion}:${versions["akka"]}")
+    implementation("com.typesafe.akka:akka-http-testkit_${scalaVersion}:${versions["akka-http"]}")
     testImplementation("org.assertj:assertj-core:3.15.0")
     testImplementation("org.awaitility:awaitility:4.0.2")
 }
@@ -32,6 +43,17 @@ java.targetCompatibility = VERSION_11
 
 sourceSets.create("infra") {
     java.srcDir("src/infra/docker")
+}
+
+tasks.register<Test>("unitTest") {
+    useJUnit {
+        includeCategories("lit.fass.server.helper.UnitTest")
+    }
+}
+tasks.register<Test>("integrationTest") {
+    useJUnit {
+        includeCategories("lit.fass.server.helper.IntegrationTest")
+    }
 }
 
 tasks.withType<Jar> {

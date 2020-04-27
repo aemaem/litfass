@@ -2,6 +2,8 @@ package lit.fass.server
 
 import akka.actor.testkit.typed.scaladsl.ScalaTestWithActorTestKit
 import lit.fass.server.Greeter.{Greet, Greeted}
+import lit.fass.server.helper.UnitTest
+import org.junit.experimental.categories.Category
 import org.junit.runner.RunWith
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatestplus.junit.JUnitRunner
@@ -10,6 +12,7 @@ import org.scalatestplus.junit.JUnitRunner
  * @author Michael Mair
  */
 @RunWith(classOf[JUnitRunner])
+@Category(Array(classOf[UnitTest]))
 class GreetingsTest extends ScalaTestWithActorTestKit with AnyWordSpecLike {
 
   "A Greeter" must {
