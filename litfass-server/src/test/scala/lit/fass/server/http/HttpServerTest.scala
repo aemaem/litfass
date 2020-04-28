@@ -3,6 +3,7 @@ package lit.fass.server.http
 import akka.actor.testkit.typed.scaladsl.ActorTestKit
 import akka.actor.typed.scaladsl.adapter._
 import akka.actor.typed.{ActorRef, ActorSystem}
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.model.ContentTypes.`application/json`
 import akka.http.scaladsl.model.StatusCodes.{Created, OK}
@@ -11,6 +12,8 @@ import akka.http.scaladsl.model.{HttpRequest, MessageEntity}
 import akka.http.scaladsl.server.{AuthenticationFailedRejection, Route}
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import lit.fass.server.helper.UnitTest
+import lit.fass.server.http.JsonFormats._
+import lit.fass.server.security.SafeguardManager
 import org.junit.experimental.categories.Category
 import org.junit.runner.RunWith
 import org.scalatest.concurrent.ScalaFutures
@@ -31,28 +34,21 @@ class HttpServerTest extends AnyWordSpec with Matchers with ScalaFutures with Sc
 
   override def createActorSystem(): akka.actor.ActorSystem = testKit.system.toClassic
 
-  // Here we need to implement all the abstract members of UserRoutes.
-  // We use the real UserRegistryActor to test it while we hit the Routes,
-  // but we could "mock" it by implementing it in-place or by using a TestProbe
-  // created with testKit.createTestProbe()
   val userRegistry: ActorRef[UserRegistry.Command] = testKit.spawn(UserRegistry())
-  lazy val routes: Route = new UserRoutes(userRegistry).userRoutes
+  val safeguardManager = new SafeguardManager()
+  lazy val routes: Route = new UserRoutes(userRegistry, safeguardManager).userRoutes
 
-  // use the json formats to marshal and unmarshall objects in the test
-
-  import JsonFormats._
-  import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 
   "UserRoutes" should {
     "return unauthorized if not authenticated (GET /users/greet)" in {
       Get("/users/greet") ~> routes ~> check {
-        rejection shouldBe an [AuthenticationFailedRejection]
+        rejection shouldBe an[AuthenticationFailedRejection]
       }
     }
 
     "return unauthorized if authorization fails (GET /users/greet)" in {
       Get("/users/greet") ~> addCredentials(BasicHttpCredentials("Sepp", "p4ffw0rd")) ~> routes ~> check {
-        rejection shouldBe an [AuthenticationFailedRejection]
+        rejection shouldBe an[AuthenticationFailedRejection]
       }
     }
 

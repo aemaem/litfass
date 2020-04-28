@@ -7,23 +7,27 @@ import akka.http.scaladsl.model.StatusCodes.{Created, OK}
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.Credentials
+import akka.http.scaladsl.server.directives.Credentials.Provided
 import akka.util.Timeout
 import lit.fass.server.http.JsonFormats._
 import lit.fass.server.http.UserRegistry._
+import lit.fass.server.security.SafeguardManager
+import org.apache.shiro.subject.Subject
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class UserRoutes(userRegistry: ActorRef[UserRegistry.Command])(implicit val system: ActorSystem[_]) {
+class UserRoutes(userRegistry: ActorRef[UserRegistry.Command],
+                 safeguardManager: SafeguardManager)(implicit val system: ActorSystem[_]) {
 
   private implicit val timeout: Timeout = Timeout.create(system.settings.config.getDuration("litfass.routes.ask-timeout"))
 
-  def defaultAuthenticator(credentials: Credentials): Future[Option[String]] =
+  def defaultAuthenticator(credentials: Credentials): Future[Option[Subject]] =
     credentials match {
-      case p@Credentials.Provided(id) =>
+      case p@Provided(id) =>
         Future {
-          //todo: get users from config
-          if (p.verify("p4ssw0rd")) Some(id)
+          //todo: authenticate with shiro
+          if (p.verify("p4ssw0rd")) Some(safeguardManager.getSubject(id))
           else None
         }
       case _ => Future.successful(None)
@@ -75,10 +79,10 @@ class UserRoutes(userRegistry: ActorRef[UserRegistry.Command])(implicit val syst
           )
         },
         pathPrefix("greet") {
-          authenticateBasicAsync("basic", defaultAuthenticator) { userName =>
+          authenticateBasicAsync("basic", defaultAuthenticator) { subject =>
             get {
-              authorizeAsync(_ => Future.successful(true)) { //todo: implement Shiro Authorization
-                complete((OK, s"Servus $userName!"))
+              authorizeAsync(_ => Future.successful(subject.isPermitted("greet"))) {
+                complete((OK, s"Servus ${subject.getPrincipal}!"))
               }
             }
           }

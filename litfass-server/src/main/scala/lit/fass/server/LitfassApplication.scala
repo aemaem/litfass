@@ -2,8 +2,8 @@ package lit.fass.server
 
 import akka.actor.typed.ActorSystem
 import akka.actor.typed.scaladsl.Behaviors
-import lit.fass.server.GreeterMain.SayHello
 import lit.fass.server.http.{HttpServer, UserRegistry, UserRoutes}
+import lit.fass.server.security.SafeguardManager
 
 /**
  * Main class.
@@ -13,14 +13,13 @@ import lit.fass.server.http.{HttpServer, UserRegistry, UserRoutes}
 object LitfassApplication extends App {
   print("\nLITFASS\n\n")
 
-//  val greeterMain: ActorSystem[GreeterMain.SayHello] = ActorSystem(GreeterMain(), "litfass")
-//  greeterMain ! SayHello("Sepp")
+  val safeguardManager = new SafeguardManager()
 
   val rootBehavior = Behaviors.setup[Nothing] { context =>
     val userRegistryActor = context.spawn(UserRegistry(), "UserRegistryActor")
     context.watch(userRegistryActor)
 
-    val routes = new UserRoutes(userRegistryActor)(context.system)
+    val routes = new UserRoutes(userRegistryActor, safeguardManager)(context.system)
     HttpServer.startHttpServer(routes.userRoutes, context.system)
 
     Behaviors.empty
