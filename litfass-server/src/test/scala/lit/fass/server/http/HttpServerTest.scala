@@ -13,9 +13,10 @@ import akka.http.scaladsl.server.{AuthenticationFailedRejection, Route}
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import lit.fass.server.helper.UnitTest
 import lit.fass.server.http.JsonFormats._
-import lit.fass.server.security.SafeguardManager
+import lit.fass.server.security.SecurityManager
 import org.junit.experimental.categories.Category
 import org.junit.runner.RunWith
+import org.scalatest.Ignore
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -24,6 +25,7 @@ import org.scalatestplus.junit.JUnitRunner
 /**
  * @author Michael Mair
  */
+@Ignore
 @RunWith(classOf[JUnitRunner])
 @Category(Array(classOf[UnitTest]))
 class HttpServerTest extends AnyWordSpec with Matchers with ScalaFutures with ScalatestRouteTest {
@@ -35,7 +37,7 @@ class HttpServerTest extends AnyWordSpec with Matchers with ScalaFutures with Sc
   override def createActorSystem(): akka.actor.ActorSystem = testKit.system.toClassic
 
   val userRegistry: ActorRef[UserRegistry.Command] = testKit.spawn(UserRegistry())
-  val safeguardManager = new SafeguardManager()
+  val safeguardManager = new SecurityManager()
   lazy val routes: Route = new UserRoutes(userRegistry, safeguardManager).userRoutes
 
 

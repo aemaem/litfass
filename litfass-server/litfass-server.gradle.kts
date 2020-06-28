@@ -20,7 +20,8 @@ dependencies {
     val versions = mapOf(
         "scala" to "${scalaVersion}.2",
         "akka" to "2.6.4",
-        "akka-http" to "10.1.11"
+        "akka-http" to "10.1.11",
+        "shiro" to "1.5.2"
     )
 
     implementation("org.scala-lang:scala-library:${versions["scala"]}")
@@ -29,7 +30,13 @@ dependencies {
     implementation("com.typesafe.akka:akka-http_${scalaVersion}:${versions["akka-http"]}")
     implementation("com.typesafe.akka:akka-http-spray-json_${scalaVersion}:${versions["akka-http"]}")
     implementation("ch.qos.logback:logback-classic:1.2.3")
-    implementation("org.apache.shiro:shiro-core:1.5.2")
+    implementation("org.apache.shiro:shiro-core:${versions["shiro"]}")
+    implementation("org.apache.shiro:shiro-web:${versions["shiro"]}")
+    implementation("org.apache.commons:commons-lang3:3.10")
+    implementation("org.codehaus.groovy:groovy:2.5.11")
+    implementation("org.codehaus.groovy:groovy-jsr223:2.5.11")
+    implementation("org.codehaus.groovy:groovy-json:2.5.11")
+    implementation("org.codehaus.groovy:groovy-xml:2.5.11")
 
     testImplementation("org.scalatest:scalatest_${scalaVersion}:3.1.1")
     testImplementation("org.scalatestplus:scalatestplus-junit_${scalaVersion}:1.0.0-M2")

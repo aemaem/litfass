@@ -10,6 +10,7 @@ gradle.afterProject {
 rootProject.name = "litfass"
 
 include("litfass-server")
+include("litfass-spring")
 
 rootProject.children.forEach { subproject ->
     val dir = subproject.projectDir.absolutePath

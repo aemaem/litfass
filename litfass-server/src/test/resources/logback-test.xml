@@ -1,4 +1,10 @@
 <configuration>
+    <appender name="STDOUT" target="System.out" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%date{ISO8601} %level %logger{16} - %msg [%mdc]%n</pattern>
+        </encoder>
+    </appender>
+
     <root level="INFO">
         <appender-ref ref="STDOUT"/>
     </root>

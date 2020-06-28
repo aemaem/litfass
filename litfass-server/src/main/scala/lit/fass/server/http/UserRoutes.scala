@@ -11,14 +11,14 @@ import akka.http.scaladsl.server.directives.Credentials.Provided
 import akka.util.Timeout
 import lit.fass.server.http.JsonFormats._
 import lit.fass.server.http.UserRegistry._
-import lit.fass.server.security.SafeguardManager
+import lit.fass.server.security.SecurityManager
 import org.apache.shiro.subject.Subject
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class UserRoutes(userRegistry: ActorRef[UserRegistry.Command],
-                 safeguardManager: SafeguardManager)(implicit val system: ActorSystem[_]) {
+                 safeguardManager: SecurityManager)(implicit val system: ActorSystem[_]) {
 
   private implicit val timeout: Timeout = Timeout.create(system.settings.config.getDuration("litfass.routes.ask-timeout"))
 
@@ -27,7 +27,7 @@ class UserRoutes(userRegistry: ActorRef[UserRegistry.Command],
       case p@Provided(id) =>
         Future {
           //todo: authenticate with shiro
-          if (p.verify("p4ssw0rd")) Some(safeguardManager.getSubject(id))
+          if (p.verify("p4ssw0rd")) Some(safeguardManager.buildSubject())
           else None
         }
       case _ => Future.successful(None)
@@ -51,7 +51,7 @@ class UserRoutes(userRegistry: ActorRef[UserRegistry.Command],
         pathEnd {
           concat(
             get {
-              complete(getUsers())
+              complete(userRegistry.ask(GetUsers))
             },
             post {
               entity(as[User]) { user =>

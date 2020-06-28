@@ -2,8 +2,9 @@ package lit.fass.server
 
 import akka.actor.typed.ActorSystem
 import akka.actor.typed.scaladsl.Behaviors
-import lit.fass.server.http.{HttpServer, UserRegistry, UserRoutes}
-import lit.fass.server.security.SafeguardManager
+import akka.http.scaladsl.server.Directives._
+import lit.fass.server.http._
+import lit.fass.server.security.SecurityManager
 
 /**
  * Main class.
@@ -13,14 +14,19 @@ import lit.fass.server.security.SafeguardManager
 object LitfassApplication extends App {
   print("\nLITFASS\n\n")
 
-  val safeguardManager = new SafeguardManager()
-
   val rootBehavior = Behaviors.setup[Nothing] { context =>
+    val securityManager = SecurityManager(context.system.settings.config)
+
     val userRegistryActor = context.spawn(UserRegistry(), "UserRegistryActor")
     context.watch(userRegistryActor)
 
-    val routes = new UserRoutes(userRegistryActor, safeguardManager)(context.system)
-    HttpServer.startHttpServer(routes.userRoutes, context.system)
+    HttpServer.startHttpServer(concat(
+      HealthRoutes().routes,
+      CollectionRoutes(securityManager).routes,
+      ConfigRoutes(securityManager).routes,
+      ScriptRoutes(securityManager).routes,
+      new UserRoutes(userRegistryActor, securityManager)(context.system).userRoutes //todo: remove
+    ), context.system)
 
     Behaviors.empty
   }
