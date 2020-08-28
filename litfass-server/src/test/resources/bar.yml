@@ -1,6 +1,7 @@
 collection: bar
 flows:
   - flow:
+      type: DELETE
       steps:
         - script:
             description: "Transform something"

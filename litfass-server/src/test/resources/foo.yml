@@ -1,6 +1,7 @@
 collection: foo
 flows:
   - flow:
+      type: insert_or_update
       steps:
         - script:
             description: "Transform something"

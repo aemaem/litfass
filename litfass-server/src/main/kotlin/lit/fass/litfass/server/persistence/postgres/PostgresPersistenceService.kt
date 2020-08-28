@@ -76,6 +76,25 @@ class PostgresPersistenceService(private val dataSource: JdbcDataSource, private
         }
     }
 
+    override fun deleteCollection(collection: String, id: Any?) {
+        if (id !is String?) {
+            throw PersistenceException("Id must be of type string")
+        } else if (id == null) {
+            throw PersistenceException("Id must not be null")
+        }
+
+        jooq.transaction { config ->
+            deleteCollection(collection, id, config)
+        }
+        log.debug("Deleted collection $collection")
+    }
+
+    override fun deleteCollection(collection: String, data: Collection<Map<String, Any?>>) {
+        data.forEach { entry ->
+            deleteCollection(collection, entry["id"])
+        }
+    }
+
     override fun findCollectionData(collection: String, id: String): Map<String, Any?> {
         val found = jooq.select()
             .from(table(collection))
@@ -144,6 +163,16 @@ class PostgresPersistenceService(private val dataSource: JdbcDataSource, private
             id ?: randomAlphanumeric(64),
             jsonMapper.writeValueAsString(data),
             now(UTC)
+        )
+    }
+
+    private fun deleteCollection(collection: String, id: String, config: Configuration) {
+        using(config).execute(
+            """
+            DELETE FROM $collection
+            WHERE $ID_KEY = '$id'
+            """.trimIndent(),
+            id
         )
     }
 

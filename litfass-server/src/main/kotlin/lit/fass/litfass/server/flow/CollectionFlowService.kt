@@ -1,6 +1,8 @@
 package lit.fass.litfass.server.flow
 
 import lit.fass.litfass.server.config.yaml.model.*
+import lit.fass.litfass.server.flow.FlowType.DELETE
+import lit.fass.litfass.server.flow.FlowType.INSERT_OR_UPDATE
 import lit.fass.litfass.server.http.HttpService
 import lit.fass.litfass.server.script.ScriptEngine
 import org.slf4j.LoggerFactory
@@ -16,11 +18,12 @@ class CollectionFlowService(
 ) : FlowService {
     companion object {
         private val log = LoggerFactory.getLogger(this::class.java.enclosingClass)
+
         @Suppress("RegExpRedundantEscape")
         private val variableRegex = Regex("\\$\\{(\\w+)\\}")
     }
 
-    override fun execute(data: Collection<Map<String, Any?>>, config: CollectionConfig): Collection<Map<String, Any?>> {
+    override fun execute(data: CollectionFlowResult, config: CollectionConfig): CollectionFlowResult {
         var currentData = data
         config.flows
             .filter { isApplicable(data.first(), it.applyIf) }
@@ -28,10 +31,19 @@ class CollectionFlowService(
         return currentData
     }
 
-    private fun executeFlow(data: Collection<Map<String, Any?>>, flowConfig: CollectionFlowConfig): Collection<Map<String, Any?>> {
-        var currentData = data
-        flowConfig.steps.forEach { currentData = executeStep(currentData, it) }
-        return currentData
+    private fun executeFlow(data: CollectionFlowResult, flowConfig: CollectionFlowConfig): CollectionFlowResult {
+        return when (flowConfig.type) {
+            INSERT_OR_UPDATE -> {
+                val currentData = data.insertOrUpdateData
+                flowConfig.steps.forEach { currentData + executeStep(currentData, it) }
+                data
+            }
+            DELETE -> {
+                val currentData = data.deleteData
+                flowConfig.steps.forEach { currentData + executeStep(currentData, it) }
+                data
+            }
+        }
     }
 
     private fun executeStep(
