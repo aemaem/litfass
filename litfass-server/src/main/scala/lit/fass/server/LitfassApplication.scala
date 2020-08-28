@@ -24,7 +24,6 @@ object LitfassApplication extends App {
       HealthRoutes().routes,
       CollectionRoutes(securityManager).routes,
       ConfigRoutes(securityManager).routes,
-      ScriptRoutes(securityManager).routes,
       new UserRoutes(userRegistryActor, securityManager)(context.system).userRoutes //todo: remove
     ), context.system)
 

@@ -15,11 +15,11 @@ object ScriptActor {
   final case class ExecutedScriptMessage(data: DataList)
   //@formatter:on
 
-  def apply(): ScriptActor =
-    Behaviors.setup(context => new ScriptActor(context = context))
+//  def apply(): ScriptActor =
+//    Behaviors.setup(context => new ScriptActor(context = context))
 
-  def apply(scriptEngines: List[ScriptEngine]): ScriptActor =
-    Behaviors.setup(context => new ScriptActor(scriptEngines, context))
+//  def apply(scriptEngines: List[ScriptEngine]): ScriptActor =
+//    Behaviors.setup(context => new ScriptActor(scriptEngines, context))
 }
 
 /**

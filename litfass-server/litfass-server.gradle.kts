@@ -3,9 +3,11 @@ import com.bmuschko.gradle.docker.tasks.image.DockerBuildImage
 import com.bmuschko.gradle.docker.tasks.image.DockerPushImage
 import org.gradle.api.JavaVersion.VERSION_11
 import org.gradle.jvm.tasks.Jar
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     scala
+    kotlin("jvm") version "1.3.72"
     `java-library`
     distribution
     id("com.bmuschko.docker-remote-api")
@@ -18,13 +20,17 @@ repositories {
 dependencies {
     val scalaVersion = "2.13"
     val versions = mapOf(
-        "scala" to "${scalaVersion}.2",
-        "akka" to "2.6.4",
-        "akka-http" to "10.1.11",
+        "kotlin" to "1.3.72",
+        "scala" to "${scalaVersion}.2", //todo: remove
+        "akka" to "2.6.8",
+        "akka-http" to "10.2.0",
         "shiro" to "1.5.2"
     )
 
-    implementation("org.scala-lang:scala-library:${versions["scala"]}")
+    implementation("org.jetbrains.kotlin:kotlin-reflect:${versions["kotlin"]}")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:${versions["kotlin"]}")
+
+    implementation("org.scala-lang:scala-library:${versions["scala"]}") //todo: remove
     implementation("com.typesafe.akka:akka-actor-typed_${scalaVersion}:${versions["akka"]}")
     implementation("com.typesafe.akka:akka-stream_${scalaVersion}:${versions["akka"]}")
     implementation("com.typesafe.akka:akka-http_${scalaVersion}:${versions["akka-http"]}")
@@ -38,8 +44,8 @@ dependencies {
     implementation("org.codehaus.groovy:groovy-json:2.5.11")
     implementation("org.codehaus.groovy:groovy-xml:2.5.11")
 
-    testImplementation("org.scalatest:scalatest_${scalaVersion}:3.1.1")
-    testImplementation("org.scalatestplus:scalatestplus-junit_${scalaVersion}:1.0.0-M2")
+    testImplementation("org.scalatest:scalatest_${scalaVersion}:3.1.1") //todo: remove
+    testImplementation("org.scalatestplus:scalatestplus-junit_${scalaVersion}:1.0.0-M2") //todo: remove
     testImplementation("com.typesafe.akka:akka-actor-testkit-typed_${scalaVersion}:${versions["akka"]}")
     testImplementation("com.typesafe.akka:akka-http-testkit_${scalaVersion}:${versions["akka-http"]}")
     testImplementation("org.assertj:assertj-core:3.15.0")
@@ -64,6 +70,12 @@ tasks.register<Test>("integrationTest") {
     }
 }
 
+tasks.withType<KotlinCompile> {
+    kotlinOptions {
+        freeCompilerArgs = listOf("-Xjsr305=strict")
+        jvmTarget = VERSION_11.majorVersion
+    }
+}
 tasks.withType<Jar> {
     enabled = true
     archiveBaseName.set(project.name)

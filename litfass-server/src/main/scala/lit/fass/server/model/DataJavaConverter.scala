@@ -39,7 +39,7 @@ object DataJavaConverter {
         val converted = new util.ArrayList[Object](sequence.size)
         sequence.foreach(it => converted.add(convert(it)))
         converted
-      case any: Double => double2Double(any).asScala
+      case any: Double => double2Double(any)
       case any: Float => float2Float(any)
       case any: Long => long2Long(any)
       case any: Int => int2Integer(any)
