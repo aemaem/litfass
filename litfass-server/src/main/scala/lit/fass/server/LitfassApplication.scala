@@ -11,6 +11,7 @@ import lit.fass.server.security.SecurityManager
  *
  * @author Michael Mair
  */
+@Deprecated
 object LitfassApplication extends App {
   print("\nLITFASS\n\n")
 

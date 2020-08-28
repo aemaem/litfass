@@ -1,13 +1,13 @@
 package lit.fass.server
 
 import akka.Done.done
-import akka.actor.ActorSystem
 import akka.actor.CoordinatedShutdown
 import akka.actor.CoordinatedShutdown.PhaseActorSystemTerminate
 import akka.actor.CoordinatedShutdown.PhaseBeforeServiceUnbind
-import akka.http.javadsl.Http
-import lit.fass.server.http.HealthRoutes
-import org.slf4j.LoggerFactory
+import akka.actor.typed.ActorSystem
+import akka.actor.typed.javadsl.Behaviors
+import lit.fass.server.http.HttpServer
+import lit.fass.server.security.SecurityManager
 import java.util.concurrent.CompletableFuture.completedStage
 import java.util.function.Supplier
 
@@ -19,20 +19,20 @@ import java.util.function.Supplier
  */
 object LitfassApplication {
 
-    private val log = LoggerFactory.getLogger("lit.fass.server.LitfassApplication")
+    private val log = this.logger()
 
     @JvmStatic
     fun main(args: Array<String>) {
         print("\nLITFASS\n\n")
-        val system = ActorSystem.create("litfass")
 
-        val http = Http.get(system)
-        http.newServerAt("localhost", 8080)
-            .bind(HealthRoutes().routes)
-            .thenApply {
-                val address = it.localAddress()
-                log.info("Server online at http://${address.hostString}:${address.port}")
-            }
+        val rootBehavior = Behaviors.setup<Void> { context ->
+            val securityManager = SecurityManager(context.system.settings().config())
+
+            HttpServer(securityManager).startHttpServer(context.system)
+
+            Behaviors.empty()
+        }
+        val system: ActorSystem<Void> = ActorSystem.create(rootBehavior, "litfass")
 
         CoordinatedShutdown.get(system).addTask(PhaseBeforeServiceUnbind(), "shutdownLogging", Supplier {
             log.info("Application is being terminated...")

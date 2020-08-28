@@ -12,6 +12,7 @@ object HealthRoutes {
 /**
  * @author Michael Mair
  */
+@Deprecated
 class HealthRoutes {
 
   val routes: Route =

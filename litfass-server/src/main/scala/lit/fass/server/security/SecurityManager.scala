@@ -16,6 +16,7 @@ import scala.jdk.CollectionConverters._
 /**
  * @author Michael Mair
  */
+@Deprecated
 class SecurityManager extends DefaultSecurityManager(new SecurityRealm()) {
 
   def buildSubject(): Subject = {

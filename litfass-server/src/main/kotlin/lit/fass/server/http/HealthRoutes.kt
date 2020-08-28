@@ -10,10 +10,9 @@ import akka.http.javadsl.server.Route
  */
 class HealthRoutes : AllDirectives() {
 
-    val routes: Route =
-        pathPrefix("health") {
-            get {
-                complete(OK)
-            }
+    val routes: Route = pathPrefix("health") {
+        get {
+            complete(OK)
         }
+    }
 }

@@ -24,7 +24,9 @@ dependencies {
         "scala" to "${scalaVersion}.2", //todo: remove
         "akka" to "2.6.8",
         "akka-http" to "10.2.0",
-        "shiro" to "1.5.2"
+        "shiro" to "1.5.2",
+        "groovy" to "2.5.11",
+        "junit" to "5.6.2"
     )
 
     implementation("org.jetbrains.kotlin:kotlin-reflect:${versions["kotlin"]}")
@@ -39,17 +41,20 @@ dependencies {
     implementation("org.apache.shiro:shiro-core:${versions["shiro"]}")
     implementation("org.apache.shiro:shiro-web:${versions["shiro"]}")
     implementation("org.apache.commons:commons-lang3:3.10")
-    implementation("org.codehaus.groovy:groovy:2.5.11")
-    implementation("org.codehaus.groovy:groovy-jsr223:2.5.11")
-    implementation("org.codehaus.groovy:groovy-json:2.5.11")
-    implementation("org.codehaus.groovy:groovy-xml:2.5.11")
+    implementation("org.codehaus.groovy:groovy:${versions["groovy"]}")
+    implementation("org.codehaus.groovy:groovy-jsr223:${versions["groovy"]}")
+    implementation("org.codehaus.groovy:groovy-json:${versions["groovy"]}")
+    implementation("org.codehaus.groovy:groovy-xml:${versions["groovy"]}")
 
-    testImplementation("org.scalatest:scalatest_${scalaVersion}:3.1.1") //todo: remove
-    testImplementation("org.scalatestplus:scalatestplus-junit_${scalaVersion}:1.0.0-M2") //todo: remove
     testImplementation("com.typesafe.akka:akka-actor-testkit-typed_${scalaVersion}:${versions["akka"]}")
     testImplementation("com.typesafe.akka:akka-http-testkit_${scalaVersion}:${versions["akka-http"]}")
+    testImplementation("junit:junit:4.13")
+    testImplementation("org.junit.jupiter:junit-jupiter-engine:${versions["junit"]}")
+    testImplementation("org.junit.jupiter:junit-jupiter-params:${versions["junit"]}")
+    testRuntimeOnly("org.junit.vintage:junit-vintage-engine:${versions["junit"]}")
     testImplementation("org.assertj:assertj-core:3.15.0")
     testImplementation("org.awaitility:awaitility:4.0.2")
+
 }
 
 java.sourceCompatibility = VERSION_11
@@ -59,15 +64,19 @@ sourceSets.create("infra") {
     java.srcDir("src/infra/docker")
 }
 
-tasks.register<Test>("unitTest") {
-    useJUnit {
-        includeCategories("lit.fass.server.helper.UnitTest")
-    }
-}
-tasks.register<Test>("integrationTest") {
-    useJUnit {
-        includeCategories("lit.fass.server.helper.IntegrationTest")
-    }
+
+tasks.withType<Test> {
+    useJUnitPlatform()
+    addTestListener(object : TestListener {
+        override fun beforeSuite(suite: TestDescriptor?) {}
+        override fun afterSuite(suite: TestDescriptor?, result: TestResult?) {}
+
+        override fun beforeTest(testDescriptor: TestDescriptor?) {
+            logger.quiet(testDescriptor.toString())
+        }
+
+        override fun afterTest(testDescriptor: TestDescriptor?, result: TestResult?) {}
+    })
 }
 
 tasks.withType<KotlinCompile> {
@@ -152,18 +161,22 @@ tasks.create("buildImage", DockerBuildImage::class) {
     dependsOn(tasks.named("prepareImage"))
     inputDir.set(file("${buildDir}/docker/"))
     images.add(
-        "${rootProject.extra["dockerHubUsername"]}/${rootProject.name}:${project.version.toString().replace(
-            "\\+",
-            "."
-        )}"
+        "${rootProject.extra["dockerHubUsername"]}/${rootProject.name}:${
+            project.version.toString().replace(
+                "\\+",
+                "."
+            )
+        }"
     )
 }
 tasks.create("pushImage", DockerPushImage::class) {
     dependsOn(tasks.named("buildImage"))
     images.add(
-        "${rootProject.extra["dockerHubUsername"]}/${rootProject.name}:${project.version.toString().replace(
-            "\\+",
-            "."
-        )}"
+        "${rootProject.extra["dockerHubUsername"]}/${rootProject.name}:${
+            project.version.toString().replace(
+                "\\+",
+                "."
+            )
+        }"
     )
 }

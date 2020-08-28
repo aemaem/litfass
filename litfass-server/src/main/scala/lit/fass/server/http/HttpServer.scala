@@ -10,6 +10,7 @@ import scala.util.{Failure, Success}
 /**
  * @author Michael Mair
  */
+@Deprecated
 object HttpServer {
   def startHttpServer(routes: Route, system: ActorSystem[_]): Unit = {
     // Akka HTTP still needs a classic ActorSystem to start

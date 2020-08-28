@@ -6,10 +6,9 @@ import org.apache.shiro.realm.SimpleAccountRealm
 /**
  * @author Michael Mair
  */
-@Deprecated
-class SecurityRealm extends SimpleAccountRealm {
+class SecurityRealm : SimpleAccountRealm() {
 
-  def addAccount(account: SimpleAccount): Unit = {
-    add(account)
-  }
+    fun addAccount(account: SimpleAccount) {
+        add(account)
+    }
 }
