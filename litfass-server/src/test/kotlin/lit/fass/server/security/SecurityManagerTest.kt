@@ -1,41 +1,41 @@
 package lit.fass.server.security
 
+import com.typesafe.config.ConfigFactory
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.Test
+
 
 /**
  * @author Michael Mair
  */
 internal class SecurityManagerTest {
-    // todo: implement
 
-    //  "security manager" should {
-    //
-    //    "initialize users from config" in {
-    //      val config = ConfigFactory.parseResources("application-test.conf")
-    //      val securityManager: SecurityManager = SecurityManager(config)
-    //      securityManager.getRealm.accountExists("admin") shouldBe true
-    //      securityManager.getRealm.accountExists("user") shouldBe true
-    //      securityManager.getRealm.accountExists("foo") shouldBe false
-    //    }
-    //
-    //    "authenticate users" in {
-    //      val securityManager = SecurityManager(ConfigFactory.parseResources("application-test.conf"))
-    //      val subject = securityManager.loginHttpBasic("YWRtaW46YWRtaW4=") // admin:admin
-    //      subject.isAuthenticated shouldBe true
-    //    }
-    //
-    //    "not authenticate users with wrong password" in {
-    //      val securityManager = SecurityManager(ConfigFactory.parseResources("application-test.conf"))
-    //      val subject = securityManager.loginHttpBasic("YWRtaW46QURNSU4=") // admin:ADMIN
-    //      subject.isAuthenticated shouldBe false
-    //    }
-    //
-    //    "authorize users" in {
-    //      val securityManager = SecurityManager(ConfigFactory.parseResources("application-test.conf"))
-    //      val subject = securityManager.loginHttpBasic("YWRtaW46YWRtaW4=") // admin:admin
-    //      subject.hasRole("ADMIN") shouldBe true
-    //      subject.hasRole("FOO") shouldBe false
-    //    }
-    //
-    //  }
+    val classUnderTest = SecurityManager(ConfigFactory.parseResources("application-test.conf"))
+
+    @Test
+    fun `security manager initialize users from config`() {
+        assertThat(classUnderTest.getRealm().accountExists("admin")).isTrue()
+        assertThat(classUnderTest.getRealm().accountExists("user")).isTrue()
+        assertThat(classUnderTest.getRealm().accountExists("foo")).isFalse()
+    }
+
+    @Test
+    fun `security manager authenticates users`() {
+        val subject = classUnderTest.loginHttpBasic("YWRtaW46YWRtaW4=") // admin:admin
+        assertThat(subject.isAuthenticated).isTrue()
+    }
+
+    @Test
+    fun `security manager does not authenticate users with wrong password`() {
+        val subject = classUnderTest.loginHttpBasic("YWRtaW46QURNSU4=") // admin:ADMIN
+        assertThat(subject.isAuthenticated).isFalse()
+    }
+
+    @Test
+    fun `security manager authorizes users`() {
+        val subject = classUnderTest.loginHttpBasic("YWRtaW46YWRtaW4=") // admin:admin
+        assertThat(subject.hasRole("ADMIN")).isTrue()
+        assertThat(subject.hasRole("FOO")).isFalse()
+    }
 
 }

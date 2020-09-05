@@ -6,7 +6,6 @@ import org.gradle.jvm.tasks.Jar
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    scala
     kotlin("jvm") version "1.3.72"
     `java-library`
     distribution
@@ -24,9 +23,11 @@ dependencies {
         "scala" to "${scalaVersion}.2", //todo: remove
         "akka" to "2.6.8",
         "akka-http" to "10.2.0",
+        "jackson" to "2.11.2",
         "shiro" to "1.5.2",
         "groovy" to "2.5.11",
-        "junit" to "5.6.2"
+        "junit" to "5.6.2",
+        "testcontainers" to "1.14.3"
     )
 
     implementation("org.jetbrains.kotlin:kotlin-reflect:${versions["kotlin"]}")
@@ -41,20 +42,37 @@ dependencies {
     implementation("org.apache.shiro:shiro-core:${versions["shiro"]}")
     implementation("org.apache.shiro:shiro-web:${versions["shiro"]}")
     implementation("org.apache.commons:commons-lang3:3.10")
+    implementation("com.google.guava:guava:29.0-jre")
+
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:${versions["jackson"]}")
+    implementation("com.fasterxml.jackson.core:jackson-databind:${versions["jackson"]}")
+    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${versions["jackson"]}")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${versions["jackson"]}")
+    implementation("com.github.ben-manes.caffeine:caffeine:2.8.5")
+    implementation("com.cronutils:cron-utils:8.0.0")
+    implementation("org.quartz-scheduler:quartz:2.3.0")
+    implementation("org.quartz-scheduler:quartz-jobs:2.3.0")
+    implementation("org.jooq:jooq:3.11.7")
+    implementation("org.postgresql:postgresql:42.2.5")
+    implementation("org.apache.httpcomponents:httpclient:4.5.11")
     implementation("org.codehaus.groovy:groovy:${versions["groovy"]}")
     implementation("org.codehaus.groovy:groovy-jsr223:${versions["groovy"]}")
     implementation("org.codehaus.groovy:groovy-json:${versions["groovy"]}")
     implementation("org.codehaus.groovy:groovy-xml:${versions["groovy"]}")
 
+
     testImplementation("com.typesafe.akka:akka-actor-testkit-typed_${scalaVersion}:${versions["akka"]}")
     testImplementation("com.typesafe.akka:akka-http-testkit_${scalaVersion}:${versions["akka-http"]}")
     testImplementation("junit:junit:4.13")
+    testRuntimeOnly("org.junit.vintage:junit-vintage-engine:${versions["junit"]}")
     testImplementation("org.junit.jupiter:junit-jupiter-engine:${versions["junit"]}")
     testImplementation("org.junit.jupiter:junit-jupiter-params:${versions["junit"]}")
-    testRuntimeOnly("org.junit.vintage:junit-vintage-engine:${versions["junit"]}")
     testImplementation("org.assertj:assertj-core:3.15.0")
     testImplementation("org.awaitility:awaitility:4.0.2")
-
+    testImplementation("io.mockk:mockk:1.10.0")
+    testImplementation("org.springframework.boot:spring-boot-test:2.3.3.RELEASE")
+    testImplementation("org.testcontainers:junit-jupiter:${versions["testcontainers"]}")
+    testImplementation("org.testcontainers:postgresql:${versions["testcontainers"]}")
 }
 
 java.sourceCompatibility = VERSION_11

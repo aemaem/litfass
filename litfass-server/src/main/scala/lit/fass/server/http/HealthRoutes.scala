@@ -5,6 +5,7 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 
 
+@Deprecated
 object HealthRoutes {
   def apply(): HealthRoutes = new HealthRoutes()
 }
