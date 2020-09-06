@@ -7,7 +7,7 @@ import io.mockk.impl.annotations.MockK
 import io.mockk.verify
 import lit.fass.server.config.yaml.model.CollectionConfig
 import lit.fass.server.execution.ExecutionService
-import lit.fass.server.helper.UnitTest.UnitTest
+import lit.fass.server.helper.TestTypes.UnitTest
 import lit.fass.server.persistence.Datastore.POSTGRES
 import lit.fass.server.retention.RetentionService
 import org.assertj.core.api.Assertions.*

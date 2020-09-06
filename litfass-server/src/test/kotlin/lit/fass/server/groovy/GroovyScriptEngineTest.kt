@@ -1,6 +1,6 @@
 package lit.fass.server.groovy
 
-import lit.fass.server.helper.UnitTest.UnitTest
+import lit.fass.server.helper.TestTypes.UnitTest
 import lit.fass.server.script.ScriptLanguage
 import lit.fass.server.script.groovy.GroovyScriptEngine
 import org.assertj.core.api.Assertions.assertThat

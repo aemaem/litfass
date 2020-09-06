@@ -9,7 +9,7 @@ import lit.fass.server.config.yaml.ConfigException
 import lit.fass.server.config.yaml.YamlConfigService
 import lit.fass.server.config.yaml.model.CollectionFlowStepHttpConfig
 import lit.fass.server.config.yaml.model.CollectionFlowStepScriptConfig
-import lit.fass.server.helper.UnitTest.UnitTest
+import lit.fass.server.helper.TestTypes.UnitTest
 import lit.fass.server.persistence.CollectionConfigPersistenceService
 import lit.fass.server.persistence.Datastore.POSTGRES
 import lit.fass.server.schedule.SchedulerService

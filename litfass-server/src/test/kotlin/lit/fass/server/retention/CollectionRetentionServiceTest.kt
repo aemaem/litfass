@@ -6,8 +6,7 @@ import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.verify
 import lit.fass.server.config.yaml.model.CollectionConfig
-import lit.fass.server.helper.UnitTest
-import lit.fass.server.helper.UnitTest.UnitTest
+import lit.fass.server.helper.TestTypes.UnitTest
 import lit.fass.server.persistence.CollectionPersistenceService
 import lit.fass.server.persistence.Datastore.POSTGRES
 import org.assertj.core.api.Assertions.assertThat

@@ -1,7 +1,7 @@
 package lit.fass.server.postgres
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import lit.fass.server.helper.IntegrationTest.IntegrationTest
+import lit.fass.server.helper.TestTypes.IntegrationTest
 import lit.fass.server.helper.PostgresSupport
 import lit.fass.server.persistence.CollectionConfigPersistenceService.Companion.COLLECTION_CONFIG_TABLE
 import lit.fass.server.persistence.CollectionPersistenceService.Companion.ID_KEY

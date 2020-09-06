@@ -96,6 +96,30 @@ tasks.withType<Test> {
         override fun afterTest(testDescriptor: TestDescriptor?, result: TestResult?) {}
     })
 }
+object UnitTest
+object IntegrationTest
+object End2EndTest
+tasks.register<Test>("unitTest") {
+    useJUnitPlatform {
+        filter {
+            excludeTags(IntegrationTest::class.java.simpleName, End2EndTest::class.java.simpleName)
+        }
+    }
+}
+tasks.register<Test>("integrationTest") {
+    useJUnitPlatform {
+        filter {
+            includeTags(IntegrationTest::class.java.simpleName)
+        }
+    }
+}
+tasks.register<Test>("e2eTest") {
+    useJUnitPlatform {
+        filter {
+            includeTags(End2EndTest::class.java.simpleName)
+        }
+    }
+}
 
 tasks.withType<KotlinCompile> {
     kotlinOptions {

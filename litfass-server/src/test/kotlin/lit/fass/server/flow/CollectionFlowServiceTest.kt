@@ -9,7 +9,7 @@ import lit.fass.server.config.yaml.model.CollectionConfig
 import lit.fass.server.config.yaml.model.CollectionFlowConfig
 import lit.fass.server.config.yaml.model.CollectionFlowStepHttpConfig
 import lit.fass.server.config.yaml.model.CollectionFlowStepScriptConfig
-import lit.fass.server.helper.UnitTest.UnitTest
+import lit.fass.server.helper.TestTypes.UnitTest
 import lit.fass.server.http.HttpService
 import lit.fass.server.persistence.Datastore.POSTGRES
 import lit.fass.server.script.ScriptEngine
