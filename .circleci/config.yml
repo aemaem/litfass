@@ -1,13 +1,10 @@
 version: 2
+machine: true
 jobs:
   build:
     docker:
       - image: circleci/openjdk:11-jdk-node-browsers
-      - image: postgres:11.1-alpine
-        environment:
-          POSTGRES_USER: "admin"
-          POSTGRES_PASSWORD: "admin"
-          POSTGRES_DB: litfass
+      - image: docker:stable-git
     environment:
       TZ: "/usr/share/zoneinfo/Europe/Vienna"
       GRADLE_OPTS: '-Xmx128m -Dorg.gradle.jvmargs="-XX:+HeapDumpOnOutOfMemoryError"'
@@ -34,11 +31,6 @@ jobs:
   release:
     docker:
       - image: circleci/openjdk:11-jdk-node-browsers
-      - image: postgres:11.1-alpine
-        environment:
-          POSTGRES_USER: "admin"
-          POSTGRES_PASSWORD: "admin"
-          POSTGRES_DB: litfass
       - image: docker:stable-git
     environment:
       TZ: "/usr/share/zoneinfo/Europe/Vienna"

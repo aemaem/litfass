@@ -11,27 +11,22 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.jooq.impl.DSL.field
 import org.jooq.impl.DSL.table
-import org.junit.jupiter.api.*
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Tag
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS
 import java.time.OffsetDateTime
 import java.time.ZoneOffset.UTC
 
 /**
- * docker run --rm -p 5432:5432 -e POSTGRES_USER=admin -e POSTGRES_PASSWORD=admin -e POSTGRES_DB=litfass postgres:11.5-alpine
- *
  * @author Michael Mair
  */
 @Tag(IntegrationTest)
 @TestInstance(PER_CLASS)
 internal class PostgresPersistenceServiceTest : PostgresSupport() {
-    // todo: refactor to testcontainers
 
     lateinit var persistenceService: PostgresPersistenceService
-
-    @AfterAll
-    fun cleanupClass() {
-        jdbcDataSource.close()
-    }
 
     @BeforeEach
     fun setup() {
