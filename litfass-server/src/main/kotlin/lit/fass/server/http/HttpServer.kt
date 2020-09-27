@@ -3,13 +3,13 @@ package lit.fass.server.http
 import akka.actor.typed.ActorSystem
 import akka.http.javadsl.Http
 import akka.http.javadsl.server.AllDirectives
+import akka.http.javadsl.server.Route
 import lit.fass.server.logger
-import lit.fass.server.security.SecurityManager
 
 /**
  * @author Michael Mair
  */
-class HttpServer(private val securityManager: SecurityManager) : AllDirectives() {
+class HttpServer(private val route: Route) : AllDirectives() {
 
     companion object {
         private val log = this.logger()
@@ -19,11 +19,8 @@ class HttpServer(private val securityManager: SecurityManager) : AllDirectives()
 
         val http = Http.get(system)
         http.newServerAt("localhost", 8080)
-            .bind(
-                concat(
-                    HealthRoutes().routes
-                )
-            )
+            .bind(route)
+            //todo: exception handling: https://doc.akka.io/docs/akka-http/current/routing-dsl/exception-handling.html
             .handle { serverBinding, throwable ->
                 if (throwable == null) {
                     val address = serverBinding.localAddress()

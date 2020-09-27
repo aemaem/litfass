@@ -7,5 +7,5 @@ enum class Role {
     ADMIN,
     READER,
     WRITER,
-    EXECUTER
+    EXECUTOR
 }

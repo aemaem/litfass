@@ -9,6 +9,7 @@ plugins {
     kotlin("jvm") version "1.3.72"
     `java-library`
     distribution
+    id("com.github.johnrengelman.shadow")
     id("com.bmuschko.docker-remote-api")
 }
 
@@ -20,8 +21,8 @@ dependencies {
     val scalaVersion = "2.13"
     val versions = mapOf(
         "kotlin" to "1.3.72",
-        "scala" to "${scalaVersion}.2", //todo: remove
-        "akka" to "2.6.8",
+        "scala" to "${scalaVersion}.2",
+        "akka" to "2.6.9",
         "akka-http" to "10.2.0",
         "jackson" to "2.11.2",
         "shiro" to "1.5.2",
@@ -33,10 +34,11 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect:${versions["kotlin"]}")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:${versions["kotlin"]}")
 
-    implementation("org.scala-lang:scala-library:${versions["scala"]}") //todo: remove
+    implementation("org.scala-lang:scala-library:${versions["scala"]}")
     implementation("com.typesafe.akka:akka-actor-typed_${scalaVersion}:${versions["akka"]}")
     implementation("com.typesafe.akka:akka-stream_${scalaVersion}:${versions["akka"]}")
     implementation("com.typesafe.akka:akka-http_${scalaVersion}:${versions["akka-http"]}")
+    implementation("com.typesafe.akka:akka-http-jackson_${scalaVersion}:${versions["akka-http"]}")
     implementation("com.typesafe.akka:akka-http-spray-json_${scalaVersion}:${versions["akka-http"]}")
     implementation("ch.qos.logback:logback-classic:1.2.3")
     implementation("org.apache.shiro:shiro-core:${versions["shiro"]}")
@@ -73,6 +75,8 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-test:2.3.3.RELEASE")
     testImplementation("org.testcontainers:junit-jupiter:${versions["testcontainers"]}")
     testImplementation("org.testcontainers:postgresql:${versions["testcontainers"]}")
+    testImplementation("com.github.kittinunf.fuel:fuel:2.2.3")
+    testRuntimeOnly("com.github.kittinunf.fuel:fuel-jackson:2.2.3")
 }
 
 java.sourceCompatibility = VERSION_11
@@ -84,7 +88,11 @@ sourceSets.create("infra") {
 
 
 tasks.withType<Test> {
-    useJUnitPlatform()
+    useJUnitPlatform {
+        filter {
+            excludeTags(End2EndTest::class.java.simpleName)
+        }
+    }
     addTestListener(object : TestListener {
         override fun beforeSuite(suite: TestDescriptor?) {}
         override fun afterSuite(suite: TestDescriptor?, result: TestResult?) {}
@@ -136,14 +144,16 @@ tasks.withType<Jar> {
         attributes["Main-Class"] = "lit.fass.server.LitfassApplication"
     }
 }
-tasks.create("allJar", Jar::class) {
+tasks.create("allJar", com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar::class) {
     archiveClassifier.set("all")
     manifest {
         attributes["Implementation-Title"] = "LITFASS"
         attributes["Implementation-Version"] = project.version
         attributes["Main-Class"] = "lit.fass.server.LitfassApplication"
     }
-    from(project.configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
+    transform(com.github.jengelman.gradle.plugins.shadow.transformers.AppendingTransformer::class.java) {
+        resource = "reference.conf"
+    }
     with(tasks.named<Jar>("jar").get())
 }
 tasks.assembleDist.get().dependsOn(tasks["allJar"])
@@ -152,7 +162,7 @@ distributions {
     main {
         contents {
             val runFile = File.createTempFile("run", ".sh")
-            runFile.writeText("""!/bin/sh\njava -XX:+UseG1GC -XX:+UseStringDeduplication -XX:+HeapDumpOnOutOfMemoryError -server -ea -classpath "./*:./lib/*" lit.fass.server.LitfassApplication""")
+            runFile.writeText("#!/bin/sh\njava -XX:+UseG1GC -XX:+UseStringDeduplication -XX:+HeapDumpOnOutOfMemoryError -server -ea -classpath \"./*:./lib/*\" lit.fass.server.LitfassApplication")
             runFile.setExecutable(true)
             runFile.deleteOnExit()
             from(runFile) {

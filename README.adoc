@@ -7,7 +7,6 @@ image:https://img.shields.io/github/license/mashape/apistatus.svg?style=flat-squ
 Lightweight Integrated Tailorable Flow Aware Software Service
 
 === TODO
-. basic http endpoint: https://doc.akka.io/docs/akka-http/current/
 . use akka streams: https://doc.akka.io/docs/akka/2.6/stream/index.html
 . basic security with apache shiro: https://shiro.apache.org/
 . basic persistence with akka and postgres: https://doc.akka.io/docs/alpakka/current/slick.html
