@@ -10,10 +10,11 @@ import akka.http.javadsl.testkit.TestRoute
 import io.mockk.MockKAnnotations
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
-import io.mockk.mockk
 import lit.fass.server.helper.UnitTest
 import lit.fass.server.script.ScriptEngine
 import lit.fass.server.script.ScriptLanguage
+import lit.fass.server.security.Role.ADMIN
+import lit.fass.server.security.Role.EXECUTOR
 import lit.fass.server.security.SecurityManager
 import org.apache.shiro.subject.Subject
 import org.junit.Before
@@ -24,12 +25,15 @@ import org.junit.experimental.categories.Category
  * @author Michael Mair
  */
 @Category(UnitTest::class)
-internal class ScriptRoutesTest : JUnitRouteTest() {
+internal class ScriptRoutesFunctionTest : JUnitRouteTest() {
 
     lateinit var routeUnderTest: TestRoute
 
     @MockK
     lateinit var securityManagerMock: SecurityManager
+
+    @MockK(relaxed = true)
+    lateinit var subjectMock: Subject
 
     @MockK(relaxed = true)
     lateinit var scriptEngine1Mock: ScriptEngine
@@ -40,11 +44,10 @@ internal class ScriptRoutesTest : JUnitRouteTest() {
     @Before
     fun setup() {
         MockKAnnotations.init(this)
-        val authenticatedSubjectMock = mockk<Subject>()
-        every { authenticatedSubjectMock.isAuthenticated } returns true
-        every { authenticatedSubjectMock.hasRole("ADMIN") } returns true
-        every { authenticatedSubjectMock.principal } returns "admin"
-        every { securityManagerMock.loginHttpBasic(any() as String) } returns authenticatedSubjectMock
+        every { subjectMock.isAuthenticated } returns true
+        every { subjectMock.hasRole(or(ADMIN.name, EXECUTOR.name)) } returns true
+        every { subjectMock.principal } returns "admin"
+        every { securityManagerMock.loginHttpBasic(any() as String) } returns subjectMock
         every { scriptEngine1Mock.isApplicable(ScriptLanguage.GROOVY) } returns false
         every { scriptEngine2Mock.isApplicable(ScriptLanguage.GROOVY) } returns true
         @Suppress("UNCHECKED_CAST")

@@ -1,12 +1,19 @@
 package lit.fass.server.http.route
 
-import akka.http.javadsl.model.StatusCodes
+import akka.http.javadsl.marshallers.jackson.Jackson.marshaller
+import akka.http.javadsl.marshallers.jackson.Jackson.unmarshaller
+import akka.http.javadsl.model.StatusCodes.*
 import akka.http.javadsl.server.PathMatchers.segment
 import akka.http.javadsl.server.Route
 import lit.fass.server.config.ConfigService
 import lit.fass.server.http.SecurityDirectives
 import lit.fass.server.logger
+import lit.fass.server.security.Role
+import lit.fass.server.security.Role.*
 import lit.fass.server.security.SecurityManager
+import org.apache.shiro.subject.Subject
+import java.io.ByteArrayInputStream
+
 
 /**
  * @author Michael Mair
@@ -21,68 +28,79 @@ class ConfigRoutes(
     }
 
     val routes: Route = pathPrefix("configs") {
-        concat(
-            post {
-                complete(StatusCodes.NOT_IMPLEMENTED)
-            },
-            get {
-                complete(StatusCodes.NOT_IMPLEMENTED)
-            },
-            path(segment()) { collection ->
-                concat(
-                    get {
-                        complete(StatusCodes.NOT_IMPLEMENTED)
-                    },
-                    delete {
-                        complete(StatusCodes.NOT_IMPLEMENTED)
+        authenticate { subject ->
+            concat(
+                post {
+                    authorize(subject, listOf(ADMIN, WRITER)) {
+                        entity(unmarshaller(ByteArray::class.java)) { payload ->
+                            addConfig(payload)
+                        }
                     }
-                )
-            }
-        )
+                },
+                get {
+                    authorize(subject, listOf(ADMIN, READER)) {
+                        getConfigs(subject)
+                    }
+                },
+                path(segment()) { collection ->
+                    concat(
+                        get {
+                            authorize(subject, listOf(ADMIN, READER)) {
+                                getConfig(collection, subject)
+                            }
+                        },
+                        delete {
+                            authorize(subject, listOf(ADMIN, WRITER)) {
+                                deleteConfig(collection, subject)
+                            }
+                        }
+                    )
+                }
+            )
+        }
     }
 
-    //todo: implement
-//    fun getConfigs(request: ServerRequest): Mono<ServerResponse> {
-//        // todo: implement pagination
-//        return request.principal().flatMap { principal ->
-//            log.debug("Getting all configs for user ${principal.name}")
-//            ok().body(fromValue(configService.getConfigs()))
-//        }
-//    }
-//
-//    fun getConfig(request: ServerRequest): Mono<ServerResponse> {
-//        val collection = request.pathVariable("collection")
-//        if (collection.isBlank()) {
-//            return badRequest().body(fromValue(mapOf("error" to "Collection must not be blank")))
-//        }
-//        return request.principal().flatMap { principal ->
-//            log.debug("Getting config $collection for user ${principal.name}")
-//            ok().body(fromValue(configService.getConfig(collection)))
-//        }
-//    }
-//
-//    fun deleteConfig(request: ServerRequest): Mono<ServerResponse> {
-//        val collection = request.pathVariable("collection")
-//        if (collection.isBlank()) {
-//            return badRequest().body(fromValue(mapOf("error" to "Collection must not be blank")))
-//        }
-//        return request.principal().flatMap { principal ->
-//            log.debug("Removing config $collection for user ${principal.name}")
-//            configService.removeConfig(collection)
-//            noContent().build()
-//        }
-//    }
-//
-//    fun addConfig(request: ServerRequest): Mono<ServerResponse> {
-//        return request.bodyToMono(ByteArray::class.java).flatMap { body ->
-//            try {
-//                configService.readConfig(ByteArrayInputStream(body))
-//            } catch (ex: Exception) {
-//                log.error("Unable to read config", ex)
-//                return@flatMap badRequest().body(fromValue(mapOf("error" to "Unable to read config: ${ex.message}")))
-//            }
-//            noContent().build()
-//        }
-//    }
+    private fun getConfigs(subject: Subject): Route {
+        return try {
+            log.debug("Getting all configs for user ${subject.principal}")
+            val result = configService.getConfigs()
+            complete(OK, result, marshaller())
+        } catch (ex: Exception) {
+            complete(BAD_REQUEST, mapOf("error" to ex.message), marshaller())
+        }
+    }
+
+    private fun getConfig(collection: String, subject: Subject): Route {
+        if (collection.isBlank()) {
+            return complete(BAD_REQUEST, mapOf("error" to "Collection must not be blank"), marshaller())
+        }
+
+        return try {
+            log.debug("Getting config $collection for user ${subject.principal}")
+            val result = configService.getConfig(collection)
+            complete(OK, result, marshaller())
+        } catch (ex: Exception) {
+            complete(BAD_REQUEST, mapOf("error" to ex.message), marshaller())
+        }
+    }
+
+    private fun deleteConfig(collection: String, subject: Subject): Route {
+        if (collection.isBlank()) {
+            return complete(BAD_REQUEST, mapOf("error" to "Collection must not be blank"), marshaller())
+        }
+        log.debug("Removing config $collection for user ${subject.principal}")
+        configService.removeConfig(collection)
+        return complete(NO_CONTENT)
+    }
+
+    private fun addConfig(payload: ByteArray): Route {
+        try {
+            configService.readConfig(ByteArrayInputStream(payload))
+        } catch (ex: Exception) {
+            log.error("Unable to read config", ex)
+            complete(BAD_REQUEST, mapOf("error" to "Unable to read config: ${ex.message}"), marshaller())
+        }
+        return complete(NO_CONTENT)
+    }
 
 }

@@ -1,0 +1,26 @@
+name: Build and Test
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-18.04
+    env:
+      GRADLE_OPTS: '-Xmx128m -Dorg.gradle.jvmargs="-XX:+HeapDumpOnOutOfMemoryError"'
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up JDK 11
+        uses: actions/setup-java@v1
+        with:
+          java-version: 11.0.4
+          java-package: jdk
+          architecture: x64
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+      - name: Unit Test
+        run: ./gradlew unitTest --stacktrace
+      - name: Integration Test
+        run: ./gradlew integrationTest --stacktrace
+      - name: End2End Test
+        run: ./gradlew e2eTest --stacktrace
+      - name: Build
+        run: ./gradlew assemble --stacktrace
