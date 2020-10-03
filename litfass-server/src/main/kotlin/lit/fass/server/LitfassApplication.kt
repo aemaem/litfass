@@ -67,7 +67,7 @@ object LitfassApplication {
             val securityManager = SecurityManager(config)
 
             val route = HealthRoutes().routes
-                .orElse(CollectionRoutes(securityManager, configService, persistenceServices).routes)
+                .orElse(CollectionRoutes(securityManager, configService, executionService, persistenceServices).routes)
                 .orElse(ConfigRoutes(securityManager, configService).routes)
                 .orElse(ScriptRoutes(securityManager, scriptEngines).routes)
             HttpServer(route).startHttpServer(context.system)

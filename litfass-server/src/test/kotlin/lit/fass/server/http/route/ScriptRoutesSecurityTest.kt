@@ -7,12 +7,14 @@ import akka.http.javadsl.model.headers.HttpCredentials.createBasicHttpCredential
 import akka.http.javadsl.testkit.JUnitRouteTest
 import akka.http.javadsl.testkit.TestRoute
 import io.mockk.MockKAnnotations
+import io.mockk.clearAllMocks
+import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import lit.fass.server.helper.UnitTest
 import lit.fass.server.logger
 import lit.fass.server.script.ScriptEngine
-import lit.fass.server.script.ScriptLanguage
+import lit.fass.server.script.ScriptLanguage.GROOVY
 import lit.fass.server.security.Role
 import lit.fass.server.security.Role.ADMIN
 import lit.fass.server.security.Role.EXECUTOR
@@ -49,9 +51,10 @@ internal class ScriptRoutesSecurityTest : JUnitRouteTest() {
     @Before
     fun setup() {
         MockKAnnotations.init(this)
+        clearAllMocks()
         every { securityManagerMock.loginHttpBasic(any() as String) } returns subjectMock
-        every { scriptEngine1Mock.isApplicable(ScriptLanguage.GROOVY) } returns false
-        every { scriptEngine2Mock.isApplicable(ScriptLanguage.GROOVY) } returns true
+        every { scriptEngine1Mock.isApplicable(GROOVY) } returns false
+        every { scriptEngine2Mock.isApplicable(GROOVY) } returns true
         @Suppress("UNCHECKED_CAST")
         every { scriptEngine2Mock.invoke("""binding.data""", any()) } answers {
             args[1] as Collection<Map<String, Any?>>
@@ -73,19 +76,19 @@ internal class ScriptRoutesSecurityTest : JUnitRouteTest() {
 
     @Test
     fun `script extension test POST endpoint is permitted for specified roles`() {
-        every { subjectMock.isAuthenticated } returns true
-
         val permittedRoles = setOf(ADMIN, EXECUTOR)
         Role.values().forEach { role ->
+            clearMocks(subjectMock)
+            every { subjectMock.isAuthenticated } returns true
             log.info("Testing role $role")
 
             var expectedStatus = FORBIDDEN
             if (role in permittedRoles) {
-                every { subjectMock.hasRole(or(ADMIN.name, EXECUTOR.name)) } returns true
-                every { subjectMock.principal } returns "user"
                 expectedStatus = OK
+                every { subjectMock.hasRole(role.name) } returns true
+                every { subjectMock.principal } returns "user"
             } else {
-                every { subjectMock.hasRole(or(ADMIN.name, EXECUTOR.name)) } returns false
+                every { subjectMock.hasRole(role.name) } returns false
             }
 
             routeUnderTest.run(

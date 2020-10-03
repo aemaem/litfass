@@ -23,7 +23,7 @@ dependencies {
         "kotlin" to "1.3.72",
         "scala" to "${scalaVersion}.2",
         "akka" to "2.6.9",
-        "akka-http" to "10.2.0",
+        "akka-http" to "10.2.1",
         "jackson" to "2.11.2",
         "shiro" to "1.5.2",
         "groovy" to "2.5.11",

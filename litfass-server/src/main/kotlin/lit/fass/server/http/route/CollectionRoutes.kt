@@ -1,13 +1,21 @@
 package lit.fass.server.http.route
 
-import akka.http.javadsl.model.StatusCodes
+import akka.http.javadsl.marshallers.jackson.Jackson.marshaller
+import akka.http.javadsl.marshallers.jackson.Jackson.unmarshaller
+import akka.http.javadsl.model.StatusCodes.*
 import akka.http.javadsl.server.PathMatchers.segment
 import akka.http.javadsl.server.Route
 import lit.fass.server.config.ConfigService
 import lit.fass.server.execution.ExecutionService
 import lit.fass.server.http.SecurityDirectives
 import lit.fass.server.logger
+import lit.fass.server.persistence.CollectionPersistenceService
+import lit.fass.server.security.Role.ADMIN
+import lit.fass.server.security.Role.READER
 import lit.fass.server.security.SecurityManager
+import org.apache.shiro.subject.Subject
+import java.time.OffsetDateTime.now
+import java.time.ZoneOffset.UTC
 
 /**
  * @author Michael Mair
@@ -15,7 +23,8 @@ import lit.fass.server.security.SecurityManager
 class CollectionRoutes(
     securityManager: SecurityManager,
     private val configService: ConfigService,
-    private val executionService: ExecutionService
+    private val executionService: ExecutionService,
+    private val persistenceServices: List<CollectionPersistenceService>
 ) : SecurityDirectives(securityManager) {
 
     companion object {
@@ -25,85 +34,75 @@ class CollectionRoutes(
     val routes: Route = pathPrefix("collections") {
         path(segment()) { collection ->
             concat(
-                post {
-                    complete(StatusCodes.NOT_IMPLEMENTED)
+                extractRequest { request ->
+                    val headers = request.headers.associateBy({ entry -> entry.name() }, { entry -> entry.value() })
+                    parameterMap { queryParams ->
+                        concat(
+                            post {
+                                entity(unmarshaller(Map::class.java)) { payload ->
+                                    @Suppress("UNCHECKED_CAST")
+                                    addCollection(collection, headers, queryParams, payload as Map<String, Any?>)
+                                }
+                            },
+                            get {
+                                addCollection(collection, headers, queryParams)
+                            }
+                        )
+                    }
                 },
-                get {
-                    complete(StatusCodes.NOT_IMPLEMENTED)
-                },
-                path(segment()) { id ->
-                    get {
-                        complete(StatusCodes.NOT_IMPLEMENTED)
+                authenticate { subject ->
+                    path(segment()) { id ->
+                        get {
+                            authorize(subject, listOf(ADMIN, READER)) {
+                                getCollection(collection, id, subject)
+                            }
+                        }
                     }
                 }
             )
         }
     }
 
-    //todo: implement
-//    fun addCollection(request: ServerRequest): Mono<ServerResponse> {
-//        val collection = request.pathVariable("collection")
-//        if (collection.isBlank()) {
-//            return badRequest().body(fromValue(mapOf("error" to "Collection must not be blank")))
-//        }
-//
-//        val collectionHeaders = request.headers().asHttpHeaders().entries
-//            .associateBy({ entry -> entry.key }, { entry -> entry.value.joinToString(",") })
-//        log.trace("Got headers $collectionHeaders for collection $collection")
-//        val collectionMetaData = request.queryParams().entries
-//            .associateBy({ entry -> entry.key }, { entry -> entry.value.joinToString(",") })
-//        log.trace("Got collection $collection and meta data $collectionMetaData")
-//
-//        val data = mutableMapOf<String, Any?>("timestamp" to now(UTC))
-//        data.putAll(collectionHeaders)
-//        data.putAll(collectionMetaData)
-//
-//        if (request.method() == GET) {
-//            try {
-//                executionService.execute(configService.getConfig(collection), listOf(data))
-//            } catch (ex: Exception) {
-//                log.error("Exception during execution of collection $collection", ex)
-//                return status(INTERNAL_SERVER_ERROR).body(fromValue(mapOf("error" to ex.message)))
-//            }
-//            return ok().build()
-//        }
-//
-//        return request.bodyToMono(object : ParameterizedTypeReference<Map<String, Any?>>() {})
-//            .flatMap {
-//                data.putAll(it)
-//                return@flatMap just(data)
-//            }
-//            .flatMap {
-//                try {
-//                    executionService.execute(configService.getConfig(collection), listOf(it))
-//                } catch (ex: Exception) {
-//                    log.error("Exception during execution of collection $collection", ex)
-//                    return@flatMap status(INTERNAL_SERVER_ERROR).body(fromValue(mapOf("error" to ex.message)))
-//                }
-//                ok().build()
-//            }
-//    }
-//
-//    fun getCollection(request: ServerRequest): Mono<ServerResponse> {
-//        val collection = request.pathVariable("collection")
-//        if (collection.isBlank()) {
-//            return badRequest().body(fromValue(mapOf("error" to "Collection must not be blank")))
-//        }
-//        val id = request.pathVariable("id")
-//        if (id.isBlank()) {
-//            return badRequest().body(fromValue(mapOf("error" to "Id must not be blank")))
-//        }
-//
-//        val config = configService.getConfig(collection)
-//        val persistenceService = persistenceServices.find { it.isApplicable(config.datastore) }
-//        if (persistenceService == null) {
-//            return badRequest().body(fromValue(mapOf("error" to "Persistence service for ${config.datastore} not found")))
-//        }
-//
-//        return request.principal().flatMap { principal ->
-//            log.debug("Getting collection data for $collection with id $id for user ${principal.name}")
-//            ok().body(fromValue(persistenceService.findCollectionData(collection, id)))
-//        }
-//    }
+    fun addCollection(
+        collection: String,
+        headers: Map<String, String?>,
+        queryParams: Map<String, String?>,
+        payload: Map<String, Any?> = emptyMap()
+    ): Route {
+        if (collection.isBlank()) {
+            return complete(BAD_REQUEST, mapOf("error" to "Collection must not be blank"), marshaller())
+        }
 
+        log.trace("Got headers $headers for collection $collection")
+        log.trace("Got collection $collection and meta data $queryParams")
+
+        val data = mutableMapOf<String, Any?>("timestamp" to now(UTC))
+        data.putAll(headers)
+        data.putAll(queryParams)
+        data.putAll(payload)
+
+        try {
+            executionService.execute(configService.getConfig(collection), listOf(data))
+        } catch (ex: Exception) {
+            log.error("Exception during execution of collection $collection", ex)
+            return complete(INTERNAL_SERVER_ERROR, mapOf("error" to ex.message), marshaller())
+        }
+        return complete(OK)
+    }
+
+    private fun getCollection(collection: String, id: String, subject: Subject): Route {
+        if (collection.isBlank()) {
+            return complete(BAD_REQUEST, mapOf("error" to "Collection must not be blank"), marshaller())
+        }
+        if (id.isBlank()) {
+            return complete(BAD_REQUEST, mapOf("error" to "Id must not be blank"), marshaller())
+        }
+
+        val config = configService.getConfig(collection)
+        val persistenceService = persistenceServices.find { it.isApplicable(config.datastore) }
+            ?: return complete(BAD_REQUEST, mapOf("error" to "Persistence service for ${config.datastore} not found"), marshaller())
+
+        log.debug("Getting collection data for $collection with id $id for user ${subject.principal}")
+        return complete(OK, persistenceService.findCollectionData(collection, id), marshaller())
+    }
 }

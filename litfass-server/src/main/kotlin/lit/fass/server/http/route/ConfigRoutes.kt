@@ -1,14 +1,13 @@
 package lit.fass.server.http.route
 
 import akka.http.javadsl.marshallers.jackson.Jackson.marshaller
-import akka.http.javadsl.marshallers.jackson.Jackson.unmarshaller
 import akka.http.javadsl.model.StatusCodes.*
 import akka.http.javadsl.server.PathMatchers.segment
 import akka.http.javadsl.server.Route
+import akka.util.ByteString.emptyByteString
 import lit.fass.server.config.ConfigService
 import lit.fass.server.http.SecurityDirectives
 import lit.fass.server.logger
-import lit.fass.server.security.Role
 import lit.fass.server.security.Role.*
 import lit.fass.server.security.SecurityManager
 import org.apache.shiro.subject.Subject
@@ -30,18 +29,6 @@ class ConfigRoutes(
     val routes: Route = pathPrefix("configs") {
         authenticate { subject ->
             concat(
-                post {
-                    authorize(subject, listOf(ADMIN, WRITER)) {
-                        entity(unmarshaller(ByteArray::class.java)) { payload ->
-                            addConfig(payload)
-                        }
-                    }
-                },
-                get {
-                    authorize(subject, listOf(ADMIN, READER)) {
-                        getConfigs(subject)
-                    }
-                },
                 path(segment()) { collection ->
                     concat(
                         get {
@@ -55,6 +42,22 @@ class ConfigRoutes(
                             }
                         }
                     )
+                },
+                post {
+                    authorize(subject, listOf(ADMIN, WRITER)) {
+                        extractMaterializer { materializer ->
+                            extractDataBytes { data ->
+                                onSuccess(data.runFold(emptyByteString(), { acc, i -> acc.concat(i) }, materializer)) { rawData ->
+                                    addConfig(rawData.toArray())
+                                }
+                            }
+                        }
+                    }
+                },
+                get {
+                    authorize(subject, listOf(ADMIN, READER)) {
+                        getConfigs(subject)
+                    }
                 }
             )
         }

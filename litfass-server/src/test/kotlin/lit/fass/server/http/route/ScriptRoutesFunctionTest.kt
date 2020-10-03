@@ -45,7 +45,7 @@ internal class ScriptRoutesFunctionTest : JUnitRouteTest() {
     fun setup() {
         MockKAnnotations.init(this)
         every { subjectMock.isAuthenticated } returns true
-        every { subjectMock.hasRole(or(ADMIN.name, EXECUTOR.name)) } returns true
+        every { subjectMock.hasRole(any()) } returns true
         every { subjectMock.principal } returns "admin"
         every { securityManagerMock.loginHttpBasic(any() as String) } returns subjectMock
         every { scriptEngine1Mock.isApplicable(ScriptLanguage.GROOVY) } returns false
