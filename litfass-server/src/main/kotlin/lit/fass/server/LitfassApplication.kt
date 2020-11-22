@@ -52,7 +52,7 @@ object LitfassApplication {
                 config.getString("litfass.jdbc.database"),
                 config.getString("litfass.jdbc.username"),
                 config.getString("litfass.jdbc.password"),
-                config.getInt("litfass.jdbc.poolsize")
+                config.getInt("litfass.jdbc.poolSize")
             )
 
             val postgresPersistenceService = PostgresPersistenceService(jdbcDataSource, jsonMapper)
@@ -64,6 +64,7 @@ object LitfassApplication {
             val executionService = CollectionExecutionService(CollectionFlowService(CollectionHttpService(jsonMapper), scriptEngines), persistenceServices)
             val schedulerService = QuartzCollectionSchedulerService(executionService, CollectionRetentionService(persistenceServices))
             val configService = YamlConfigService(postgresPersistenceService, schedulerService, config)
+            configService.initializeConfigs()
             val securityManager = SecurityManager(config)
 
             val route = HealthRoutes().routes

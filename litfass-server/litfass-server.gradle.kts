@@ -22,7 +22,7 @@ dependencies {
     val versions = mapOf(
         "kotlin" to "1.3.72",
         "scala" to "${scalaVersion}.2",
-        "akka" to "2.6.9",
+        "akka" to "2.6.10",
         "akka-http" to "10.2.1",
         "jackson" to "2.11.2",
         "shiro" to "1.5.2",
@@ -54,7 +54,7 @@ dependencies {
     implementation("com.cronutils:cron-utils:8.0.0")
     implementation("org.quartz-scheduler:quartz:2.3.0")
     implementation("org.quartz-scheduler:quartz-jobs:2.3.0")
-    implementation("org.jooq:jooq:3.11.7")
+    implementation("org.jooq:jooq:3.11.12")
     implementation("org.postgresql:postgresql:42.2.5")
     implementation("org.apache.httpcomponents:httpclient:4.5.11")
     implementation("org.codehaus.groovy:groovy:${versions["groovy"]}")

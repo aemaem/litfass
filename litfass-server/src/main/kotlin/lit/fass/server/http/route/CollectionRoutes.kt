@@ -32,8 +32,17 @@ class CollectionRoutes(
     }
 
     val routes: Route = pathPrefix("collections") {
-        path(segment()) { collection ->
-            concat(
+        concat(
+            path(segment().slash(segment())) { collection, id ->
+                authenticate { subject ->
+                    get {
+                        authorize(subject, listOf(ADMIN, READER)) {
+                            getCollection(collection, id, subject)
+                        }
+                    }
+                }
+            },
+            path(segment()) { collection ->
                 extractRequest { request ->
                     val headers = request.headers.associateBy({ entry -> entry.name() }, { entry -> entry.value() })
                     parameterMap { queryParams ->
@@ -49,18 +58,9 @@ class CollectionRoutes(
                             }
                         )
                     }
-                },
-                authenticate { subject ->
-                    path(segment()) { id ->
-                        get {
-                            authorize(subject, listOf(ADMIN, READER)) {
-                                getCollection(collection, id, subject)
-                            }
-                        }
-                    }
                 }
-            )
-        }
+            }
+        )
     }
 
     fun addCollection(
