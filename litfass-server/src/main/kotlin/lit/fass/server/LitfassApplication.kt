@@ -6,6 +6,7 @@ import akka.actor.CoordinatedShutdown.PhaseActorSystemTerminate
 import akka.actor.CoordinatedShutdown.PhaseBeforeServiceUnbind
 import akka.actor.typed.ActorSystem
 import akka.actor.typed.javadsl.Behaviors
+import akka.http.javadsl.server.directives.RouteDirectives
 import com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
@@ -32,7 +33,7 @@ import java.util.function.Supplier
  *
  * @author Michael Mair
  */
-object LitfassApplication {
+object LitfassApplication : RouteDirectives() {
 
     private val log = this.logger()
 
@@ -80,11 +81,14 @@ object LitfassApplication {
             configService.initializeConfigs()
             val securityManager = SecurityManager(config)
 
-            val route = HealthRoutes().routes
-                .orElse(CollectionRoutes(securityManager, configService, executionService, persistenceServices).routes)
-                .orElse(ConfigRoutes(securityManager, configService).routes)
-                .orElse(ScriptRoutes(securityManager, scriptEngines).routes)
-            HttpServer(route).startHttpServer(context.system)
+            HttpServer(
+                concat(
+                    HealthRoutes().routes,
+                    CollectionRoutes(securityManager, configService, executionService, persistenceServices).routes,
+                    ConfigRoutes(securityManager, configService).routes,
+                    ScriptRoutes(securityManager, scriptEngines).routes
+                )
+            ).startHttpServer(context.system)
 
             Behaviors.empty()
         }

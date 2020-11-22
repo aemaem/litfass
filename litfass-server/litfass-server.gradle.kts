@@ -76,7 +76,7 @@ dependencies {
     testImplementation("org.testcontainers:junit-jupiter:${versions["testcontainers"]}")
     testImplementation("org.testcontainers:postgresql:${versions["testcontainers"]}")
     testImplementation("com.github.kittinunf.fuel:fuel:2.2.3")
-    testRuntimeOnly("com.github.kittinunf.fuel:fuel-jackson:2.2.3")
+    testImplementation("com.github.kittinunf.fuel:fuel-jackson:2.2.3")
 }
 
 java.sourceCompatibility = VERSION_11
