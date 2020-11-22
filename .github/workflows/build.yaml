@@ -21,6 +21,6 @@ jobs:
       - name: Integration Test
         run: ./gradlew integrationTest --stacktrace
       - name: End2End Test
-        run: ./gradlew e2eTest --stacktrace
+        run: ./gradlew apiTest --stacktrace
       - name: Build
         run: ./gradlew assemble --stacktrace

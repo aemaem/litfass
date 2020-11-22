@@ -40,6 +40,19 @@ object LitfassApplication {
     fun main(args: Array<String>) {
         print("\nLITFASS\n\n")
 
+        System.setProperty("config.override_with_env_vars", "true")
+
+        if (log.isDebugEnabled) {
+            println("System properties:")
+            val systemProperties = System.getProperties().entries.sortedBy { it.key.toString() }
+            println(systemProperties.joinToString(separator = "\n") { "${it.key}=${it.value}" })
+            println()
+            println("Environment variables:")
+            val environmentVariables = System.getenv().entries.sortedBy { it.key.toString() }
+            println(environmentVariables.joinToString(separator = "\n") { "${it.key}=${it.value}" })
+            println()
+        }
+
         val rootBehavior = Behaviors.setup<Void> { context ->
             val config = context.system.settings().config()
 

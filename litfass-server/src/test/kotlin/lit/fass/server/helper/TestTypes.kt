@@ -11,12 +11,12 @@ object IntegrationTest {
     const val NAME = "IntegrationTest"
 }
 
-object End2EndTest {
-    const val NAME = "End2EndTest"
+object ApiTest {
+    const val NAME = "ApiTest"
 }
 
 object TestTypes {
     const val UnitTest = lit.fass.server.helper.UnitTest.NAME
     const val IntegrationTest = lit.fass.server.helper.IntegrationTest.NAME
-    const val End2EndTest = lit.fass.server.helper.End2EndTest.NAME
+    const val ApiTest = lit.fass.server.helper.ApiTest.NAME
 }

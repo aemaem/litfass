@@ -90,7 +90,7 @@ sourceSets.create("infra") {
 tasks.withType<Test> {
     useJUnitPlatform {
         filter {
-            excludeTags(End2EndTest::class.java.simpleName)
+            excludeTags(ApiTest::class.java.simpleName)
         }
     }
     addTestListener(object : TestListener {
@@ -106,11 +106,11 @@ tasks.withType<Test> {
 }
 object UnitTest
 object IntegrationTest
-object End2EndTest
+object ApiTest
 tasks.register<Test>("unitTest") {
     useJUnitPlatform {
         filter {
-            excludeTags(IntegrationTest::class.java.simpleName, End2EndTest::class.java.simpleName)
+            excludeTags(IntegrationTest::class.java.simpleName, ApiTest::class.java.simpleName)
         }
     }
 }
@@ -121,10 +121,10 @@ tasks.register<Test>("integrationTest") {
         }
     }
 }
-tasks.register<Test>("e2eTest") {
+tasks.register<Test>("apiTest") {
     useJUnitPlatform {
         filter {
-            includeTags(End2EndTest::class.java.simpleName)
+            includeTags(ApiTest::class.java.simpleName)
         }
     }
 }
@@ -213,22 +213,15 @@ tasks.create("buildImage", DockerBuildImage::class) {
     dependsOn(tasks.named("prepareImage"))
     inputDir.set(file("${buildDir}/docker/"))
     images.add(
-        "${rootProject.extra["dockerHubUsername"]}/${rootProject.name}:${
-            project.version.toString().replace(
-                "+",
-                "."
-            )
-        }"
+        "${rootProject.extra["dockerHubUsername"]}/${rootProject.name}:${project.version.toString().replace("+",".")}"
+    )
+    images.add(
+        "${rootProject.extra["dockerHubUsername"]}/${rootProject.name}:latest"
     )
 }
 tasks.create("pushImage", DockerPushImage::class) {
     dependsOn(tasks.named("buildImage"))
     images.add(
-        "${rootProject.extra["dockerHubUsername"]}/${rootProject.name}:${
-            project.version.toString().replace(
-                "+",
-                "."
-            )
-        }"
+        "${rootProject.extra["dockerHubUsername"]}/${rootProject.name}:${project.version.toString().replace("+",".")}"
     )
 }

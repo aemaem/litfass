@@ -37,7 +37,6 @@ class YamlConfigService(
     private val yamlMapper =
         ObjectMapper(YAMLFactory()).registerKotlinModule()
 
-    //todo: initialize on startup
     fun initializeConfigs() {
         log.info("Reading collection configs from database.")
         readConfigsFromDatabase()
