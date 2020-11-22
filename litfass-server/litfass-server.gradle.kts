@@ -215,7 +215,7 @@ tasks.create("buildImage", DockerBuildImage::class) {
     images.add(
         "${rootProject.extra["dockerHubUsername"]}/${rootProject.name}:${
             project.version.toString().replace(
-                "\\+",
+                "+",
                 "."
             )
         }"
@@ -226,7 +226,7 @@ tasks.create("pushImage", DockerPushImage::class) {
     images.add(
         "${rootProject.extra["dockerHubUsername"]}/${rootProject.name}:${
             project.version.toString().replace(
-                "\\+",
+                "+",
                 "."
             )
         }"
