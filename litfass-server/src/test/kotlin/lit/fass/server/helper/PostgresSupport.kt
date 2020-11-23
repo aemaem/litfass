@@ -10,13 +10,15 @@ import org.jooq.impl.DSL.using
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.testcontainers.containers.PostgreSQLContainer
+import org.testcontainers.containers.wait.strategy.LogMessageWaitStrategy
+import java.time.Duration
 
 /**
  * @author Michael Mair
  */
 abstract class PostgresSupport {
 
-    val postgres = PostgreSQLContainer<Nothing>("${PostgreSQLContainer.IMAGE}:11.5-alpine").apply {
+    val postgres = PostgreSQLContainer<Nothing>("${PostgreSQLContainer.IMAGE}:11.1-alpine").apply {
         addExposedPort(5432)
         withDatabaseName("litfass")
         withUsername("admin")
@@ -24,27 +26,33 @@ abstract class PostgresSupport {
         withLogConsumer {
             print("POSTGRES: ${it.utf8String}")
         }
+        waitingFor(
+            LogMessageWaitStrategy()
+                .withRegEx(".*database system is ready to accept connections.*")
+                .withTimes(2)
+                .withStartupTimeout(Duration.ofSeconds(10))
+        )
     }
 
     lateinit var jdbcDataSource: JdbcDataSource
     lateinit var jooq: DSLContext
 
     @BeforeAll
-    fun setupClass() {
+    fun setupSpec() {
         postgres.start()
         jdbcDataSource = JdbcDataSource(
             "jdbc:postgresql://${postgres.host}:${postgres.getMappedPort(5432)}",
             "litfass",
             "admin",
             "admin",
-            2,
+            1,
             emptyMap()
         )
         jooq = using(jdbcDataSource.instance(), POSTGRES)
     }
 
     @AfterAll
-    fun cleanupClass() {
+    fun cleanupSpec() {
         jdbcDataSource.close()
         postgres.stop()
     }

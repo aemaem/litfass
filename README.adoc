@@ -8,7 +8,6 @@ image:https://img.shields.io/github/license/mashape/apistatus.svg?style=flat-squ
 Lightweight Integrated Tailorable Flow Aware Software Service
 
 === TODO
-. collection api tests
 . http exception handling
 . setup CI (github actions)
 . implement delete collection item endpoint

@@ -27,7 +27,7 @@ class HttpServer(private val route: Route) : AllDirectives() {
             }.build()
 
         val http = Http.get(system)
-        http.newServerAt("localhost", 8080)
+        http.newServerAt("0.0.0.0", 8080)
             .bind(handleExceptions(exceptionHandler) {
                 route
             })

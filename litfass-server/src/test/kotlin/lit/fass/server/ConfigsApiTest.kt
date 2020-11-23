@@ -7,12 +7,10 @@ import com.github.kittinunf.fuel.httpPost
 import com.github.kittinunf.fuel.jackson.jacksonDeserializerOf
 import lit.fass.server.helper.TestTypes.ApiTest
 import lit.fass.server.helper.TestcontainerSupport
+import lit.fass.server.persistence.CollectionConfigPersistenceService.Companion.COLLECTION_CONFIG_TABLE
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.*
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation
-import org.junit.jupiter.api.Order
-import org.junit.jupiter.api.Tag
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestMethodOrder
 
 /**
  * @author Michael Mair
@@ -20,6 +18,11 @@ import org.junit.jupiter.api.TestMethodOrder
 @Tag(ApiTest)
 @TestMethodOrder(OrderAnnotation::class)
 internal class ConfigsApiTest : TestcontainerSupport() {
+
+    @AfterAll
+    fun cleanupTests() {
+        clearTable(COLLECTION_CONFIG_TABLE)
+    }
 
     @Test
     @Order(1)

@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test
  * @author Michael Mair
  */
 @Tag(ApiTest)
-internal class ApiTest : TestcontainerSupport() {
+internal class HealthApiTest : TestcontainerSupport() {
 
     @Test
     fun `actuator health GET endpoint`() {
