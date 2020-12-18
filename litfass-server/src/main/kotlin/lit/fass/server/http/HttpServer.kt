@@ -6,7 +6,13 @@ import akka.http.javadsl.model.StatusCodes
 import akka.http.javadsl.server.AllDirectives
 import akka.http.javadsl.server.ExceptionHandler
 import akka.http.javadsl.server.Route
+import lit.fass.server.config.yaml.ConfigException
+import lit.fass.server.execution.ExecutionException
+import lit.fass.server.flow.FlowException
 import lit.fass.server.logger
+import lit.fass.server.persistence.PersistenceException
+import lit.fass.server.retention.RetentionException
+import lit.fass.server.schedule.SchedulerException
 
 /**
  * @author Michael Mair
@@ -20,11 +26,13 @@ class HttpServer(private val route: Route) : AllDirectives() {
     fun startHttpServer(system: ActorSystem<*>) {
 
         val exceptionHandler = ExceptionHandler.newBuilder()
-            .match(Exception::class.java) {
-                //todo: exception handling: https://doc.akka.io/docs/akka-http/current/routing-dsl/exception-handling.html
-                log.error(it.message, it)
-                complete(StatusCodes.IM_A_TEAPOT)
-            }.build()
+            .match(ConfigException::class.java) { complete(StatusCodes.BAD_REQUEST, it.message) }
+            .match(ExecutionException::class.java) { complete(StatusCodes.BAD_REQUEST, it.message) }
+            .match(FlowException::class.java) { complete(StatusCodes.BAD_REQUEST, it.message) }
+            .match(PersistenceException::class.java) { complete(StatusCodes.BAD_REQUEST, it.message) }
+            .match(RetentionException::class.java) { complete(StatusCodes.BAD_REQUEST, it.message) }
+            .match(SchedulerException::class.java) { complete(StatusCodes.BAD_REQUEST, it.message) }
+            .match(Exception::class.java) { complete(StatusCodes.INTERNAL_SERVER_ERROR, it.message) }.build()
 
         val http = Http.get(system)
         http.newServerAt("0.0.0.0", 8080)
