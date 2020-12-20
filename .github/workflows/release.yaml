@@ -8,9 +8,9 @@ on:
         default: minor
 
 jobs:
-  environment: default
   release:
     runs-on: ubuntu-18.04
+    environment: default
     env:
       GRADLE_OPTS: '-Xmx128m -Dorg.gradle.jvmargs="-XX:+HeapDumpOnOutOfMemoryError"'
     steps:

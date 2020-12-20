@@ -2,9 +2,9 @@ name: build
 on: [push]
 
 jobs:
-  environment: default
   build:
     runs-on: ubuntu-18.04
+    environment: default
     env:
       GRADLE_OPTS: '-Xmx128m -Dorg.gradle.jvmargs="-XX:+HeapDumpOnOutOfMemoryError"'
     steps:
