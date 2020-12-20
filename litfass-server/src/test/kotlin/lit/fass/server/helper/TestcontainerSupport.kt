@@ -10,8 +10,6 @@ import org.jooq.impl.DSL
 import org.jooq.impl.DSL.table
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.TestInstance
-import org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.containers.Network
 import org.testcontainers.containers.PostgreSQLContainer
@@ -21,7 +19,6 @@ import java.time.Duration.ofSeconds
 /**
  * @author Michael Mair
  */
-@TestInstance(PER_CLASS)
 abstract class TestcontainerSupport {
 
     companion object {

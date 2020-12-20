@@ -12,6 +12,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.awaitility.Awaitility.with
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation
+import org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS
 import org.springframework.core.io.ClassPathResource
 import java.util.concurrent.TimeUnit.SECONDS
 
@@ -19,6 +20,7 @@ import java.util.concurrent.TimeUnit.SECONDS
  * @author Michael Mair
  */
 @Tag(ApiTest)
+@TestInstance(PER_CLASS)
 @TestMethodOrder(OrderAnnotation::class)
 internal class CollectionsApiTest : TestcontainerSupport() {
 

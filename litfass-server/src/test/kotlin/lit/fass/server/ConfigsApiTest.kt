@@ -11,11 +11,13 @@ import lit.fass.server.persistence.CollectionConfigPersistenceService.Companion.
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation
+import org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS
 
 /**
  * @author Michael Mair
  */
 @Tag(ApiTest)
+@TestInstance(PER_CLASS)
 @TestMethodOrder(OrderAnnotation::class)
 internal class ConfigsApiTest : TestcontainerSupport() {
 
