@@ -144,7 +144,7 @@ internal class QuartzCollectionSchedulerServiceTest {
         collectionSchedulerService.createRetentionJob(CollectionConfig("foo", null, "P3D", POSTGRES, emptyList()))
 
         verify(atLeast = 4, atMost = 6) { retentionServiceMock.getCronExpression() }
-        verify(atMost = 3) { retentionServiceMock.clean(any()) }
+        verify(atLeast = 0, atMost = 3) { retentionServiceMock.clean(any()) }
         confirmVerified(retentionServiceMock)
     }
 
