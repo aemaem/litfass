@@ -124,7 +124,7 @@ tasks.register<Test>("integrationTest") {
 tasks.register<Test>("apiTest") {
     useJUnitPlatform {
         filter {
-            includeTags("ApiTest", ApiTest::class.java.simpleName)
+            includeTags(ApiTest::class.java.simpleName)
         }
     }
 }
