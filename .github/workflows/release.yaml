@@ -8,6 +8,7 @@ on:
         default: minor
 
 jobs:
+  environment: default
   release:
     runs-on: ubuntu-18.04
     env:
