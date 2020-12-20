@@ -12,5 +12,6 @@ Lightweight Integrated Tailorable Flow Aware Software Service
 * Akka
 
 === TODO
+. refactor to actors
 . implement delete collection item endpoint
 . basic persistence with akka and postgres: https://doc.akka.io/docs/alpakka/current/slick.html
