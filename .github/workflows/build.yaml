@@ -18,9 +18,40 @@ jobs:
         run: chmod +x gradlew
       - name: Unit Test
         run: ./gradlew unitTest --stacktrace
+      - name: Upload unit test report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: unit-test-report
+          retention-days: 7
+          path: litfass-server/build/reports/tests/unitTest
       - name: Integration Test
         run: ./gradlew integrationTest --stacktrace
-      - name: End2End Test
+      - name: Upload integration test report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: integration-test-report
+          retention-days: 7
+          path: litfass-server/build/reports/tests/integrationTest
+      - name: API Test
         run: ./gradlew apiTest --stacktrace
+      - name: Upload API test report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: api-test-report
+          retention-days: 7
+          path: litfass-server/build/reports/tests/apiTest
+      - name: Cache dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/.gradle/caches
+          key: cache-gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle') }}
+          restore-keys: cache-gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle') }}
       - name: Build
         run: ./gradlew assemble --stacktrace
+      - uses: actions/upload-artifact@v2
+        with:
+          name: executable
+          path: litfass-server/build/libs

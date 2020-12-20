@@ -1,8 +1,13 @@
 name: release
-on: [push]
+on:
+  workflow_dispatch:
+    inputs:
+      scope:
+        description: "Scope (e.g. major, minor, patch)"
+        required: true
+        default: minor
 
 jobs:
-  #todo: trigger release manually
   release:
     runs-on: ubuntu-18.04
     env:
@@ -17,8 +22,14 @@ jobs:
           architecture: x64
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
+      - name: Cache dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/.gradle/caches
+          key: cache-gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle') }}
+          restore-keys: cache-gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle') }}
       - name: Release
-        run: ./gradlew final -Prelease.useLastTag=true pushImage --stacktrace
+        run: ./gradlew final -Prelease.scope=${{ github.event.inputs.scope }} pushImage --stacktrace
       #todo: https://github.com/marketplace/actions/build-and-push-docker-images
       - name: Publish
         uses: docker/build-push-action@v1

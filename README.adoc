@@ -1,4 +1,3 @@
-image:https://img.shields.io/circleci/project/github/aemaem/litfass/master.svg?style=flat-square["CircleCI branch",link="https://circleci.com/gh/aemaem/litfass"]
 image:https://img.shields.io/github/workflow/status/aemaem/litfass/build?style=flat-square[GitHub Workflow Status,link="https://github.com/aemaem/litfass/actions?query=workflow%3A%22Build+and+Test%22"]
 image:https://img.shields.io/github/issues/aemaem/litfass.svg?style=flat-square["GitHub issues",link="https://github.com/aemaem/litfass/issues"]
 image:https://img.shields.io/github/tag/aemaem/litfass.svg?style=flat-square["GitHub tag",link="https://github.com/aemaem/litfass/tags"]
@@ -7,8 +6,11 @@ image:https://img.shields.io/github/license/mashape/apistatus.svg?style=flat-squ
 == LITFASS
 Lightweight Integrated Tailorable Flow Aware Software Service
 
+== Technology Overview
+
+* Kotlin
+* Akka
+
 === TODO
-. http exception handling
-. setup CI (github actions)
 . implement delete collection item endpoint
 . basic persistence with akka and postgres: https://doc.akka.io/docs/alpakka/current/slick.html
