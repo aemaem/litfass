@@ -14,16 +14,17 @@ class CollectionFlowService(
 ) : FlowService {
     companion object {
         private val log = LoggerFactory.getLogger(this::class.java.enclosingClass)
+
         @Suppress("RegExpRedundantEscape")
         private val variableRegex = Regex("\\$\\{(\\w+)\\}")
     }
 
-    override fun execute(data: Collection<Map<String, Any?>>, config: CollectionConfig): Collection<Map<String, Any?>> {
+    override fun execute(data: Collection<Map<String, Any?>>, config: CollectionConfig): FlowResponse {
         var currentData = data
         config.flows
             .filter { isApplicable(data.first(), it.applyIf) }
             .forEach { currentData = executeFlow(currentData, it) }
-        return currentData
+        return FlowResponse(currentData, config.flows.last().action)
     }
 
     private fun executeFlow(data: Collection<Map<String, Any?>>, flowConfig: CollectionFlowConfig): Collection<Map<String, Any?>> {

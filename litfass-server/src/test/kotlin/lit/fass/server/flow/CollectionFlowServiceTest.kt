@@ -9,6 +9,8 @@ import lit.fass.server.config.yaml.model.CollectionConfig
 import lit.fass.server.config.yaml.model.CollectionFlowConfig
 import lit.fass.server.config.yaml.model.CollectionFlowStepHttpConfig
 import lit.fass.server.config.yaml.model.CollectionFlowStepScriptConfig
+import lit.fass.server.flow.FlowAction.ADD
+import lit.fass.server.flow.FlowAction.REMOVE
 import lit.fass.server.helper.TestTypes.UnitTest
 import lit.fass.server.http.HttpService
 import lit.fass.server.persistence.Datastore.POSTGRES
@@ -59,7 +61,32 @@ internal class CollectionFlowServiceTest {
         val config = CollectionConfig(
             "foo", null, null, POSTGRES, listOf(
                 CollectionFlowConfig(
-                    null, null, emptyMap(), listOf(
+                    null, null, ADD, emptyMap(), listOf(
+                        CollectionFlowStepScriptConfig(null, KOTLIN, """bindings["data"]""")
+                    )
+                )
+            )
+        )
+
+        val result = collectionFlowService.execute(listOf(data), config).data
+
+        assertThat(result.first()["timestamp"]).isEqualTo("0000-01-01T00:00:00Z")
+        assertThat(result.first()["foo"]).isEqualTo("bar")
+        assertThat(result.first()["bar"]).isEqualTo(true)
+    }
+
+    @Test
+    fun `data is manipulated and returned for removal`() {
+        val data = mapOf(
+            "id" to "1",
+            "timestamp" to "0000-01-01T00:00:00Z",
+            "foo" to "bar",
+            "bar" to true
+        )
+        val config = CollectionConfig(
+            "foo", null, null, POSTGRES, listOf(
+                CollectionFlowConfig(
+                    null, null, REMOVE, emptyMap(), listOf(
                         CollectionFlowStepScriptConfig(null, KOTLIN, """bindings["data"]""")
                     )
                 )
@@ -68,9 +95,10 @@ internal class CollectionFlowServiceTest {
 
         val result = collectionFlowService.execute(listOf(data), config)
 
-        assertThat(result.first()["timestamp"]).isEqualTo("0000-01-01T00:00:00Z")
-        assertThat(result.first()["foo"]).isEqualTo("bar")
-        assertThat(result.first()["bar"]).isEqualTo(true)
+        assertThat(result.action).isEqualTo(REMOVE)
+        assertThat(result.data.first()["timestamp"]).isEqualTo("0000-01-01T00:00:00Z")
+        assertThat(result.data.first()["foo"]).isEqualTo("bar")
+        assertThat(result.data.first()["bar"]).isEqualTo(true)
     }
 
     @Test
@@ -83,7 +111,7 @@ internal class CollectionFlowServiceTest {
         val config = CollectionConfig(
             "foo", null, null, POSTGRES, listOf(
                 CollectionFlowConfig(
-                    null, null, emptyMap(), listOf(
+                    null, null, ADD, emptyMap(), listOf(
                         CollectionFlowStepHttpConfig(null, "http://localhost/\${foo}", null, "admin", "admin")
                     )
                 )
@@ -91,7 +119,7 @@ internal class CollectionFlowServiceTest {
         )
 
         every { httpServiceMock.get("http://localhost/bar", any(), "admin", "admin") } returns mapOf("some" to "thing")
-        val result = collectionFlowService.execute(listOf(data), config)
+        val result = collectionFlowService.execute(listOf(data), config).data
 
         assertThat(result.first()["timestamp"]).isEqualTo("0000-01-01T00:00:00Z")
         assertThat(result.first()["foo"]).isEqualTo("bar")
@@ -110,7 +138,7 @@ internal class CollectionFlowServiceTest {
         val config = CollectionConfig(
             "foo", null, null, POSTGRES, listOf(
                 CollectionFlowConfig(
-                    null, null, emptyMap(), listOf(
+                    null, null, ADD, emptyMap(), listOf(
                         CollectionFlowStepHttpConfig(null, "http://localhost/\${foo}", null, "admin", "admin"),
                         CollectionFlowStepScriptConfig(null, KOTLIN, """bindings["data"]""")
                     )
@@ -119,7 +147,7 @@ internal class CollectionFlowServiceTest {
         )
 
         every { httpServiceMock.get("http://localhost/bar", any(), "admin", "admin") } returns mapOf("some" to "thing")
-        val result = collectionFlowService.execute(data, config) as List<Map<String, Any?>>
+        val result = collectionFlowService.execute(data, config).data as List<Map<String, Any?>>
 
         assertThat(result).hasSize(3)
         assertThat(result.first()["timestamp"]).isEqualTo("0000-01-01T00:00:00Z")
@@ -133,6 +161,7 @@ internal class CollectionFlowServiceTest {
         confirmVerified(httpServiceMock)
     }
 
+    @Suppress("unused")
     companion object {
         @JvmStatic
         fun `is applicable for applyIf source`() = listOf(

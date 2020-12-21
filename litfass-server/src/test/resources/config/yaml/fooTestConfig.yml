@@ -6,6 +6,7 @@ flows:
   - flow:
       name: "Flow 1"
       description: "Flow description 1"
+      action: REMOVE
       applyIf:
         foo: bar
         bar: true

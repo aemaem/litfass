@@ -9,6 +9,7 @@ import lit.fass.server.config.yaml.ConfigException
 import lit.fass.server.config.yaml.YamlConfigService
 import lit.fass.server.config.yaml.model.CollectionFlowStepHttpConfig
 import lit.fass.server.config.yaml.model.CollectionFlowStepScriptConfig
+import lit.fass.server.flow.FlowAction
 import lit.fass.server.helper.TestTypes.UnitTest
 import lit.fass.server.persistence.CollectionConfigPersistenceService
 import lit.fass.server.persistence.Datastore.POSTGRES
@@ -66,6 +67,7 @@ internal class YamlConfigServiceTest {
             it.flows[0].also { flow ->
                 assertThat(flow.name).isEqualTo("Flow 1")
                 assertThat(flow.description).isEqualTo("Flow description 1")
+                assertThat(flow.action).isEqualTo(FlowAction.REMOVE)
                 assertThat(flow.steps).hasSize(3)
                 (flow.steps[0] as CollectionFlowStepScriptConfig).also { step ->
                     assertThat(step.description).isEqualTo(null)
@@ -90,6 +92,7 @@ internal class YamlConfigServiceTest {
             it.flows[1].also { flow ->
                 assertThat(flow.name).isEqualTo(null)
                 assertThat(flow.description).isEqualTo(null)
+                assertThat(flow.action).isEqualTo(FlowAction.ADD)
                 assertThat(flow.steps).hasSize(1)
                 (flow.steps[0] as CollectionFlowStepScriptConfig).also { step ->
                     assertThat(step.description).isEqualTo("First step")

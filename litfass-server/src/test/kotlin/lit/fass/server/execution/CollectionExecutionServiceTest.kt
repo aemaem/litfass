@@ -6,6 +6,7 @@ import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.verify
 import lit.fass.server.config.yaml.model.CollectionConfig
+import lit.fass.server.flow.FlowResponse
 import lit.fass.server.flow.FlowService
 import lit.fass.server.helper.TestTypes.UnitTest
 import lit.fass.server.persistence.CollectionPersistenceService
@@ -62,7 +63,7 @@ internal class CollectionExecutionServiceTest {
     fun `execution calls required services`(
         description: String, data: List<Map<String, Any>>, result: List<Map<String, Any>>
     ) {
-        every { flowServiceMock.execute(data, any()) } returns result
+        every { flowServiceMock.execute(data, any()) } returns FlowResponse(result)
         every { collectionPersistenceServiceMock.isApplicable(any()) } returns true
 
         val config = CollectionConfig("foo", null, null, POSTGRES, emptyList())
@@ -79,7 +80,7 @@ internal class CollectionExecutionServiceTest {
         val config = CollectionConfig("foo", null, null, POSTGRES, emptyList())
         val data = listOf(mapOf("bar" to true, "foo" to "bar"))
 
-        every { flowServiceMock.execute(data, any()) } returns listOf(mapOf("foo" to "blub"))
+        every { flowServiceMock.execute(data, any()) } returns FlowResponse(listOf(mapOf("foo" to "blub")))
         every { collectionPersistenceServiceMock.isApplicable(any()) } returns false
 
         assertThatExceptionOfType(ExecutionException::class.java).isThrownBy {
