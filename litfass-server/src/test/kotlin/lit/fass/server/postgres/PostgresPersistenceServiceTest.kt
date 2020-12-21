@@ -1,8 +1,8 @@
 package lit.fass.server.postgres
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import lit.fass.server.helper.TestTypes.IntegrationTest
 import lit.fass.server.helper.PostgresSupport
+import lit.fass.server.helper.TestTypes.IntegrationTest
 import lit.fass.server.persistence.CollectionConfigPersistenceService.Companion.COLLECTION_CONFIG_TABLE
 import lit.fass.server.persistence.CollectionPersistenceService.Companion.ID_KEY
 import lit.fass.server.persistence.PersistenceException
@@ -102,6 +102,22 @@ internal class PostgresPersistenceServiceTest : PostgresSupport() {
         ).isEqualTo("""{"id": "1", "bar": true, "foo": "blub", "blub": 100}""")
         assertThat(result.getValues("created", OffsetDateTime::class.java)[0]).isNotNull()
         assertThat(result.getValues("updated", OffsetDateTime::class.java)[0]).isNotNull()
+    }
+
+    @Test
+    fun `collection with id is deleted`() {
+        val collection = "foo"
+        val data1 = mapOf(ID_KEY to "1", "foo" to "bar", "bar" to true)
+        val data2 = mapOf(ID_KEY to "2", "foo" to "bar")
+
+        persistenceService.saveCollection(collection, data1, data1["id"] as String)
+        persistenceService.saveCollection(collection, data2, data2["id"] as String)
+        persistenceService.removeCollection(collection, "1")
+
+        val result = selectAllFromTable(collection)
+
+        assertThat(result).hasSize(1)
+        assertThat(result.getValues("id", String::class.java)[0]).isEqualTo("2")
     }
 
     @Test

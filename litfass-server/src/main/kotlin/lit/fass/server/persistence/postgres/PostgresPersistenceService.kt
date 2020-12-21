@@ -71,6 +71,22 @@ class PostgresPersistenceService(private val dataSource: JdbcDataSource, private
         }
     }
 
+    override fun removeCollection(collection: String, ids: Collection<String>) {
+        jooq.transaction { config ->
+            createTableIfNotExists(collection, config)
+            deleteCollection(collection, ids, config)
+        }
+        log.debug("Removed collection $collection")
+    }
+
+    override fun removeCollection(collection: String, id: String) {
+        jooq.transaction { config ->
+            createTableIfNotExists(collection, config)
+            deleteCollection(collection, listOf(id), config)
+        }
+        log.debug("Removed collection $collection")
+    }
+
     override fun findCollectionData(collection: String, id: String): Map<String, Any?> {
         val found = jooq.select()
             .from(table(collection))
@@ -139,6 +155,19 @@ class PostgresPersistenceService(private val dataSource: JdbcDataSource, private
             id ?: randomAlphanumeric(64),
             jsonMapper.writeValueAsString(data),
             now(UTC)
+        )
+    }
+
+    private fun deleteCollection(
+        collection: String,
+        ids: Collection<String>,
+        config: Configuration
+    ) {
+        using(config).execute(
+            """
+            DELETE FROM $collection WHERE $ID_KEY IN ({0})
+            """.trimIndent(),
+            ids.joinToString()
         )
     }
 
