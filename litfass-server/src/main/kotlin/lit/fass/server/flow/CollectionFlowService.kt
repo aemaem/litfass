@@ -21,10 +21,10 @@ class CollectionFlowService(
 
     override fun execute(data: Collection<Map<String, Any?>>, config: CollectionConfig): FlowResponse {
         var currentData = data
-        config.flows
-            .filter { isApplicable(data.first(), it.applyIf) }
-            .forEach { currentData = executeFlow(currentData, it) }
-        return FlowResponse(currentData, config.flows.last().action)
+        val applicableFlows = config.flows.filter { isApplicable(data.first(), it.applyIf) }
+        log.debug("Applicable flows: {}", applicableFlows.map { it.name })
+        applicableFlows.forEach { currentData = executeFlow(currentData, it) }
+        return FlowResponse(currentData, applicableFlows.last().action)
     }
 
     private fun executeFlow(data: Collection<Map<String, Any?>>, flowConfig: CollectionFlowConfig): Collection<Map<String, Any?>> {

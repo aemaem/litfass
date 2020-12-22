@@ -38,12 +38,12 @@ jobs:
           name: integration-test-report
           retention-days: 7
           path: litfass-server/build/reports/tests/integrationTest
-#      - name: Cache dependencies
-#        uses: actions/cache@v2
-#        with:
-#          path: ~/.gradle/caches
-#          key: cache-gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle') }}
-#          restore-keys: cache-gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle') }}
+      - name: Cache dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/.gradle/caches
+          key: cache-gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle') }}
+          restore-keys: cache-gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle') }}
       - name: Build
         run: ./gradlew assemble buildImage --stacktrace
       - uses: actions/upload-artifact@v2

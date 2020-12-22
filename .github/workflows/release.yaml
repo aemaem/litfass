@@ -26,11 +26,11 @@ jobs:
           architecture: x64
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
-#      - name: Cache dependencies
-#        uses: actions/cache@v2
-#        with:
-#          path: ~/.gradle/caches
-#          key: cache-gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle') }}
-#          restore-keys: cache-gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle') }}
+      - name: Cache dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/.gradle/caches
+          key: cache-gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle') }}
+          restore-keys: cache-gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle') }}
       - name: Release
         run: ./gradlew final -Prelease.scope=${{ github.event.inputs.scope }} pushImage --stacktrace

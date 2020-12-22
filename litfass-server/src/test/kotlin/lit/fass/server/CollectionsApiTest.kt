@@ -116,24 +116,7 @@ internal class CollectionsApiTest : TestcontainerSupport() {
     @Test
     @Order(5)
     fun `collections {collection} POST endpoint removes collection item`() {
-        "/configs"
-            .httpPost()
-            .authentication().basic("admin", "admin")
-            .body(ClassPathResource("blub.yml").file)
-            .response()
-            .apply {
-                val response = second
-                assertThat(response.statusCode).isEqualTo(204)
-            }
-        "/collections/blub?param1=foo&param1=bar&param2=true"
-            .httpPost()
-            .objectBody(mapOf("id" to "1", "foo" to "bar"))
-            .response()
-            .apply {
-                val response = second
-                assertThat(response.statusCode).isEqualTo(200)
-            }
-        "/collections/blub?delete=true"
+        "/collections/foo?action=delete"
             .httpPost()
             .objectBody(mapOf("id" to "1"))
             .response()
@@ -141,8 +124,8 @@ internal class CollectionsApiTest : TestcontainerSupport() {
                 val response = second
                 assertThat(response.statusCode).isEqualTo(200)
             }
-        assertThat(litfassServer.logs).contains("Removed collection blub")
-        with().pollDelay(3, SECONDS).await().until { selectAllFromTable("blub").size == 0 }
+        assertThat(litfassServer.logs).contains("Removed collection foo")
+        with().pollDelay(3, SECONDS).await().until { selectAllFromTable("foo").size == 0 }
     }
 
 }
