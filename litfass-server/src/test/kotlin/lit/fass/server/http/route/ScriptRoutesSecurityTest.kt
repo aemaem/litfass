@@ -70,7 +70,7 @@ internal class ScriptRoutesSecurityTest : JUnitRouteTest() {
             args[1] as Collection<Map<String, Any?>>
         }
 
-        scriptActor = ScriptRoutesFunctionTest.testKit.spawn(ScriptActor.create(listOf(scriptEngine1Mock, scriptEngine2Mock)))
+        scriptActor = testKit.spawn(ScriptActor.create(listOf(scriptEngine1Mock, scriptEngine2Mock)))
         routeUnderTest = testRoute(ScriptRoutes(securityManagerMock, scriptActor, testKit.scheduler(), ofSeconds(10)).routes)
     }
 
