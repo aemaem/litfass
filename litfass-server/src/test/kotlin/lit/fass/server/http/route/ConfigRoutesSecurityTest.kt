@@ -1,5 +1,6 @@
 package lit.fass.server.http.route
 
+import akka.actor.testkit.typed.javadsl.TestKitJunitResource
 import akka.http.javadsl.model.ContentTypes.TEXT_PLAIN_UTF8
 import akka.http.javadsl.model.HttpRequest.*
 import akka.http.javadsl.model.StatusCodes.*
@@ -11,6 +12,7 @@ import io.mockk.clearAllMocks
 import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
+import lit.fass.server.actor.ConfigActor
 import lit.fass.server.config.ConfigService
 import lit.fass.server.config.yaml.model.CollectionConfig
 import lit.fass.server.helper.UnitTest
@@ -20,8 +22,10 @@ import lit.fass.server.security.Role.*
 import lit.fass.server.security.SecurityManager
 import org.apache.shiro.subject.Subject
 import org.junit.Before
+import org.junit.ClassRule
 import org.junit.Test
 import org.junit.experimental.categories.Category
+import java.time.Duration.ofSeconds
 
 /**
  * @author Michael Mair
@@ -30,6 +34,9 @@ import org.junit.experimental.categories.Category
 internal class ConfigRoutesSecurityTest : JUnitRouteTest() {
 
     companion object {
+        @ClassRule
+        @JvmField
+        val testKit = TestKitJunitResource()
         val log = this.logger()
     }
 
@@ -51,7 +58,9 @@ internal class ConfigRoutesSecurityTest : JUnitRouteTest() {
         every { securityManagerMock.loginHttpBasic(any() as String) } returns subjectMock
         every { configServiceMock.getConfigs() } returns emptyList()
         every { configServiceMock.getConfig("foo") } returns CollectionConfig("foo", null, null, flows = emptyList())
-        routeUnderTest = testRoute(ConfigRoutes(securityManagerMock, configServiceMock).routes)
+
+        val configActor = testKit.spawn(ConfigActor.create(configServiceMock))
+        routeUnderTest = testRoute(ConfigRoutes(securityManagerMock, configActor, testKit.scheduler(), ofSeconds(10)).routes)
     }
 
     @Test

@@ -36,6 +36,9 @@ dependencies {
 
     implementation("org.scala-lang:scala-library:${versions["scala"]}")
     implementation("com.typesafe.akka:akka-actor-typed_${scalaVersion}:${versions["akka"]}")
+    implementation("com.typesafe.akka:akka-cluster-typed_${scalaVersion}:${versions["akka"]}")
+    implementation("com.typesafe.akka:akka-discovery_${scalaVersion}:${versions["akka"]}")
+    implementation("com.lightbend.akka.management:akka-management-cluster-bootstrap_${scalaVersion}:1.0.9")
     implementation("com.typesafe.akka:akka-stream_${scalaVersion}:${versions["akka"]}")
     implementation("com.typesafe.akka:akka-http_${scalaVersion}:${versions["akka-http"]}")
     implementation("com.typesafe.akka:akka-http-jackson_${scalaVersion}:${versions["akka-http"]}")

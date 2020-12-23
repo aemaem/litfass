@@ -4,12 +4,21 @@ import akka.Done.done
 import akka.actor.CoordinatedShutdown
 import akka.actor.CoordinatedShutdown.PhaseActorSystemTerminate
 import akka.actor.CoordinatedShutdown.PhaseBeforeServiceUnbind
+import akka.actor.typed.ActorRef
 import akka.actor.typed.ActorSystem
+import akka.actor.typed.SupervisorStrategy.restartWithBackoff
 import akka.actor.typed.javadsl.Behaviors
+import akka.actor.typed.javadsl.Behaviors.supervise
+import akka.cluster.typed.Cluster
+import akka.cluster.typed.ClusterSingleton
+import akka.cluster.typed.SingletonActor
 import akka.http.javadsl.server.directives.RouteDirectives
+import akka.management.cluster.bootstrap.ClusterBootstrap
+import akka.management.javadsl.AkkaManagement
 import com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import lit.fass.server.actor.ConfigActor
 import lit.fass.server.config.yaml.YamlConfigService
 import lit.fass.server.execution.CollectionExecutionService
 import lit.fass.server.flow.CollectionFlowService
@@ -25,8 +34,10 @@ import lit.fass.server.retention.CollectionRetentionService
 import lit.fass.server.schedule.QuartzCollectionSchedulerService
 import lit.fass.server.script.groovy.GroovyScriptEngine
 import lit.fass.server.security.SecurityManager
+import java.time.Duration.ofSeconds
 import java.util.concurrent.CompletableFuture.completedStage
 import java.util.function.Supplier
+
 
 /**
  * Main class.
@@ -81,11 +92,24 @@ object LitfassApplication : RouteDirectives() {
             configService.initializeConfigs()
             val securityManager = SecurityManager(config)
 
+            val clusterSingleton = ClusterSingleton.get(context.system)
+//            val schedulerActor = clusterSingleton.init(
+//                SingletonActor.of(
+//                    supervise(SchedulerActor.create()).onFailure(restartWithBackoff(ofSeconds(1), ofSeconds(10), 0.2)),
+//                    "globalSchedulerActor"
+//                )
+//            )
+            // todo: implement scheduler actor
+            val configActor = context.spawn(ConfigActor.create(configService), "configActor")
+
+            val httpScheduler = context.system.scheduler()
+            val httpTimeout = config.getDuration("litfass.routes.ask-timeout")
+
             HttpServer(
                 concat(
                     HealthRoutes().routes,
                     CollectionRoutes(securityManager, configService, executionService, persistenceServices).routes,
-                    ConfigRoutes(securityManager, configService).routes,
+                    ConfigRoutes(securityManager, configActor, httpScheduler, httpTimeout).routes,
                     ScriptRoutes(securityManager, scriptEngines).routes
                 )
             ).startHttpServer(context.system)

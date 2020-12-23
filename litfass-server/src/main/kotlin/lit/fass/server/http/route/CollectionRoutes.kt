@@ -50,11 +50,11 @@ class CollectionRoutes(
                             post {
                                 entity(unmarshaller(Map::class.java)) { payload ->
                                     @Suppress("UNCHECKED_CAST")
-                                    addCollection(collection, headers, queryParams, payload as Map<String, Any?>)
+                                    executeCollection(collection, headers, queryParams, payload as Map<String, Any?>)
                                 }
                             },
                             get {
-                                addCollection(collection, headers, queryParams)
+                                executeCollection(collection, headers, queryParams)
                             }
                         )
                     }
@@ -63,7 +63,7 @@ class CollectionRoutes(
         )
     }
 
-    fun addCollection(
+    fun executeCollection(
         collection: String,
         headers: Map<String, String?>,
         queryParams: Map<String, String?>,
