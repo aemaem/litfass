@@ -6,7 +6,7 @@ import org.gradle.jvm.tasks.Jar
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "1.3.72"
+    kotlin("jvm") version "1.4.21"
     `java-library`
     distribution
     id("com.github.johnrengelman.shadow")
@@ -20,7 +20,7 @@ repositories {
 dependencies {
     val scalaVersion = "2.13"
     val versions = mapOf(
-        "kotlin" to "1.3.72",
+        "kotlin" to "1.4.21",
         "scala" to "${scalaVersion}.2",
         "akka" to "2.6.10",
         "akka-http" to "10.2.1",
