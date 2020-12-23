@@ -1,6 +1,5 @@
 package lit.fass.server.http.route
 
-import akka.actor.Kill
 import akka.actor.testkit.typed.javadsl.TestKitJunitResource
 import akka.actor.typed.ActorRef
 import akka.http.javadsl.marshallers.jackson.Jackson.unmarshaller
@@ -23,7 +22,6 @@ import lit.fass.server.helper.UnitTest
 import lit.fass.server.security.SecurityManager
 import org.apache.shiro.subject.Subject
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.After
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Test
@@ -73,11 +71,6 @@ internal class ConfigRoutesFunctionTest : JUnitRouteTest() {
 
         configActor = testKit.spawn(ConfigActor.create(configServiceMock))
         routeUnderTest = testRoute(ConfigRoutes(securityManagerMock, configActor, testKit.scheduler(), ofSeconds(10)).routes)
-    }
-
-    @After
-    fun cleanup() {
-        // todo: fix shutdown
     }
 
     @Test

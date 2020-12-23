@@ -1,5 +1,7 @@
 package lit.fass.server.http.route
 
+import akka.actor.testkit.typed.javadsl.TestKitJunitResource
+import akka.actor.typed.ActorRef
 import akka.http.javadsl.marshallers.jackson.Jackson.unmarshaller
 import akka.http.javadsl.model.ContentTypes.APPLICATION_JSON
 import akka.http.javadsl.model.HttpRequest.POST
@@ -10,6 +12,8 @@ import akka.http.javadsl.testkit.TestRoute
 import io.mockk.MockKAnnotations
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
+import lit.fass.server.actor.ConfigActor
+import lit.fass.server.actor.ScriptActor
 import lit.fass.server.helper.UnitTest
 import lit.fass.server.script.ScriptEngine
 import lit.fass.server.script.ScriptLanguage
@@ -18,8 +22,11 @@ import lit.fass.server.security.Role.EXECUTOR
 import lit.fass.server.security.SecurityManager
 import org.apache.shiro.subject.Subject
 import org.junit.Before
+import org.junit.ClassRule
 import org.junit.Test
 import org.junit.experimental.categories.Category
+import java.time.Duration
+import java.time.Duration.ofSeconds
 
 /**
  * @author Michael Mair
@@ -27,7 +34,15 @@ import org.junit.experimental.categories.Category
 @Category(UnitTest::class)
 internal class ScriptRoutesFunctionTest : JUnitRouteTest() {
 
+    companion object {
+        @ClassRule
+        @JvmField
+        val testKit = TestKitJunitResource()
+    }
+
     lateinit var routeUnderTest: TestRoute
+
+    lateinit var scriptActor: ActorRef<ScriptActor.Message>
 
     @MockK
     lateinit var securityManagerMock: SecurityManager
@@ -55,7 +70,8 @@ internal class ScriptRoutesFunctionTest : JUnitRouteTest() {
             args[1] as Collection<Map<String, Any?>>
         }
 
-        routeUnderTest = testRoute(ScriptRoutes(securityManagerMock, listOf(scriptEngine1Mock, scriptEngine2Mock)).routes)
+        scriptActor = testKit.spawn(ScriptActor.create(listOf(scriptEngine1Mock, scriptEngine2Mock)))
+        routeUnderTest = testRoute(ScriptRoutes(securityManagerMock, scriptActor, testKit.scheduler(), ofSeconds(10)).routes)
     }
 
     @Test

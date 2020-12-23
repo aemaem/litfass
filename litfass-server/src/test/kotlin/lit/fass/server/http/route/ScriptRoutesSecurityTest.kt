@@ -1,5 +1,7 @@
 package lit.fass.server.http.route
 
+import akka.actor.testkit.typed.javadsl.TestKitJunitResource
+import akka.actor.typed.ActorRef
 import akka.http.javadsl.model.ContentTypes.APPLICATION_JSON
 import akka.http.javadsl.model.HttpRequest.POST
 import akka.http.javadsl.model.StatusCodes.*
@@ -11,6 +13,7 @@ import io.mockk.clearAllMocks
 import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
+import lit.fass.server.actor.ScriptActor
 import lit.fass.server.helper.UnitTest
 import lit.fass.server.logger
 import lit.fass.server.script.ScriptEngine
@@ -21,8 +24,10 @@ import lit.fass.server.security.Role.EXECUTOR
 import lit.fass.server.security.SecurityManager
 import org.apache.shiro.subject.Subject
 import org.junit.Before
+import org.junit.ClassRule
 import org.junit.Test
 import org.junit.experimental.categories.Category
+import java.time.Duration.ofSeconds
 
 /**
  * @author Michael Mair
@@ -31,10 +36,15 @@ import org.junit.experimental.categories.Category
 internal class ScriptRoutesSecurityTest : JUnitRouteTest() {
 
     companion object {
+        @ClassRule
+        @JvmField
+        val testKit = TestKitJunitResource()
         val log = this.logger()
     }
 
     lateinit var routeUnderTest: TestRoute
+
+    lateinit var scriptActor: ActorRef<ScriptActor.Message>
 
     @MockK
     lateinit var securityManagerMock: SecurityManager
@@ -60,7 +70,8 @@ internal class ScriptRoutesSecurityTest : JUnitRouteTest() {
             args[1] as Collection<Map<String, Any?>>
         }
 
-        routeUnderTest = testRoute(ScriptRoutes(securityManagerMock, listOf(scriptEngine1Mock, scriptEngine2Mock)).routes)
+        scriptActor = ScriptRoutesFunctionTest.testKit.spawn(ScriptActor.create(listOf(scriptEngine1Mock, scriptEngine2Mock)))
+        routeUnderTest = testRoute(ScriptRoutes(securityManagerMock, scriptActor, testKit.scheduler(), ofSeconds(10)).routes)
     }
 
     @Test

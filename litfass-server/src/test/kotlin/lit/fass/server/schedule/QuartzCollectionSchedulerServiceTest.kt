@@ -136,19 +136,6 @@ internal class QuartzCollectionSchedulerServiceTest {
     }
 
     @Test
-    fun `retention job is overwritten if it already exists`() {
-        val config = CollectionConfig("foo", null, "P2D", POSTGRES, emptyList())
-        every { retentionServiceMock.getCronExpression() } returns "* * * * * ? *"
-
-        collectionSchedulerService.createRetentionJob(config)
-        collectionSchedulerService.createRetentionJob(CollectionConfig("foo", null, "P3D", POSTGRES, emptyList()))
-
-        verify(atLeast = 4, atMost = 6) { retentionServiceMock.getCronExpression() }
-        verify(atLeast = 0, atMost = 3) { retentionServiceMock.clean(any()) }
-        confirmVerified(retentionServiceMock)
-    }
-
-    @Test
     fun `retention job can be cancelled`(output: CapturedOutput) {
         val config = CollectionConfig("foo", null, "P2D", POSTGRES, emptyList())
         every { retentionServiceMock.getCronExpression() } returns "* * * * * ? *"

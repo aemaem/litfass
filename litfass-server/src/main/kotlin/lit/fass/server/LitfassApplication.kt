@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMEST
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import lit.fass.server.actor.ConfigActor
+import lit.fass.server.actor.ScriptActor
 import lit.fass.server.config.yaml.YamlConfigService
 import lit.fass.server.execution.CollectionExecutionService
 import lit.fass.server.flow.CollectionFlowService
@@ -101,6 +102,7 @@ object LitfassApplication : RouteDirectives() {
 //            )
             // todo: implement scheduler actor
             val configActor = context.spawn(ConfigActor.create(configService), "configActor")
+            val scriptActor = context.spawn(ScriptActor.create(scriptEngines), "scriptActor")
 
             val httpScheduler = context.system.scheduler()
             val httpTimeout = config.getDuration("litfass.routes.ask-timeout")
@@ -110,10 +112,12 @@ object LitfassApplication : RouteDirectives() {
                     HealthRoutes().routes,
                     CollectionRoutes(securityManager, configService, executionService, persistenceServices).routes,
                     ConfigRoutes(securityManager, configActor, httpScheduler, httpTimeout).routes,
-                    ScriptRoutes(securityManager, scriptEngines).routes
+                    ScriptRoutes(securityManager, scriptActor, httpScheduler, httpTimeout).routes
                 )
             ).startHttpServer(context.system)
 
+//            AkkaManagement.get(context.system).start()
+//            ClusterBootstrap.get(context.system).start()
             Behaviors.empty()
         }
         val system: ActorSystem<Void> = ActorSystem.create(rootBehavior, "litfass")
