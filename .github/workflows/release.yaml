@@ -30,7 +30,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ~/.gradle/caches
-          key: cache-gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle') }}
-          restore-keys: cache-gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle') }}
+          key: cache-gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle.kts') }}
+          restore-keys: cache-gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle.kts') }}
       - name: Release
         run: ./gradlew final -Prelease.scope=${{ github.event.inputs.scope }} pushImage --stacktrace
