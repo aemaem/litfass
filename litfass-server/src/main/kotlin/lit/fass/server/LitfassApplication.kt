@@ -8,12 +8,12 @@ import akka.actor.typed.ActorSystem
 import akka.actor.typed.javadsl.Behaviors
 import akka.cluster.typed.ClusterSingleton
 import akka.http.javadsl.server.directives.RouteDirectives
+import akka.management.cluster.bootstrap.ClusterBootstrap
+import akka.management.javadsl.AkkaManagement
 import com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import lit.fass.server.actor.CollectionActor
-import lit.fass.server.actor.ConfigActor
-import lit.fass.server.actor.ScriptActor
+import lit.fass.server.actor.*
 import lit.fass.server.config.yaml.YamlConfigService
 import lit.fass.server.execution.CollectionExecutionService
 import lit.fass.server.flow.CollectionFlowService
@@ -31,7 +31,6 @@ import lit.fass.server.script.groovy.GroovyScriptEngine
 import lit.fass.server.security.SecurityManager
 import java.util.concurrent.CompletableFuture.completedStage
 import java.util.function.Supplier
-
 
 /**
  * Main class.
@@ -110,8 +109,10 @@ object LitfassApplication : RouteDirectives() {
                 )
             ).startHttpServer(context.system)
 
-//            AkkaManagement.get(context.system).start()
-//            ClusterBootstrap.get(context.system).start()
+            context.spawn(clusterEventLoggingBehavior(), "clusterEventLoggingBehavior")
+            AkkaManagement.get(context.system).start()
+            ClusterBootstrap.get(context.system).start()
+
             Behaviors.empty()
         }
         val system: ActorSystem<Void> = ActorSystem.create(rootBehavior, "litfass")

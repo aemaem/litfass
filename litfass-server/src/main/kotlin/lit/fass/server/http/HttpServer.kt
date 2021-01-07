@@ -36,8 +36,9 @@ class HttpServer(private val route: Route) : AllDirectives() {
             .match(SchedulerException::class.java) { complete(StatusCodes.BAD_REQUEST, it.message) }
             .match(Exception::class.java) { complete(StatusCodes.INTERNAL_SERVER_ERROR, it.message) }.build()
 
+        val config = system.settings().config()
         val http = Http.get(system)
-        http.newServerAt("0.0.0.0", 8080)
+        http.newServerAt(config.getString("litfass.http.interface"), config.getInt("litfass.http.port"))
             .bind(handleExceptions(exceptionHandler) {
                 route
             })
