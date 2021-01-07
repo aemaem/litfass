@@ -10,6 +10,3 @@ Lightweight Integrated Tailorable Flow Aware Software Service
 
 * Kotlin
 * Akka
-
-=== TODO
-. use akka cluster with cluster singleton for scheduler service and retention service
