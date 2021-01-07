@@ -21,10 +21,10 @@ dependencies {
     val scalaVersion = "2.13"
     val versions = mapOf(
         "kotlin" to "1.4.21",
-        "scala" to "${scalaVersion}.2",
+        "scala" to "${scalaVersion}.4",
         "akka" to "2.6.10",
-        "akka-http" to "10.2.1",
-        "jackson" to "2.11.2",
+        "akka-http" to "10.2.2",
+        "jackson" to "2.10.5",
         "shiro" to "1.5.2",
         "groovy" to "2.5.11",
         "junit" to "5.6.2",
@@ -39,6 +39,7 @@ dependencies {
     implementation("com.typesafe.akka:akka-cluster-typed_${scalaVersion}:${versions["akka"]}")
     implementation("com.typesafe.akka:akka-discovery_${scalaVersion}:${versions["akka"]}")
     implementation("com.lightbend.akka.management:akka-management-cluster-bootstrap_${scalaVersion}:1.0.9")
+    implementation("com.typesafe.akka:akka-serialization-jackson_${scalaVersion}:${versions["akka"]}")
     implementation("com.typesafe.akka:akka-stream_${scalaVersion}:${versions["akka"]}")
     implementation("com.typesafe.akka:akka-http_${scalaVersion}:${versions["akka-http"]}")
     implementation("com.typesafe.akka:akka-http-jackson_${scalaVersion}:${versions["akka-http"]}")

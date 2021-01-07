@@ -35,13 +35,13 @@ class ConfigActor private constructor(
             configService: ConfigService,
             timeout: Duration
         ): Behavior<Message> {
-            return Behaviors.setup<Message> { context ->
+            return Behaviors.setup { context ->
                 ConfigActor(schedulerActor, configService, context, context.system.scheduler(), timeout)
             }
         }
     }
 
-    interface Message
+    interface Message : SerializationMarker
     class Done : Message
     data class GetConfig(val collection: String, val replyTo: ActorRef<Config>) : Message
     data class Config(val collection: String, val response: CollectionConfig) : Message

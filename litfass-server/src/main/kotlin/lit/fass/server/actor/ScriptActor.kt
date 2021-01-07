@@ -25,11 +25,11 @@ class ScriptActor private constructor(
     companion object {
         @JvmStatic
         fun create(scriptEngines: List<ScriptEngine>): Behavior<Message> {
-            return Behaviors.setup<Message> { context -> ScriptActor(scriptEngines, context) }
+            return Behaviors.setup { context -> ScriptActor(scriptEngines, context) }
         }
     }
 
-    interface Message
+    interface Message : SerializationMarker
     data class TestScript(val language: ScriptLanguage, val payload: Map<*, *>, val replyTo: ActorRef<ScriptResult>) : Message
     data class ScriptResult(val result: Collection<Map<String, Any?>>) : Message
 
@@ -39,6 +39,7 @@ class ScriptActor private constructor(
                 ?: throw ScriptException("No script engine available for language ${it.language}")
 
             val script = it.payload["script"] as String
+
             @Suppress("UNCHECKED_CAST")
             val data = it.payload["data"] as Map<String, Any?>
 

@@ -110,6 +110,7 @@ internal class PostgresPersistenceServiceTest : PostgresSupport() {
         val data1 = mapOf(ID_KEY to "1", "foo" to "bar", "bar" to true)
         val data2 = mapOf(ID_KEY to "2", "foo" to "bar")
 
+        @Suppress("CAST_NEVER_SUCCEEDS")
         persistenceService.saveCollection(collection, data1, data1["id"] as String)
         persistenceService.saveCollection(collection, data2, data2["id"] as String)
         persistenceService.removeCollection(collection, "1")

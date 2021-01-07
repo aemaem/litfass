@@ -26,11 +26,11 @@ class SchedulerActor private constructor(
 
         @JvmStatic
         fun create(schedulingService: SchedulerService): Behavior<Message> {
-            return Behaviors.setup<Message> { context -> SchedulerActor(schedulingService, context) }
+            return Behaviors.setup { context -> SchedulerActor(schedulingService, context) }
         }
     }
 
-    interface Message
+    interface Message : SerializationMarker
     class Done : Message
     data class ScheduleJob(val config: CollectionConfig, val replyTo: ActorRef<Done>) : Message
     data class CancelJob(val config: CollectionConfig, val replyTo: ActorRef<Done>) : Message

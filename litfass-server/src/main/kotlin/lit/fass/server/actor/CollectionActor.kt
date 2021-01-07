@@ -38,11 +38,11 @@ class CollectionActor private constructor(
             executionService: ExecutionService,
             persistenceServices: List<CollectionPersistenceService>
         ): Behavior<Message> {
-            return Behaviors.setup<Message> { context -> CollectionActor(configService, executionService, persistenceServices, context) }
+            return Behaviors.setup { context -> CollectionActor(configService, executionService, persistenceServices, context) }
         }
     }
 
-    interface Message
+    interface Message : SerializationMarker
     class Done : Message
     data class GetCollection(val collection: String, val id: String, val subject: Subject, val replyTo: ActorRef<Collection>) : Message
     data class Collection(val response: Map<String, Any?>) : Message
