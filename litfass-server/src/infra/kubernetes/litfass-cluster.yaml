@@ -1,0 +1,88 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: litfass-env-conf
+  namespace: infra
+data:
+  #LITFASS_USERS_ADMIN_PASSWORD: "my-admin-password"
+  LITFASS_JDBC_POOL_SIZE: "1"
+  LITFASS_JDBC_URL: "jdbc:postgresql://postgres-postgresql:5432"
+  LITFASS_JDBC_DATABASE: "litfass"
+  LITFASS_JDBC_USERNAME: "litfass"
+  LITFASS_JDBC_PASSWORD: "litfass"
+  LITFASS_AKKA_REMOTE_CANONICAL_HOSTNAME: "litfass.default.svc.cluster.local"
+  LITFASS_AKKA_REMOTE_CANONICAL_PORT: "25520"
+  LITFASS_AKKA_REMOTE_BIND_HOSTNAME: "litfass.default.svc.cluster.local"
+  LITFASS_AKKA_REMOTE_BIND_PORT: "25520"
+  LITFASS_AKKA_CLUSTER_SERVICE_NAME: "litfass"
+  LITFASS_AKKA_CLUSTER_SERVICE_NAMESPACE: "default.svc.cluster.local"
+  LITFASS_AKKA_CLUSTER_PORT_NAME: "25520"
+  #LOGGING_LEVEL_LIT_FASS: "DEBUG"
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: litfass
+  namespace: default
+spec:
+  replicas: 3
+  selector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values:
+          - litfass
+  template:
+    metadata:
+      labels:
+        app: litfass
+        version: "2.0.0"
+    spec:
+      containers:
+        - name: litfass
+          image: aemaem/litfass:2.0.0
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              cpu: "0.25"
+              memory: "0.5G"
+            limits:
+              cpu: "0.75"
+              memory: "1.5G"
+          envFrom:
+            - configMapRef:
+                name: litfass-env-conf
+          env:
+            - name: LITFASS_AKKA_REMOTE_BIND_HOSTNAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: status.podIP
+          ports:
+            - containerPort: 80
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 90
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 90
+            successThreshold: 3
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: litfass
+  namespace: default
+spec:
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+      protocol: TCP
+  selector:
+    app: litfass

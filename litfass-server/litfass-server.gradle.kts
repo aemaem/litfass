@@ -88,6 +88,7 @@ java.targetCompatibility = VERSION_11
 
 sourceSets.create("infra") {
     java.srcDir("src/infra/docker")
+    java.srcDir("src/infra/kubernetes")
 }
 
 
