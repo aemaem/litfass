@@ -1,30 +1,35 @@
 package lit.fass.server.http.route
 
+import akka.actor.typed.ActorRef
+import akka.actor.typed.Scheduler
+import akka.actor.typed.javadsl.AskPattern.ask
 import akka.http.javadsl.marshallers.jackson.Jackson.marshaller
 import akka.http.javadsl.marshallers.jackson.Jackson.unmarshaller
-import akka.http.javadsl.model.StatusCodes.*
+import akka.http.javadsl.model.StatusCodes.OK
 import akka.http.javadsl.server.PathMatchers.segment
 import akka.http.javadsl.server.Route
-import lit.fass.server.config.ConfigService
-import lit.fass.server.execution.ExecutionService
+import akka.japi.function.Function
+import lit.fass.server.CollectionException
+import lit.fass.server.actor.CollectionActor
+import lit.fass.server.actor.CollectionActor.*
+import lit.fass.server.execution.ExecutionException
 import lit.fass.server.http.SecurityDirectives
 import lit.fass.server.logger
-import lit.fass.server.persistence.CollectionPersistenceService
 import lit.fass.server.security.Role.ADMIN
 import lit.fass.server.security.Role.READER
 import lit.fass.server.security.SecurityManager
 import org.apache.shiro.subject.Subject
-import java.time.OffsetDateTime.now
-import java.time.ZoneOffset.UTC
+import java.time.Duration
+import java.util.concurrent.CompletionStage
 
 /**
  * @author Michael Mair
  */
 class CollectionRoutes(
     securityManager: SecurityManager,
-    private val configService: ConfigService,
-    private val executionService: ExecutionService,
-    private val persistenceServices: List<CollectionPersistenceService>
+    private val collectionActor: ActorRef<Message>,
+    private val scheduler: Scheduler,
+    private val timeout: Duration
 ) : SecurityDirectives(securityManager) {
 
     companion object {
@@ -37,7 +42,7 @@ class CollectionRoutes(
                 authenticate { subject ->
                     get {
                         authorize(subject, listOf(ADMIN, READER)) {
-                            getCollection(collection, id, subject)
+                            onSuccess(getCollection(collection, id, subject)) { complete(OK, it.response, marshaller()) }
                         }
                     }
                 }
@@ -50,11 +55,11 @@ class CollectionRoutes(
                             post {
                                 entity(unmarshaller(Map::class.java)) { payload ->
                                     @Suppress("UNCHECKED_CAST")
-                                    executeCollection(collection, headers, queryParams, payload as Map<String, Any?>)
+                                    onSuccess(executeCollection(collection, headers, queryParams, payload as Map<String, Any?>)) { complete(OK) }
                                 }
                             },
                             get {
-                                executeCollection(collection, headers, queryParams)
+                                onSuccess(executeCollection(collection, headers, queryParams, emptyMap())) { complete(OK) }
                             }
                         )
                     }
@@ -68,41 +73,30 @@ class CollectionRoutes(
         headers: Map<String, String?>,
         queryParams: Map<String, String?>,
         payload: Map<String, Any?> = emptyMap()
-    ): Route {
+    ): CompletionStage<Done> {
         if (collection.isBlank()) {
-            return complete(BAD_REQUEST, mapOf("error" to "Collection must not be blank"), marshaller())
+            throw ExecutionException("Collection must not be blank")
         }
 
         log.trace("Got headers $headers for collection $collection")
         log.trace("Got collection $collection and meta data $queryParams")
 
-        val data = mutableMapOf<String, Any?>("timestamp" to now(UTC))
-        data.putAll(headers)
-        data.putAll(queryParams)
-        data.putAll(payload)
-
-        try {
-            executionService.execute(configService.getConfig(collection), listOf(data))
-        } catch (ex: Exception) {
-            log.error("Exception during execution of collection $collection", ex)
-            return complete(INTERNAL_SERVER_ERROR, mapOf("error" to ex.message), marshaller())
-        }
-        return complete(OK)
+        return ask(collectionActor, Function<ActorRef<Done>, Message?> { ref ->
+            ExecuteCollection(collection, headers, queryParams, payload, ref)
+        }, timeout, scheduler)
     }
 
-    private fun getCollection(collection: String, id: String, subject: Subject): Route {
+    private fun getCollection(collection: String, id: String, subject: Subject): CompletionStage<CollectionActor.Collection> {
         if (collection.isBlank()) {
-            return complete(BAD_REQUEST, mapOf("error" to "Collection must not be blank"), marshaller())
+            throw CollectionException("Collection must not be blank")
         }
         if (id.isBlank()) {
-            return complete(BAD_REQUEST, mapOf("error" to "Id must not be blank"), marshaller())
+            throw CollectionException("Id must not be blank")
         }
 
-        val config = configService.getConfig(collection)
-        val persistenceService = persistenceServices.find { it.isApplicable(config.datastore) }
-            ?: return complete(BAD_REQUEST, mapOf("error" to "Persistence service for ${config.datastore} not found"), marshaller())
-
-        log.debug("Getting collection data for $collection with id $id for user ${subject.principal}")
-        return complete(OK, persistenceService.findCollectionData(collection, id), marshaller())
+        return ask(collectionActor, Function<ActorRef<CollectionActor.Collection>, Message?> { ref ->
+            GetCollection(collection, id, subject, ref)
+        }, timeout, scheduler)
     }
+
 }

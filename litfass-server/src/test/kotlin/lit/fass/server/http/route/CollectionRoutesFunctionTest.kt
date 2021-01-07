@@ -1,5 +1,7 @@
 package lit.fass.server.http.route
 
+import akka.actor.testkit.typed.javadsl.TestKitJunitResource
+import akka.actor.typed.ActorRef
 import akka.http.javadsl.marshallers.jackson.Jackson.unmarshaller
 import akka.http.javadsl.model.ContentTypes.APPLICATION_JSON
 import akka.http.javadsl.model.HttpHeader
@@ -14,6 +16,7 @@ import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.verify
+import lit.fass.server.actor.CollectionActor
 import lit.fass.server.config.ConfigService
 import lit.fass.server.config.yaml.model.CollectionConfig
 import lit.fass.server.execution.ExecutionService
@@ -24,8 +27,10 @@ import lit.fass.server.security.SecurityManager
 import org.apache.shiro.subject.Subject
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before
+import org.junit.ClassRule
 import org.junit.Test
 import org.junit.experimental.categories.Category
+import java.time.Duration.ofSeconds
 
 /**
  * @author Michael Mair
@@ -33,7 +38,15 @@ import org.junit.experimental.categories.Category
 @Category(UnitTest::class)
 internal class CollectionRoutesFunctionTest : JUnitRouteTest() {
 
+    companion object {
+        @ClassRule
+        @JvmField
+        val testKit = TestKitJunitResource()
+    }
+
     lateinit var routeUnderTest: TestRoute
+
+    lateinit var collectionActor: ActorRef<CollectionActor.Message>
 
     @MockK
     lateinit var securityManagerMock: SecurityManager
@@ -61,14 +74,10 @@ internal class CollectionRoutesFunctionTest : JUnitRouteTest() {
         every { subjectMock.hasRole(any()) } returns true
         every { subjectMock.principal } returns "admin"
         every { securityManagerMock.loginHttpBasic(any() as String) } returns subjectMock
-        routeUnderTest = testRoute(
-            CollectionRoutes(
-                securityManagerMock,
-                configServiceMock,
-                executionServiceMock,
-                listOf(persistenceService1Mock, persistenceService2Mock)
-            ).routes
+        collectionActor = testKit.spawn(
+            CollectionActor.create(configServiceMock, executionServiceMock, listOf(persistenceService1Mock, persistenceService2Mock))
         )
+        routeUnderTest = testRoute(CollectionRoutes(securityManagerMock, collectionActor, testKit.scheduler(), ofSeconds(10)).routes)
     }
 
     @Test
@@ -107,16 +116,18 @@ internal class CollectionRoutesFunctionTest : JUnitRouteTest() {
                 )
         ).assertStatusCode(OK)
 
-        verify(exactly = 1) {  executionServiceMock.execute(any(), match {
-            assertThat(it).hasSize(1)
-            assertThat(it.first()).hasSize(7)
-            assertThat(it.first()["bar"]).isEqualTo("true")
-            assertThat(it.first()["foo"]).isEqualTo("42")
-            assertThat(it.first()["x-foo"]).isEqualTo("bar")
-            assertThat(it.first()["bla"] as Boolean).isTrue()
-            assertThat(it.first()["blub"] as List<*>).hasSize(3)
-            true
-        }) }
+        verify(exactly = 1) {
+            executionServiceMock.execute(any(), match {
+                assertThat(it).hasSize(1)
+                assertThat(it.first()).hasSize(7)
+                assertThat(it.first()["bar"]).isEqualTo("true")
+                assertThat(it.first()["foo"]).isEqualTo("42")
+                assertThat(it.first()["x-foo"]).isEqualTo("bar")
+                assertThat(it.first()["bla"] as Boolean).isTrue()
+                assertThat(it.first()["blub"] as List<*>).hasSize(3)
+                true
+            })
+        }
     }
 
     @Test
@@ -129,14 +140,16 @@ internal class CollectionRoutesFunctionTest : JUnitRouteTest() {
                 .addHeader(HttpHeader.parse("x-foo", "bar"))
         ).assertStatusCode(OK)
 
-        verify(exactly = 1) {  executionServiceMock.execute(any(), match {
-            assertThat(it).hasSize(1)
-            assertThat(it.first()).hasSize(5)
-            assertThat(it.first()["bar"]).isEqualTo("true")
-            assertThat(it.first()["foo"]).isEqualTo("42")
-            assertThat(it.first()["x-foo"]).isEqualTo("bar")
-            true
-        }) }
+        verify(exactly = 1) {
+            executionServiceMock.execute(any(), match {
+                assertThat(it).hasSize(1)
+                assertThat(it.first()).hasSize(5)
+                assertThat(it.first()["bar"]).isEqualTo("true")
+                assertThat(it.first()["foo"]).isEqualTo("42")
+                assertThat(it.first()["x-foo"]).isEqualTo("bar")
+                true
+            })
+        }
     }
 
 }

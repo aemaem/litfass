@@ -6,6 +6,7 @@ import akka.http.javadsl.model.StatusCodes
 import akka.http.javadsl.server.AllDirectives
 import akka.http.javadsl.server.ExceptionHandler
 import akka.http.javadsl.server.Route
+import lit.fass.server.CollectionException
 import lit.fass.server.config.yaml.ConfigException
 import lit.fass.server.execution.ExecutionException
 import lit.fass.server.flow.FlowException
@@ -27,6 +28,7 @@ class HttpServer(private val route: Route) : AllDirectives() {
 
         val exceptionHandler = ExceptionHandler.newBuilder()
             .match(ConfigException::class.java) { complete(StatusCodes.BAD_REQUEST, it.message) }
+            .match(CollectionException::class.java) { complete(StatusCodes.BAD_REQUEST, it.message) }
             .match(ExecutionException::class.java) { complete(StatusCodes.BAD_REQUEST, it.message) }
             .match(FlowException::class.java) { complete(StatusCodes.BAD_REQUEST, it.message) }
             .match(PersistenceException::class.java) { complete(StatusCodes.BAD_REQUEST, it.message) }
