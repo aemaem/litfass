@@ -15,10 +15,12 @@ import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import lit.fass.server.actor.ConfigActor
+import lit.fass.server.actor.SchedulerActor
 import lit.fass.server.config.ConfigService
 import lit.fass.server.config.yaml.model.CollectionConfig
 import lit.fass.server.config.yaml.model.CollectionFlowConfig
 import lit.fass.server.helper.UnitTest
+import lit.fass.server.schedule.SchedulerService
 import lit.fass.server.security.SecurityManager
 import org.apache.shiro.subject.Subject
 import org.assertj.core.api.Assertions.assertThat
@@ -44,6 +46,7 @@ internal class ConfigRoutesFunctionTest : JUnitRouteTest() {
     lateinit var routeUnderTest: TestRoute
 
     lateinit var configActor: ActorRef<ConfigActor.Message>
+    lateinit var schedulerActor: ActorRef<SchedulerActor.Message>
 
     @MockK
     lateinit var securityManagerMock: SecurityManager
@@ -53,6 +56,9 @@ internal class ConfigRoutesFunctionTest : JUnitRouteTest() {
 
     @MockK(relaxed = true)
     lateinit var configServiceMock: ConfigService
+
+    @MockK(relaxed = true)
+    lateinit var schedulerServiceMock: SchedulerService
 
     @Before
     fun setup() {
@@ -69,7 +75,8 @@ internal class ConfigRoutesFunctionTest : JUnitRouteTest() {
         every { configServiceMock.getConfig("foo") } returns
                 CollectionConfig("foo", null, null, flows = listOf(CollectionFlowConfig(null, null, steps = emptyList())))
 
-        configActor = testKit.spawn(ConfigActor.create(configServiceMock))
+        schedulerActor = testKit.spawn(SchedulerActor.create(schedulerServiceMock))
+        configActor = testKit.spawn(ConfigActor.create(schedulerActor, configServiceMock, ofSeconds(10)))
         routeUnderTest = testRoute(ConfigRoutes(securityManagerMock, configActor, testKit.scheduler(), ofSeconds(10)).routes)
     }
 

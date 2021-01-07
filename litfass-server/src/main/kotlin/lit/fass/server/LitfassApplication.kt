@@ -5,8 +5,11 @@ import akka.actor.CoordinatedShutdown
 import akka.actor.CoordinatedShutdown.PhaseActorSystemTerminate
 import akka.actor.CoordinatedShutdown.PhaseBeforeServiceUnbind
 import akka.actor.typed.ActorSystem
+import akka.actor.typed.SupervisorStrategy.restartWithBackoff
 import akka.actor.typed.javadsl.Behaviors
+import akka.actor.typed.javadsl.Behaviors.supervise
 import akka.cluster.typed.ClusterSingleton
+import akka.cluster.typed.SingletonActor
 import akka.http.javadsl.server.directives.RouteDirectives
 import akka.management.cluster.bootstrap.ClusterBootstrap
 import akka.management.javadsl.AkkaManagement
@@ -29,6 +32,7 @@ import lit.fass.server.retention.CollectionRetentionService
 import lit.fass.server.schedule.QuartzCollectionSchedulerService
 import lit.fass.server.script.groovy.GroovyScriptEngine
 import lit.fass.server.security.SecurityManager
+import java.time.Duration.ofSeconds
 import java.util.concurrent.CompletableFuture.completedStage
 import java.util.function.Supplier
 
@@ -80,32 +84,31 @@ object LitfassApplication : RouteDirectives() {
             val scriptEngines = listOf(groovyScriptEngine)
 
             val executionService = CollectionExecutionService(CollectionFlowService(CollectionHttpService(jsonMapper), scriptEngines), persistenceServices)
-            val schedulerService = QuartzCollectionSchedulerService(executionService, CollectionRetentionService(persistenceServices))
-            val configService = YamlConfigService(postgresPersistenceService, schedulerService, config)
+            val configService = YamlConfigService(postgresPersistenceService, config)
             configService.initializeConfigs()
             val securityManager = SecurityManager(config)
 
+            val askScheduler = context.system.scheduler()
+            val askTimout = config.getDuration("litfass.routes.ask-timeout")
+
+            val schedulerService = QuartzCollectionSchedulerService(executionService, CollectionRetentionService(persistenceServices))
             val clusterSingleton = ClusterSingleton.get(context.system)
-//            val schedulerActor = clusterSingleton.init(
-//                SingletonActor.of(
-//                    supervise(SchedulerActor.create()).onFailure(restartWithBackoff(ofSeconds(1), ofSeconds(10), 0.2)),
-//                    "globalSchedulerActor"
-//                )
-//            )
-            // todo: implement scheduler actor
-            val configActor = context.spawn(ConfigActor.create(configService), "configActor")
+            val schedulerActor = clusterSingleton.init(
+                SingletonActor.of(
+                    supervise(SchedulerActor.create(schedulerService)).onFailure(restartWithBackoff(ofSeconds(1), ofSeconds(10), 0.2)),
+                    "globalSchedulerActor"
+                )
+            )
+            val configActor = context.spawn(ConfigActor.create(schedulerActor, configService, askTimout), "configActor")
             val collectionActor = context.spawn(CollectionActor.create(configService, executionService, persistenceServices), "collectionActor")
             val scriptActor = context.spawn(ScriptActor.create(scriptEngines), "scriptActor")
-
-            val httpScheduler = context.system.scheduler()
-            val httpTimeout = config.getDuration("litfass.routes.ask-timeout")
 
             HttpServer(
                 concat(
                     HealthRoutes().routes,
-                    CollectionRoutes(securityManager, collectionActor, httpScheduler, httpTimeout).routes,
-                    ConfigRoutes(securityManager, configActor, httpScheduler, httpTimeout).routes,
-                    ScriptRoutes(securityManager, scriptActor, httpScheduler, httpTimeout).routes
+                    CollectionRoutes(securityManager, collectionActor, askScheduler, askTimout).routes,
+                    ConfigRoutes(securityManager, configActor, askScheduler, askTimout).routes,
+                    ScriptRoutes(securityManager, scriptActor, askScheduler, askTimout).routes
                 )
             ).startHttpServer(context.system)
 

@@ -13,10 +13,12 @@ import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import lit.fass.server.actor.ConfigActor
+import lit.fass.server.actor.SchedulerActor
 import lit.fass.server.config.ConfigService
 import lit.fass.server.config.yaml.model.CollectionConfig
 import lit.fass.server.helper.UnitTest
 import lit.fass.server.logger
+import lit.fass.server.schedule.SchedulerService
 import lit.fass.server.security.Role
 import lit.fass.server.security.Role.*
 import lit.fass.server.security.SecurityManager
@@ -51,6 +53,9 @@ internal class ConfigRoutesSecurityTest : JUnitRouteTest() {
     @MockK(relaxed = true)
     lateinit var configServiceMock: ConfigService
 
+    @MockK(relaxed = true)
+    lateinit var schedulerServiceMock: SchedulerService
+
     @Before
     fun setup() {
         MockKAnnotations.init(this)
@@ -59,7 +64,8 @@ internal class ConfigRoutesSecurityTest : JUnitRouteTest() {
         every { configServiceMock.getConfigs() } returns emptyList()
         every { configServiceMock.getConfig("foo") } returns CollectionConfig("foo", null, null, flows = emptyList())
 
-        val configActor = testKit.spawn(ConfigActor.create(configServiceMock))
+        val schedulerActor = testKit.spawn(SchedulerActor.create(schedulerServiceMock))
+        val configActor = testKit.spawn(ConfigActor.create(schedulerActor, configServiceMock, ofSeconds(10)))
         routeUnderTest = testRoute(ConfigRoutes(securityManagerMock, configActor, testKit.scheduler(), ofSeconds(10)).routes)
     }
 

@@ -2,29 +2,42 @@ package lit.fass.server.actor
 
 import akka.actor.typed.ActorRef
 import akka.actor.typed.Behavior
+import akka.actor.typed.Scheduler
 import akka.actor.typed.javadsl.AbstractBehavior
 import akka.actor.typed.javadsl.ActorContext
+import akka.actor.typed.javadsl.AskPattern.ask
 import akka.actor.typed.javadsl.Behaviors
 import akka.actor.typed.javadsl.Behaviors.same
 import akka.actor.typed.javadsl.Receive
+import akka.japi.function.Function
 import lit.fass.server.actor.ConfigActor.Message
 import lit.fass.server.config.ConfigService
 import lit.fass.server.config.yaml.model.CollectionConfig
 import java.io.InputStream
+import java.time.Duration
 
 
 /**
  * @author Michael Mair
  */
 class ConfigActor private constructor(
+    private val schedulerActor: ActorRef<SchedulerActor.Message>,
     private val configService: ConfigService,
-    context: ActorContext<Message>?
+    context: ActorContext<Message>?,
+    private val scheduler: Scheduler,
+    private val timeout: Duration
 ) : AbstractBehavior<Message>(context) {
 
     companion object {
         @JvmStatic
-        fun create(configService: ConfigService): Behavior<Message> {
-            return Behaviors.setup<Message> { context -> ConfigActor(configService, context) }
+        fun create(
+            schedulerActor: ActorRef<SchedulerActor.Message>,
+            configService: ConfigService,
+            timeout: Duration
+        ): Behavior<Message> {
+            return Behaviors.setup<Message> { context ->
+                ConfigActor(schedulerActor, configService, context, context.system.scheduler(), timeout)
+            }
         }
     }
 
@@ -37,6 +50,7 @@ class ConfigActor private constructor(
     data class AddConfig(val inputStream: InputStream, val replyTo: ActorRef<Done>) : Message
     data class RemoveConfig(val collection: String, val replyTo: ActorRef<Done>) : Message
 
+
     override fun createReceive(): Receive<Message> = newReceiveBuilder()
         .onMessage(GetConfig::class.java) {
             it.replyTo.tell(Config(it.collection, configService.getConfig(it.collection)))
@@ -48,12 +62,25 @@ class ConfigActor private constructor(
         }
         .onMessage(AddConfig::class.java) {
             configService.readConfig(it.inputStream)
-            it.replyTo.tell(Done())
+                .forEach { config ->
+                    ask(schedulerActor, Function<ActorRef<SchedulerActor.Done>, SchedulerActor.Message?> { ref ->
+                        SchedulerActor.ScheduleJob(config, ref)
+                    }, timeout, scheduler)
+                        .thenRun {
+                            it.replyTo.tell(Done())
+                        }
+                }
             same()
         }
         .onMessage(RemoveConfig::class.java) {
-            configService.removeConfig(it.collection)
-            it.replyTo.tell(Done())
+            val config = configService.getConfig(it.collection)
+            ask(schedulerActor, Function<ActorRef<SchedulerActor.Done>, SchedulerActor.Message?> { ref ->
+                SchedulerActor.CancelJob(config, ref)
+            }, timeout, scheduler)
+                .thenRun {
+                    configService.removeConfig(it.collection)
+                    it.replyTo.tell(Done())
+                }
             same()
         }
         .build()

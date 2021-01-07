@@ -9,7 +9,6 @@ import com.typesafe.config.ConfigFactory
 import lit.fass.server.config.ConfigService
 import lit.fass.server.config.yaml.model.CollectionConfig
 import lit.fass.server.persistence.CollectionConfigPersistenceService
-import lit.fass.server.schedule.SchedulerService
 import org.apache.commons.lang3.time.DurationFormatUtils.formatDurationHMS
 import org.slf4j.LoggerFactory
 import java.io.ByteArrayInputStream
@@ -23,7 +22,6 @@ import java.util.function.Function
  */
 class YamlConfigService(
     private val configPersistenceService: CollectionConfigPersistenceService,
-    private val schedulerService: SchedulerService,
     private val properties: Config = ConfigFactory.defaultApplication()
 ) : ConfigService {
     companion object {
@@ -65,16 +63,17 @@ class YamlConfigService(
             .forEach { readConfig(it) }
     }
 
-    override fun readConfig(file: File) {
+    override fun readConfig(file: File): List<CollectionConfig> {
         log.debug("Reading config from file ${file.absolutePath}")
         return readConfig(file.inputStream())
     }
 
-    override fun readConfig(inputStream: InputStream) {
+    override fun readConfig(inputStream: InputStream): List<CollectionConfig> {
         val configs = yamlMapper.readValues(YAMLFactory().createParser(inputStream), CollectionConfig::class.java)
             .readAll()
 
         configs.forEach { readSingleConfig(it) }
+        return configs
     }
 
     override fun readConfigsFromDatabase() {
@@ -100,7 +99,6 @@ class YamlConfigService(
 
         log.info("Adding config ${config.collection}")
         try {
-            scheduleConfig(config)
             configPersistenceService.saveConfig(config.collection, yamlMapper.writeValueAsString(config))
         } catch (ex: Exception) {
             log.error(ex.message, ex)
@@ -119,15 +117,12 @@ class YamlConfigService(
 
     override fun removeConfig(name: String) {
         log.info("Removing config $name")
-        val config = loadConfig(name) ?: return
         try {
             configPersistenceService.deleteConfig(name)
         } catch (ex: Exception) {
             log.error(ex.message, ex)
             throw ConfigException("Unable to delete config $name in database")
         }
-        schedulerService.cancelCollectionJob(config)
-        schedulerService.cancelRetentionJob(config)
         configCache.invalidate(name)
     }
 
@@ -136,24 +131,5 @@ class YamlConfigService(
             val configData = configPersistenceService.findConfig(name) ?: return@Function null
             return@Function yamlMapper.readValue(configData, CollectionConfig::class.java)
         })
-    }
-
-    private fun scheduleConfig(config: CollectionConfig) {
-        if (config.scheduled != null) {
-            try {
-                schedulerService.createCollectionJob(config)
-            } catch (ex: Exception) {
-                log.error("Unable to schedule config ${config.collection}", ex)
-                throw ConfigException("Unable to schedule collection config ${config.collection}: ${ex.message}")
-            }
-        }
-        if (config.retention != null) {
-            try {
-                schedulerService.createRetentionJob(config)
-            } catch (ex: Exception) {
-                log.error("Unable to schedule config ${config.collection}", ex)
-                throw ConfigException("Unable to schedule retention config ${config.collection}: ${ex.message}")
-            }
-        }
     }
 }

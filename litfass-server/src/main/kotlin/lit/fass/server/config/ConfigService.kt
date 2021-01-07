@@ -9,8 +9,8 @@ import java.io.InputStream
  */
 interface ConfigService {
     fun readRecursively(file: File)
-    fun readConfig(file: File)
-    fun readConfig(inputStream: InputStream)
+    fun readConfig(file: File): List<CollectionConfig>
+    fun readConfig(inputStream: InputStream): List<CollectionConfig>
     fun readConfigsFromDatabase()
     fun getConfig(name: String): CollectionConfig
     fun getConfigs(): Collection<CollectionConfig>

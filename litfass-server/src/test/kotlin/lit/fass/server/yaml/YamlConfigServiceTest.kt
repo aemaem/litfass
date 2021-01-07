@@ -13,7 +13,6 @@ import lit.fass.server.flow.FlowAction
 import lit.fass.server.helper.TestTypes.UnitTest
 import lit.fass.server.persistence.CollectionConfigPersistenceService
 import lit.fass.server.persistence.Datastore.POSTGRES
-import lit.fass.server.schedule.SchedulerService
 import lit.fass.server.script.ScriptLanguage.GROOVY
 import lit.fass.server.script.ScriptLanguage.KOTLIN
 import org.assertj.core.api.Assertions.assertThat
@@ -37,13 +36,10 @@ internal class YamlConfigServiceTest {
     @MockK(relaxed = true)
     lateinit var configPersistenceServiceMock: CollectionConfigPersistenceService
 
-    @MockK(relaxed = true)
-    lateinit var schedulerServiceMock: SchedulerService
-
     @BeforeEach
     fun setup() {
         MockKAnnotations.init(this)
-        yamlConfigService = YamlConfigService(configPersistenceServiceMock, schedulerServiceMock)
+        yamlConfigService = YamlConfigService(configPersistenceServiceMock)
     }
 
     @Test
@@ -53,9 +49,7 @@ internal class YamlConfigServiceTest {
 
         verify(exactly = 1) { configPersistenceServiceMock.saveConfig("foo", any()) }
         verify(exactly = 0) { configPersistenceServiceMock.findConfig(any()) } // because it is cached
-        verify(exactly = 1) { schedulerServiceMock.createCollectionJob(any()) }
-        verify(exactly = 1) { schedulerServiceMock.createRetentionJob(any()) }
-        confirmVerified(configPersistenceServiceMock, schedulerServiceMock)
+        confirmVerified(configPersistenceServiceMock)
 
         assertThat(yamlConfigService.getConfigs()).hasSize(1)
         yamlConfigService.getConfig("foo").also {
@@ -111,9 +105,7 @@ internal class YamlConfigServiceTest {
         verify(exactly = 1) { configPersistenceServiceMock.saveConfig("foo1", any()) }
         verify(exactly = 1) { configPersistenceServiceMock.saveConfig("foo2", any()) }
         verify(exactly = 0) { configPersistenceServiceMock.findConfig(any()) } // because it is cached
-        verify(exactly = 0) { schedulerServiceMock.createCollectionJob(any()) }
-        verify(exactly = 0) { schedulerServiceMock.createRetentionJob(any()) }
-        confirmVerified(configPersistenceServiceMock, schedulerServiceMock)
+        confirmVerified(configPersistenceServiceMock)
 
         assertThat(yamlConfigService.getConfigs()).hasSize(2)
         yamlConfigService.getConfig("foo1").also {
@@ -153,9 +145,7 @@ internal class YamlConfigServiceTest {
 
         verify(exactly = 0) { configPersistenceServiceMock.saveConfig(any(), any()) }
         verify(exactly = 0) { configPersistenceServiceMock.findConfig(any()) } // because it is cached
-        verify(exactly = 0) { schedulerServiceMock.createCollectionJob(any()) }
-        verify(exactly = 0) { schedulerServiceMock.createRetentionJob(any()) }
-        confirmVerified(configPersistenceServiceMock, schedulerServiceMock)
+        confirmVerified(configPersistenceServiceMock)
     }
 
     @ParameterizedTest(name = "{displayName} - {0}")
@@ -180,9 +170,7 @@ internal class YamlConfigServiceTest {
 
         verify(exactly = 0) { configPersistenceServiceMock.saveConfig(any(), any()) }
         verify(exactly = 0) { configPersistenceServiceMock.findConfig(any()) } // because it is cached
-        verify(exactly = 0) { schedulerServiceMock.createCollectionJob(any()) }
-        verify(exactly = 0) { schedulerServiceMock.createRetentionJob(any()) }
-        confirmVerified(configPersistenceServiceMock, schedulerServiceMock)
+        confirmVerified(configPersistenceServiceMock)
     }
 
     @Test
@@ -192,9 +180,7 @@ internal class YamlConfigServiceTest {
 
         verify(exactly = 3) { configPersistenceServiceMock.saveConfig(any(), any()) }
         verify(exactly = 0) { configPersistenceServiceMock.findConfig(any()) } // because it is cached
-        verify(exactly = 1) { schedulerServiceMock.createCollectionJob(any()) }
-        verify(exactly = 1) { schedulerServiceMock.createRetentionJob(any()) }
-        confirmVerified(configPersistenceServiceMock, schedulerServiceMock)
+        confirmVerified(configPersistenceServiceMock)
 
         yamlConfigService.getConfigs().also {
             assertThat(it).hasSize(3)
@@ -287,9 +273,7 @@ internal class YamlConfigServiceTest {
 
         verify(exactly = 1) { configPersistenceServiceMock.saveConfig(any(), any()) }
         verify(exactly = 0) { configPersistenceServiceMock.findConfig(any()) } // because it is cached
-        verify(exactly = 1) { schedulerServiceMock.createCollectionJob(any()) }
-        verify(exactly = 1) { schedulerServiceMock.createRetentionJob(any()) }
-        confirmVerified(configPersistenceServiceMock, schedulerServiceMock)
+        confirmVerified(configPersistenceServiceMock)
 
         yamlConfigService.getConfigs().also {
             assertThat(it).hasSize(1)
@@ -306,13 +290,9 @@ internal class YamlConfigServiceTest {
 
         verify(exactly = 1) { configPersistenceServiceMock.saveConfig(any(), any()) }
         verify(exactly = 0) { configPersistenceServiceMock.findConfig(any()) } // because it is cached
-        verify(exactly = 1) { schedulerServiceMock.createCollectionJob(any()) }
-        verify(exactly = 1) { schedulerServiceMock.createRetentionJob(any()) }
 
         verify(exactly = 1) { configPersistenceServiceMock.deleteConfig("foo") }
-        verify(exactly = 1) { schedulerServiceMock.cancelCollectionJob(any()) }
-        verify(exactly = 1) { schedulerServiceMock.cancelRetentionJob(any()) }
-        confirmVerified(configPersistenceServiceMock, schedulerServiceMock)
+        confirmVerified(configPersistenceServiceMock)
 
         assertThat(yamlConfigService.getConfigs()).isEmpty()
     }
