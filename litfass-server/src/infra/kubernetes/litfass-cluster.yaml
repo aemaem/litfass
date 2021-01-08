@@ -117,12 +117,12 @@ spec:
             httpGet:
               path: /health
               port: 8080
-            initialDelaySeconds: 30
+            initialDelaySeconds: 45
           readinessProbe:
             httpGet:
-              path: /health
+              path: /ready
               port: 8080
-            initialDelaySeconds: 30
+            initialDelaySeconds: 45
             successThreshold: 3
 ---
 kind: Service

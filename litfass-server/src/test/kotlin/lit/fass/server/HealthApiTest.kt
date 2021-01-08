@@ -17,6 +17,17 @@ import org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS
 internal class HealthApiTest : TestcontainerSupport() {
 
     @Test
+    fun `actuator ready GET endpoint`() {
+        "/ready"
+            .httpGet()
+            .response()
+            .apply {
+                val response = second
+                assertThat(response.statusCode).isEqualTo(200)
+            }
+    }
+
+    @Test
     fun `actuator health GET endpoint`() {
         "/health"
             .httpGet()

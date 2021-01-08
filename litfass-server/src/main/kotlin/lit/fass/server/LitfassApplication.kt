@@ -8,6 +8,7 @@ import akka.actor.typed.ActorSystem
 import akka.actor.typed.SupervisorStrategy.restartWithBackoff
 import akka.actor.typed.javadsl.Behaviors
 import akka.actor.typed.javadsl.Behaviors.supervise
+import akka.cluster.typed.Cluster
 import akka.cluster.typed.ClusterSingleton
 import akka.cluster.typed.SingletonActor
 import akka.http.javadsl.server.directives.RouteDirectives
@@ -103,16 +104,18 @@ object LitfassApplication : RouteDirectives() {
             val collectionActor = context.spawn(CollectionActor.create(configService, executionService, persistenceServices), "collectionActor")
             val scriptActor = context.spawn(ScriptActor.create(scriptEngines), "scriptActor")
 
+            val cluster = Cluster.get(context.system)
+
             HttpServer(
                 concat(
-                    HealthRoutes().routes,
+                    HealthRoutes(cluster).routes,
                     CollectionRoutes(securityManager, collectionActor, askScheduler, askTimout).routes,
                     ConfigRoutes(securityManager, configActor, askScheduler, askTimout).routes,
                     ScriptRoutes(securityManager, scriptActor, askScheduler, askTimout).routes
                 )
             ).startHttpServer(context.system)
 
-            context.spawn(clusterEventLoggingBehavior(), "clusterEventLoggingBehavior")
+            context.spawn(clusterEventLoggingBehavior(cluster), "clusterEventLoggingBehavior")
             AkkaManagement.get(context.system).start()
             ClusterBootstrap.get(context.system).start()
 
