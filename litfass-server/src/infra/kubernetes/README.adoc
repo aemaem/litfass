@@ -1,0 +1,38 @@
+== Kubernetes
+Sample deployment configuration for Litfass. These samples assume the following setup on minikube with helm (v3.x):
+
+. `minikube start --profile litfass --kubernetes-version v1.15.12 --driver docker --cpus 6 --memory 12288 --disk-size 50G`
+. `minikube addons enable ingress --profile litfass`
+
+== Single
+A simple deployment with 1 node.
+
+=== Database
+`helm install postgres --set postgresqlDatabase=litfass --set postgresqlUsername=admin --set postgresqlPassword=admin --set persistence.enabled=true --set persistence.size=5Gi --version 10.0.2 bitnami/postgresql`
+
+=== Application
+`kubectl apply -f litfass-single.yaml`
+
+== Cluster
+A cluster deployment with 3 nodes.
+
+=== Database
+`helm install cockroachdb --set tls.enabled=true --set storage.persistentVolume.enabled=true --set storage.persistentVolume.size=5Gi --version 5.0.3 cockroachdb/cockroachdb`
+
+.Approve certificates
+. List certificate signing requests: `kubectl get csr`
+. `kubectl certificate approve default.node.cockroachdb-0`
+. `kubectl certificate approve default.node.cockroachdb-1`
+. `kubectl certificate approve default.node.cockroachdb-2`
+. `kubectl certificate approve default.client.root`
+
+.Setup database
+. `kubectl apply -f cockroachdb-client.yml`
+. `kubectl exec -it cockroachdb-client-secure -- ./cockroach sql --certs-dir=/cockroach-certs --host=cockroachdb-public`
+. `CREATE DATABASE litfass;`
+. `CREATE USER litfass WITH PASSWORD 'admin';`
+. `GRANT admin TO litfass;`
+. ``
+
+=== Application
+`kubectl apply -f litfass-cluster.yaml`

@@ -1,11 +1,12 @@
 <configuration>
-    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <appender name="STDOUT" target="System.out" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d{YYYY-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+            <pattern>%date{ISO8601} %level %logger{16} - %msg [%mdc]%n</pattern>
         </encoder>
     </appender>
+
     <root level="INFO">
         <appender-ref ref="STDOUT"/>
     </root>
-    <logger name="lit.fass.litfass" level="TRACE"/>
+    <logger name="lit.fass.server" level="TRACE"/>
 </configuration>
