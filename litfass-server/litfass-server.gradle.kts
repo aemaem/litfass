@@ -24,6 +24,7 @@ dependencies {
         "scala" to "${scalaVersion}.4",
         "akka" to "2.6.10",
         "akka-http" to "10.2.2",
+        "akka-mgmt" to "1.0.9",
         "jackson" to "2.10.5",
         "shiro" to "1.5.2",
         "groovy" to "2.5.11",
@@ -38,7 +39,8 @@ dependencies {
     implementation("com.typesafe.akka:akka-actor-typed_${scalaVersion}:${versions["akka"]}")
     implementation("com.typesafe.akka:akka-cluster-typed_${scalaVersion}:${versions["akka"]}")
     implementation("com.typesafe.akka:akka-discovery_${scalaVersion}:${versions["akka"]}")
-    implementation("com.lightbend.akka.management:akka-management-cluster-bootstrap_${scalaVersion}:1.0.9")
+    implementation("com.lightbend.akka.management:akka-management-cluster-bootstrap_${scalaVersion}:${versions["akka-mgmt"]}")
+    implementation("com.lightbend.akka.discovery:akka-discovery-kubernetes-api_${scalaVersion}:${versions["akka-mgmt"]}")
     implementation("com.typesafe.akka:akka-serialization-jackson_${scalaVersion}:${versions["akka"]}")
     implementation("com.typesafe.akka:akka-stream_${scalaVersion}:${versions["akka"]}")
     implementation("com.typesafe.akka:akka-http_${scalaVersion}:${versions["akka-http"]}")

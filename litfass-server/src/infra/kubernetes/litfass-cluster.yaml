@@ -11,14 +11,36 @@ data:
   LITFASS_JDBC_USERNAME: "litfass"
   LITFASS_JDBC_PASSWORD: "admin"
   LITFASS_JDBC_POOL_SIZE: "1"
-  LITFASS_AKKA_REMOTE_CANONICAL_HOSTNAME: "litfass-cluster.default.svc.cluster.local"
-  LITFASS_AKKA_REMOTE_CANONICAL_PORT: "25520"
-  LITFASS_AKKA_REMOTE_BIND_HOSTNAME: "litfass-cluster.default.svc.cluster.local"
-  LITFASS_AKKA_REMOTE_BIND_PORT: "25520"
-  LITFASS_AKKA_CLUSTER_SERVICE_NAME: "litfass-cluster"
-  LITFASS_AKKA_CLUSTER_SERVICE_NAMESPACE: "default.svc.cluster.local"
-  LITFASS_AKKA_CLUSTER_REQUIRED_CONTACT_POINTS: "3"
-  LITFASS_AKKA_MGMT_PORT: "8558"
+---
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  name: litfass-service-account
+  namespace: default
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: litfass-pod-reader
+  namespace: default
+rules:
+  - apiGroups: [ "" ]
+    resources: [ "pods" ]
+    verbs: [ "get", "watch", "list" ]
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: litfass-read-pods
+  namespace: default
+subjects:
+  - kind: ServiceAccount
+    name: litfass-service-account
+    namespace: default
+roleRef:
+  kind: Role
+  name: litfass-pod-reader
+  apiGroup: rbac.authorization.k8s.io
 ---
 kind: Deployment
 apiVersion: apps/v1
@@ -44,6 +66,7 @@ spec:
         app: litfass
         version: "2.0.0"
     spec:
+      serviceAccountName: litfass-service-account
       containers:
         - name: litfass
           image: aemaem/litfass:latest
@@ -60,11 +83,29 @@ spec:
             - configMapRef:
                 name: litfass-env-conf
           env:
+            - name: AKKA_CLUSTER_BOOTSTRAP_SERVICE_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: "metadata.labels['app']"
+            - name: LITFASS_AKKA_MGMT_PORT
+              value: "8558"
+            - name: LITFASS_AKKA_CLUSTER_REQUIRED_CONTACT_POINTS
+              value: "3"
+            - name: LITFASS_AKKA_REMOTE_CANONICAL_HOSTNAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: status.podIP
+            - name: LITFASS_AKKA_REMOTE_CANONICAL_PORT
+              value: "25520"
             - name: LITFASS_AKKA_REMOTE_BIND_HOSTNAME
               valueFrom:
                 fieldRef:
                   apiVersion: v1
                   fieldPath: status.podIP
+            - name: LITFASS_AKKA_REMOTE_BIND_PORT
+              value: "25520"
           ports:
             - containerPort: 8080
               protocol: TCP
@@ -83,28 +124,6 @@ spec:
               port: 8080
             initialDelaySeconds: 30
             successThreshold: 3
----
-kind: Service
-apiVersion: v1
-metadata:
-  name: litfass-cluster
-  namespace: default
-  annotations:
-    service.alpha.kubernetes.io/tolerate-unready-endpoints: "true"
-spec:
-  ports:
-    - name: akka-remote
-      port: 25520
-      targetPort: 25520
-      protocol: TCP
-    - name: akka-mgmt
-      port: 8558
-      targetPort: 8558
-      protocol: TCP
-  selector:
-    app: litfass
-  clusterIP: None
-  publishNotReadyAddresses: true
 ---
 kind: Service
 apiVersion: v1
