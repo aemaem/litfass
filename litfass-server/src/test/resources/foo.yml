@@ -6,3 +6,12 @@ flows:
             description: "Transform something"
             language: groovy
             code: binding.data
+  - flow:
+      action: REMOVE
+      applyIf:
+        action: delete
+      steps:
+        - script:
+            description: "Delete something"
+            language: groovy
+            code: binding.data

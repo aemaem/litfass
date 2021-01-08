@@ -1,0 +1,140 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: litfass-env-conf
+  namespace: default
+data:
+  LITFASS_LOG_LEVEL: "INFO"
+  LITFASS_USERS_ADMIN_PASSWORD: "admin"
+  LITFASS_JDBC_URL: "jdbc:postgresql://cockroachdb-public:26257"
+  LITFASS_JDBC_DATABASE: "litfass"
+  LITFASS_JDBC_USERNAME: "litfass"
+  LITFASS_JDBC_PASSWORD: "admin"
+  LITFASS_JDBC_POOL_SIZE: "1"
+---
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  name: litfass-service-account
+  namespace: default
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: litfass-pod-reader
+  namespace: default
+rules:
+  - apiGroups: [ "" ]
+    resources: [ "pods" ]
+    verbs: [ "get", "watch", "list" ]
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: litfass-read-pods
+  namespace: default
+subjects:
+  - kind: ServiceAccount
+    name: litfass-service-account
+    namespace: default
+roleRef:
+  kind: Role
+  name: litfass-pod-reader
+  apiGroup: rbac.authorization.k8s.io
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: litfass
+  namespace: default
+spec:
+  replicas: 3
+  selector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values:
+          - litfass
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: litfass
+        version: "2.0.0"
+    spec:
+      serviceAccountName: litfass-service-account
+      containers:
+        - name: litfass
+          image: aemaem/litfass:latest
+#          image: aemaem/litfass:2.0.0 # todo: update
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              cpu: "0.25"
+              memory: "0.5G"
+            limits:
+              cpu: "0.75"
+              memory: "1.5G"
+          envFrom:
+            - configMapRef:
+                name: litfass-env-conf
+          env:
+            - name: AKKA_CLUSTER_BOOTSTRAP_SERVICE_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: "metadata.labels['app']"
+            - name: LITFASS_AKKA_MGMT_PORT
+              value: "8558"
+            - name: LITFASS_AKKA_CLUSTER_REQUIRED_CONTACT_POINTS
+              value: "3"
+            - name: LITFASS_AKKA_REMOTE_CANONICAL_HOSTNAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: status.podIP
+            - name: LITFASS_AKKA_REMOTE_CANONICAL_PORT
+              value: "25520"
+            - name: LITFASS_AKKA_REMOTE_BIND_HOSTNAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: status.podIP
+            - name: LITFASS_AKKA_REMOTE_BIND_PORT
+              value: "25520"
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+            - containerPort: 25520
+              protocol: TCP
+            - containerPort: 8558
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 45
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8080
+            initialDelaySeconds: 45
+            successThreshold: 3
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: litfass
+  namespace: default
+spec:
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+      protocol: TCP
+  selector:
+    app: litfass
