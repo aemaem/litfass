@@ -2,16 +2,17 @@ kind: ConfigMap
 apiVersion: v1
 metadata:
   name: litfass-env-conf
-  namespace: infra
+  namespace: default
 data:
-  #LITFASS_USERS_ADMIN_PASSWORD: "my-admin-password"
-  LITFASS_JDBC_POOL_SIZE: "1"
+  LITFASS_LOG_LEVEL: "DEBUG"
+  LITFASS_USERS_ADMIN_PASSWORD: "admin"
   LITFASS_JDBC_URL: "jdbc:postgresql://postgres-postgresql:5432"
   LITFASS_JDBC_DATABASE: "litfass"
-  LITFASS_JDBC_USERNAME: "litfass"
-  LITFASS_JDBC_PASSWORD: "litfass"
+  LITFASS_JDBC_USERNAME: "admin"
+  LITFASS_JDBC_PASSWORD: "admin"
+  LITFASS_JDBC_POOL_SIZE: "1"
   LITFASS_AKKA_REMOTE_CANONICAL_PORT: "25520"
-  #LOGGING_LEVEL_LIT_FASS: "DEBUG"
+  CONFIG_FORCE_akka_cluster_seed__nodes_0: "akka://litfass@localhost:25520"
 ---
 kind: Deployment
 apiVersion: apps/v1
@@ -59,12 +60,12 @@ spec:
             httpGet:
               path: /health
               port: 8080
-            initialDelaySeconds: 90
+            initialDelaySeconds: 30
           readinessProbe:
             httpGet:
               path: /health
               port: 8080
-            initialDelaySeconds: 90
+            initialDelaySeconds: 30
             successThreshold: 3
 ---
 kind: Service
