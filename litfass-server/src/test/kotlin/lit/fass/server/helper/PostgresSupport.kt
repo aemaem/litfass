@@ -18,7 +18,7 @@ import java.time.Duration
  */
 abstract class PostgresSupport {
 
-    val postgres = PostgreSQLContainer<Nothing>("${PostgreSQLContainer.IMAGE}:11.1-alpine").apply {
+    val postgres = PostgreSQLContainer<Nothing>("${PostgreSQLContainer.IMAGE}:9.5-alpine").apply {
         addExposedPort(5432)
         withDatabaseName("litfass")
         withUsername("admin")

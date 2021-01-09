@@ -32,7 +32,7 @@ A cluster deployment with 3 nodes.
 . `CREATE DATABASE litfass;`
 . `CREATE USER litfass WITH PASSWORD 'admin';`
 . `GRANT admin TO litfass;`
-. ``
+. `kubectl delete pod cockroachdb-client-secure`
 
 === Application
 `kubectl apply -f litfass-cluster.yaml`

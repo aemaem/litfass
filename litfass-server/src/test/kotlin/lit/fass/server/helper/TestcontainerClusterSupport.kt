@@ -25,7 +25,7 @@ abstract class TestcontainerClusterSupport {
 
         val testNetwork = Network.newNetwork()
 
-        val postgres = PostgreSQLContainer<Nothing>("${PostgreSQLContainer.IMAGE}:11.1-alpine").apply {
+        val postgres = PostgreSQLContainer<Nothing>("${PostgreSQLContainer.IMAGE}:9.5-alpine").apply {
             withNetwork(testNetwork)
             withDatabaseName("litfass")
             withUsername("admin")
