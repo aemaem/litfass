@@ -59,12 +59,16 @@ class GroovyScriptEngine : ScriptEngine {
                         }
                     })
 
-                    if (evalResult is Collection<*>) {
-                        @Suppress("UNCHECKED_CAST")
-                        evalResult as Collection<Map<String, Any?>>
-                    } else {
-                        @Suppress("UNCHECKED_CAST")
-                        listOf(evalResult as Map<String, Any?>)
+                    when (evalResult) {
+                        is Collection<*> -> {
+                            @Suppress("UNCHECKED_CAST")
+                            evalResult as Collection<Map<String, Any?>>
+                        }
+                        is Map<*, *> -> {
+                            @Suppress("UNCHECKED_CAST")
+                            listOf(evalResult as Map<String, Any?>)
+                        }
+                        else -> emptyList()
                     }
                 }
             }

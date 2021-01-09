@@ -37,7 +37,7 @@ abstract class TestcontainerClusterSupport {
 
         val litfassServer1 = GenericContainer<Nothing>("aemaem/litfass:latest").apply {
             withNetwork(testNetwork)
-            withEnv("LITFASS_LOG_LEVEL", "TRACE")
+            withEnv("LITFASS_LOG_LEVEL", "DEBUG")
             withEnv("LITFASS_HTTP_PORT", "8080")
             withEnv("LITFASS_AKKA_REMOTE_CANONICAL_HOSTNAME", "litfass1")
             withEnv("LITFASS_AKKA_REMOTE_CANONICAL_PORT", "25520")
@@ -66,7 +66,7 @@ abstract class TestcontainerClusterSupport {
         }
         val litfassServer2 = GenericContainer<Nothing>("aemaem/litfass:latest").apply {
             withNetwork(testNetwork)
-            withEnv("LITFASS_LOG_LEVEL", "TRACE")
+            withEnv("LITFASS_LOG_LEVEL", "DEBUG")
             withEnv("LITFASS_HTTP_PORT", "8081")
             withEnv("LITFASS_AKKA_REMOTE_CANONICAL_HOSTNAME", "litfass2")
             withEnv("LITFASS_AKKA_REMOTE_CANONICAL_PORT", "25520")
@@ -95,7 +95,7 @@ abstract class TestcontainerClusterSupport {
         }
         val litfassServer3 = GenericContainer<Nothing>("aemaem/litfass:latest").apply {
             withNetwork(testNetwork)
-            withEnv("LITFASS_LOG_LEVEL", "TRACE")
+            withEnv("LITFASS_LOG_LEVEL", "DEBUG")
             withEnv("LITFASS_HTTP_PORT", "8082")
             withEnv("LITFASS_AKKA_REMOTE_CANONICAL_HOSTNAME", "litfass3")
             withEnv("LITFASS_AKKA_REMOTE_CANONICAL_PORT", "25520")

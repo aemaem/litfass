@@ -128,6 +128,7 @@ class PostgresPersistenceService(private val dataSource: JdbcDataSource, private
     override fun findConfigs(): List<String?> {
         return jooq.select(field("config"))
             .from(table(COLLECTION_CONFIG_TABLE))
+            .orderBy(field("collection"))
             .fetch()
             .map { it[0].toString() }
     }

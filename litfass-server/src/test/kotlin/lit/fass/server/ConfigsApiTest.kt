@@ -119,9 +119,9 @@ internal class ConfigsApiTest : TestcontainerSupport() {
             .apply {
                 val result = third.component1()!!
                 assertThat(result).hasSize(2)
-                assertThat(result[0]["collection"]).isEqualTo("foo")
+                assertThat(result[0]["collection"]).isEqualTo("bar")
                 assertThat(result[0]["flows"]).isNotNull
-                assertThat(result[1]["collection"]).isEqualTo("bar")
+                assertThat(result[1]["collection"]).isEqualTo("foo")
                 assertThat(result[1]["flows"]).isNotNull
             }
     }

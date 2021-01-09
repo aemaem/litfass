@@ -48,9 +48,7 @@ internal class YamlConfigServiceTest {
         val configFile = File(this::class.java.getResource("/config/yaml/fooTestConfig.yml").file)
         yamlConfigService.readConfig(configFile)
 
-        verify(exactly = 1) { configPersistenceServiceMock.saveConfig("foo", any()) }
-        verify(exactly = 0) { configPersistenceServiceMock.findConfig(any()) } // because it is cached
-        confirmVerified(configPersistenceServiceMock)
+        every { configPersistenceServiceMock.findConfigs() } returns listOf(configFile.readText())
 
         assertThat(yamlConfigService.getConfigs()).hasSize(1)
         yamlConfigService.getConfig("foo").also {
@@ -96,6 +94,11 @@ internal class YamlConfigServiceTest {
                 }
             }
         }
+
+        verify(exactly = 1) { configPersistenceServiceMock.saveConfig("foo", any()) }
+        verify(exactly = 1) { configPersistenceServiceMock.findConfigs() }
+        verify(exactly = 0) { configPersistenceServiceMock.findConfig(any()) } // because it is cached
+        confirmVerified(configPersistenceServiceMock)
     }
 
     @Test
@@ -103,10 +106,7 @@ internal class YamlConfigServiceTest {
         val configFile = File(this::class.java.getResource("/multiple-configs.yml").file)
         yamlConfigService.readConfig(configFile)
 
-        verify(exactly = 1) { configPersistenceServiceMock.saveConfig("foo1", any()) }
-        verify(exactly = 1) { configPersistenceServiceMock.saveConfig("foo2", any()) }
-        verify(exactly = 0) { configPersistenceServiceMock.findConfig(any()) } // because it is cached
-        confirmVerified(configPersistenceServiceMock)
+        every { configPersistenceServiceMock.findConfigs() } returns listOf(configFile.readText())
 
         assertThat(yamlConfigService.getConfigs()).hasSize(2)
         yamlConfigService.getConfig("foo1").also {
@@ -123,6 +123,12 @@ internal class YamlConfigServiceTest {
             assertThat(it.datastore).isEqualTo(POSTGRES)
             assertThat(it.flows).hasSize(1)
         }
+
+        verify(exactly = 1) { configPersistenceServiceMock.saveConfig("foo1", any()) }
+        verify(exactly = 1) { configPersistenceServiceMock.saveConfig("foo2", any()) }
+        verify(exactly = 1) { configPersistenceServiceMock.findConfigs() }
+        verify(exactly = 0) { configPersistenceServiceMock.findConfig(any()) } // because it is cached
+        confirmVerified(configPersistenceServiceMock)
     }
 
     @ParameterizedTest(name = "{displayName} - {0}")
@@ -179,9 +185,10 @@ internal class YamlConfigServiceTest {
         val configDir = File(this::class.java.getResource("/config/yaml/fooTestConfig.yml").file).parentFile
         yamlConfigService.readRecursively(configDir)
 
-        verify(exactly = 3) { configPersistenceServiceMock.saveConfig(any(), any()) }
-        verify(exactly = 0) { configPersistenceServiceMock.findConfig(any()) } // because it is cached
-        confirmVerified(configPersistenceServiceMock)
+        every { configPersistenceServiceMock.findConfigs() } returns configDir.walkTopDown()
+            .filter { it.isFile && (it.name.endsWith("yml") || it.name.endsWith("yaml")) }
+            .map { it.readText() }
+            .toList()
 
         yamlConfigService.getConfigs().also {
             assertThat(it).hasSize(3)
@@ -264,22 +271,30 @@ internal class YamlConfigServiceTest {
                 }
             }
         }
+
+        verify(exactly = 3) { configPersistenceServiceMock.saveConfig(any(), any()) }
+        verify(exactly = 1) { configPersistenceServiceMock.findConfigs() }
+        verify(exactly = 0) { configPersistenceServiceMock.findConfig(any()) } // because it is cached
+        confirmVerified(configPersistenceServiceMock)
     }
 
     @Test
     fun `file can be parsed`() {
         val configFile = File(this::class.java.getResource("/config/yaml/fooTestConfig.yml").file)
 
-        yamlConfigService.readRecursively(configFile)
+        every { configPersistenceServiceMock.findConfigs() } returns listOf(configFile.readText())
 
-        verify(exactly = 1) { configPersistenceServiceMock.saveConfig(any(), any()) }
-        verify(exactly = 0) { configPersistenceServiceMock.findConfig(any()) } // because it is cached
-        confirmVerified(configPersistenceServiceMock)
+        yamlConfigService.readRecursively(configFile)
 
         yamlConfigService.getConfigs().also {
             assertThat(it).hasSize(1)
             assertThat(it.first().collection).isEqualTo("foo")
         }
+
+        verify(exactly = 1) { configPersistenceServiceMock.saveConfig(any(), any()) }
+        verify(exactly = 1) { configPersistenceServiceMock.findConfigs() }
+        verify(exactly = 0) { configPersistenceServiceMock.findConfig(any()) } // because it is cached
+        confirmVerified(configPersistenceServiceMock)
     }
 
     @Test

@@ -107,12 +107,15 @@ class YamlConfigService(
         configCache.put(config.collection, config)
     }
 
+
     override fun getConfig(name: String): CollectionConfig {
         return loadConfig(name) ?: throw ConfigException("Config with name $name not found")
     }
 
     override fun getConfigs(): Collection<CollectionConfig> {
-        return configCache.asMap().values
+        return configPersistenceService.findConfigs()
+            .filterNotNull()
+            .flatMap { parseConfig(ByteArrayInputStream(it.toByteArray())) }
     }
 
     override fun removeConfig(name: String) {
@@ -124,6 +127,11 @@ class YamlConfigService(
             throw ConfigException("Unable to delete config $name in database")
         }
         configCache.invalidate(name)
+    }
+
+    override fun parseConfig(inputStream: InputStream): List<CollectionConfig> {
+        return yamlMapper.readValues(YAMLFactory().createParser(inputStream), CollectionConfig::class.java)
+            .readAll()
     }
 
     private fun loadConfig(name: String): CollectionConfig? {

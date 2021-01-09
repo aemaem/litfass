@@ -32,4 +32,11 @@ internal class GroovyScriptEngineTest {
         val input = mapOf("foo" to 1)
         assertThat(scriptEngine.invoke(script, listOf(input)).first()).isEqualTo(mapOf("bar" to mapOf("foo" to 1)))
     }
+
+    @Test
+    fun `groovy script engine without a result`() {
+        val script = """println "bar""""
+        val input = mapOf("foo" to 1)
+        assertThat(scriptEngine.invoke(script, listOf(input))).isEmpty()
+    }
 }

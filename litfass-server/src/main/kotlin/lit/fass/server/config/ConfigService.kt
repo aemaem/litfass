@@ -12,6 +12,7 @@ interface ConfigService {
     fun readConfig(file: File): List<CollectionConfig>
     fun readConfig(inputStream: InputStream): List<CollectionConfig>
     fun readConfigsFromDatabase()
+    fun parseConfig(inputStream: InputStream): List<CollectionConfig>
     fun getConfig(name: String): CollectionConfig
     fun getConfigs(): Collection<CollectionConfig>
     fun removeConfig(name: String)

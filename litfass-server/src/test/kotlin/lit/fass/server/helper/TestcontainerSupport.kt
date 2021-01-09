@@ -45,7 +45,7 @@ abstract class TestcontainerSupport {
 
         val litfassServer = GenericContainer<Nothing>("aemaem/litfass:latest").apply {
             withNetwork(testNetwork)
-            withEnv("LITFASS_LOG_LEVEL", "TRACE")
+            withEnv("LITFASS_LOG_LEVEL", "DEBUG")
             withEnv("LITFASS_AKKA_REMOTE_CANONICAL_PORT", "25520")
             withEnv("LITFASS_JDBC_URL", "jdbc:postgresql://postgres:5432")
             withEnv("LITFASS_JDBC_DATABASE", "litfass")
