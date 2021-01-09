@@ -169,9 +169,19 @@ internal class PostgresPersistenceServicePostgresTest : PostgresSupport() {
     }
 
     @Test
-    fun `collection config is saved`() {
+    fun `collection config is saved and updated`() {
         val collection = "foo"
         val config = """
+            collection: $collection
+            flows:
+              - flow:
+                  steps:
+                    - script:
+                        description: "Transform something"
+                        language: groovy
+                        code: bindings["data"]
+            """.trimIndent()
+        val configUpdate = """
             collection: $collection
             flows:
               - flow:
@@ -183,6 +193,7 @@ internal class PostgresPersistenceServicePostgresTest : PostgresSupport() {
             """.trimIndent()
 
         persistenceService.saveConfig(collection, config)
+        persistenceService.saveConfig(collection, configUpdate)
         val result = selectAllFromTable(COLLECTION_CONFIG_TABLE)
 
         assertThat(result).hasSize(1)
