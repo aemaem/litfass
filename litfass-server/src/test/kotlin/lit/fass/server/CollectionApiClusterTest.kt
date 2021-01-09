@@ -7,7 +7,6 @@ import com.github.kittinunf.fuel.jackson.jacksonDeserializerOf
 import com.github.kittinunf.fuel.jackson.objectBody
 import lit.fass.server.helper.TestTypes.ApiTest
 import lit.fass.server.helper.TestcontainerClusterSupport
-import lit.fass.server.helper.TestcontainerSupport
 import lit.fass.server.persistence.CollectionConfigPersistenceService.Companion.COLLECTION_CONFIG_TABLE
 import org.assertj.core.api.Assertions.assertThat
 import org.awaitility.Awaitility.with
@@ -23,7 +22,7 @@ import java.util.concurrent.TimeUnit.SECONDS
 @Tag(ApiTest)
 @TestInstance(PER_CLASS)
 @TestMethodOrder(OrderAnnotation::class)
-internal class ClusterApiTest : TestcontainerClusterSupport() {
+internal class CollectionApiClusterTest : TestcontainerClusterSupport() {
 
     @AfterAll
     fun cleanupTests() {

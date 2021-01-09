@@ -1,6 +1,7 @@
 package lit.fass.server.postgres
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import lit.fass.server.helper.CockroachSupport
 import lit.fass.server.helper.PostgresSupport
 import lit.fass.server.helper.TestTypes.IntegrationTest
 import lit.fass.server.persistence.CollectionConfigPersistenceService.Companion.COLLECTION_CONFIG_TABLE
@@ -24,7 +25,7 @@ import java.time.ZoneOffset.UTC
  */
 @Tag(IntegrationTest)
 @TestInstance(PER_CLASS)
-internal class PostgresPersistenceServiceTest : PostgresSupport() {
+internal class PostgresPersistenceServiceCockroachTest : CockroachSupport() {
 
     lateinit var persistenceService: PostgresPersistenceService
 
@@ -57,7 +58,7 @@ internal class PostgresPersistenceServiceTest : PostgresSupport() {
         assertThat(result.getValues("created", OffsetDateTime::class.java)[1]).isNotNull()
         assertThat(result.getValues("updated", OffsetDateTime::class.java)[1]).isNotNull()
         assertThat(result.getValues("id", String::class.java)[2]).isEqualTo("1")
-        assertThat(result.getValues("data", String::class.java)[2]).isEqualTo("""{"id": "1", "bar": true, "foo": 42}""")
+        assertThat(result.getValues("data", String::class.java)[2]).isEqualTo("""{"bar": true, "foo": 42, "id": "1"}""")
         assertThat(result.getValues("created", OffsetDateTime::class.java)[2]).isNotNull()
         assertThat(result.getValues("updated", OffsetDateTime::class.java)[2]).isNotNull()
     }
@@ -77,7 +78,7 @@ internal class PostgresPersistenceServiceTest : PostgresSupport() {
                 "data",
                 String::class.java
             )[0]
-        ).isEqualTo("""{"id": "1", "bar": true, "foo": "bar"}""")
+        ).isEqualTo("""{"bar": true, "foo": "bar", "id": "1"}""")
         assertThat(result.getValues("created", OffsetDateTime::class.java)[0]).isNotNull()
         assertThat(result.getValues("updated", OffsetDateTime::class.java)[0]).isNotNull()
     }
@@ -99,7 +100,7 @@ internal class PostgresPersistenceServiceTest : PostgresSupport() {
                 "data",
                 String::class.java
             )[0]
-        ).isEqualTo("""{"id": "1", "bar": true, "foo": "blub", "blub": 100}""")
+        ).isEqualTo("""{"bar": true, "blub": 100, "foo": "blub", "id": "1"}""")
         assertThat(result.getValues("created", OffsetDateTime::class.java)[0]).isNotNull()
         assertThat(result.getValues("updated", OffsetDateTime::class.java)[0]).isNotNull()
     }
@@ -134,19 +135,19 @@ internal class PostgresPersistenceServiceTest : PostgresSupport() {
     fun `collection is deleted before a given timestamp`() {
         val now = OffsetDateTime.now(UTC)
         persistenceService.saveCollection("foo", mapOf("foo" to "bar"), "1")
-        jooq.update(table("foo")).set(field("updated"), now.minusDays(1))
+        jooq.update(table("foo")).set(field("updated"), now.minusDays(1).toLocalDateTime())
             .where(field("id").eq("1")).execute()
         persistenceService.saveCollection("foo", mapOf("foo" to "bar"), "2")
-        jooq.update(table("foo")).set(field("updated"), now.minusDays(2))
+        jooq.update(table("foo")).set(field("updated"), now.minusDays(2).toLocalDateTime())
             .where(field("id").eq("2")).execute()
         persistenceService.saveCollection("foo", mapOf("foo" to "bar"), "3")
-        jooq.update(table("foo")).set(field("updated"), now.minusDays(3))
+        jooq.update(table("foo")).set(field("updated"), now.minusDays(3).toLocalDateTime())
             .where(field("id").eq("3")).execute()
         persistenceService.saveCollection("foo", mapOf("foo" to "bar"), "4")
-        jooq.update(table("foo")).set(field("updated"), now.minusDays(4))
+        jooq.update(table("foo")).set(field("updated"), now.minusDays(4).toLocalDateTime())
             .where(field("id").eq("4")).execute()
         persistenceService.saveCollection("foo", mapOf("foo" to "bar"), "5")
-        jooq.update(table("foo")).set(field("updated"), now.minusDays(5))
+        jooq.update(table("foo")).set(field("updated"), now.minusDays(5).toLocalDateTime())
             .where(field("id").eq("5")).execute()
 
         persistenceService.deleteBefore("foo", now.minusHours(25))

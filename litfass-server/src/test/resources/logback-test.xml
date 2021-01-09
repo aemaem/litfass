@@ -9,4 +9,6 @@
         <appender-ref ref="STDOUT"/>
     </root>
     <logger name="lit.fass.server" level="TRACE"/>
+    <logger name="org.jooq.tools.LoggerListener" level="DEBUG"/>
+
 </configuration>

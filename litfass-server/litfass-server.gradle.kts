@@ -29,7 +29,7 @@ dependencies {
         "shiro" to "1.5.2",
         "groovy" to "2.5.11",
         "junit" to "5.6.2",
-        "testcontainers" to "1.14.3"
+        "testcontainers" to "1.15.1"
     )
 
     implementation("org.jetbrains.kotlin:kotlin-reflect:${versions["kotlin"]}")
@@ -60,8 +60,8 @@ dependencies {
     implementation("com.cronutils:cron-utils:8.0.0")
     implementation("org.quartz-scheduler:quartz:2.3.0")
     implementation("org.quartz-scheduler:quartz-jobs:2.3.0")
-    implementation("org.jooq:jooq:3.11.12")
-    implementation("org.postgresql:postgresql:42.2.5")
+    implementation("org.jooq:jooq:3.14.4")
+    implementation("org.postgresql:postgresql:42.2.18")
     implementation("org.apache.httpcomponents:httpclient:4.5.11")
     implementation("org.codehaus.groovy:groovy:${versions["groovy"]}")
     implementation("org.codehaus.groovy:groovy-jsr223:${versions["groovy"]}")
@@ -81,6 +81,7 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-test:2.3.3.RELEASE")
     testImplementation("org.testcontainers:junit-jupiter:${versions["testcontainers"]}")
     testImplementation("org.testcontainers:postgresql:${versions["testcontainers"]}")
+    testImplementation("org.testcontainers:cockroachdb:${versions["testcontainers"]}")
     testImplementation("com.github.kittinunf.fuel:fuel:2.2.3")
     testImplementation("com.github.kittinunf.fuel:fuel-jackson:2.2.3")
 }

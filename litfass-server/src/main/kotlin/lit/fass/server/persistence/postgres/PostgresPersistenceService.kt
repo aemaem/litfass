@@ -113,7 +113,7 @@ class PostgresPersistenceService(private val dataSource: JdbcDataSource, private
             """.trimIndent(),
             collection,
             config,
-            now(UTC)
+            now(UTC).toLocalDateTime()
         )
     }
 
@@ -154,7 +154,7 @@ class PostgresPersistenceService(private val dataSource: JdbcDataSource, private
             """.trimIndent(),
             id ?: randomAlphanumeric(64),
             jsonMapper.writeValueAsString(data),
-            now(UTC)
+            now(UTC).toLocalDateTime()
         )
     }
 

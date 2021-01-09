@@ -5,6 +5,7 @@ import org.jooq.DSLContext
 import org.jooq.Record
 import org.jooq.Result
 import org.jooq.SQLDialect.POSTGRES
+import org.jooq.impl.DSL
 import org.jooq.impl.DSL.table
 import org.jooq.impl.DSL.using
 import org.junit.jupiter.api.AfterAll
@@ -61,5 +62,5 @@ abstract class PostgresSupport {
 
     fun clearTable(tableName: String) = jooq.delete(table(tableName)).execute()
 
-    fun selectAllFromTable(tableName: String): Result<Record> = jooq.select().from(table(tableName)).fetch()
+    fun selectAllFromTable(tableName: String): Result<Record> = jooq.select().from(table(tableName)).orderBy(DSL.field("created")).fetch()
 }
