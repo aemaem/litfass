@@ -86,7 +86,6 @@ object LitfassApplication : RouteDirectives() {
 
             val executionService = CollectionExecutionService(CollectionFlowService(CollectionHttpService(jsonMapper), scriptEngines), persistenceServices)
             val configService = YamlConfigService(postgresPersistenceService, config)
-            configService.initializeConfigs()
             val securityManager = SecurityManager(config)
 
             val askScheduler = context.system.scheduler()
@@ -119,6 +118,7 @@ object LitfassApplication : RouteDirectives() {
             AkkaManagement.get(context.system).start()
             ClusterBootstrap.get(context.system).start()
 
+            configActor.tell(ConfigActor.InitializeConfigs())
             Behaviors.empty()
         }
         val system: ActorSystem<Void> = ActorSystem.create(rootBehavior, "litfass")

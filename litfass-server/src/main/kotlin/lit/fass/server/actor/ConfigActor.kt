@@ -43,6 +43,7 @@ class ConfigActor private constructor(
 
     interface Message : SerializationMarker
     class Done : Message
+    class InitializeConfigs : Message
     data class GetConfig(val collection: String, val replyTo: ActorRef<Config>) : Message
     data class Config(val collection: String, val response: CollectionConfig) : Message
     data class GetConfigs(val replyTo: ActorRef<Configs>) : Message
@@ -52,6 +53,18 @@ class ConfigActor private constructor(
 
 
     override fun createReceive(): Receive<Message> = newReceiveBuilder()
+        .onMessage(InitializeConfigs::class.java) {
+            configService.initializeConfigs()
+            configService.getConfigs().forEach { config ->
+                ask(schedulerActor, Function<ActorRef<SchedulerActor.Done>, SchedulerActor.Message?> { ref ->
+                    SchedulerActor.ScheduleJob(config, ref)
+                }, timeout, scheduler)
+                    .thenRun {
+                        context.log.info("Initialized collection config {}", config.collection)
+                    }
+            }
+            same()
+        }
         .onMessage(GetConfig::class.java) {
             it.replyTo.tell(Config(it.collection, configService.getConfig(it.collection)))
             same()
