@@ -30,7 +30,6 @@ import lit.fass.server.http.route.ScriptRoutes
 import lit.fass.server.persistence.JdbcDataSource
 import lit.fass.server.persistence.postgres.PostgresPersistenceService
 import lit.fass.server.retention.CollectionRetentionService
-import lit.fass.server.schedule.QuartzCollectionSchedulerService
 import lit.fass.server.script.groovy.GroovyScriptEngine
 import lit.fass.server.security.SecurityManager
 import java.time.Duration.ofSeconds
@@ -85,17 +84,19 @@ object LitfassApplication : RouteDirectives() {
             val scriptEngines = listOf(groovyScriptEngine)
 
             val executionService = CollectionExecutionService(CollectionFlowService(CollectionHttpService(jsonMapper), scriptEngines), persistenceServices)
+            val retentionService = CollectionRetentionService(persistenceServices)
             val configService = YamlConfigService(postgresPersistenceService, config)
             val securityManager = SecurityManager(config)
 
             val askScheduler = context.system.scheduler()
             val askTimout = config.getDuration("litfass.routes.ask-timeout")
 
-            val schedulerService = QuartzCollectionSchedulerService(executionService, CollectionRetentionService(persistenceServices))
             val clusterSingleton = ClusterSingleton.get(context.system)
             val schedulerActor = clusterSingleton.init(
                 SingletonActor.of(
-                    supervise(SchedulerActor.create(schedulerService)).onFailure(restartWithBackoff(ofSeconds(1), ofSeconds(10), 0.2)),
+                    supervise(
+                        SchedulerActor.create(executionService, retentionService, configService)
+                    ).onFailure(restartWithBackoff(ofSeconds(1), ofSeconds(10), 0.2)),
                     "globalSchedulerActor"
                 )
             )

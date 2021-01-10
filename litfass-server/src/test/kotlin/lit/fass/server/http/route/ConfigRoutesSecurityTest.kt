@@ -16,9 +16,10 @@ import lit.fass.server.actor.ConfigActor
 import lit.fass.server.actor.SchedulerActor
 import lit.fass.server.config.ConfigService
 import lit.fass.server.config.yaml.model.CollectionConfig
+import lit.fass.server.execution.ExecutionService
 import lit.fass.server.helper.UnitTest
 import lit.fass.server.logger
-import lit.fass.server.schedule.SchedulerService
+import lit.fass.server.retention.RetentionService
 import lit.fass.server.security.Role
 import lit.fass.server.security.Role.*
 import lit.fass.server.security.SecurityManager
@@ -51,10 +52,13 @@ internal class ConfigRoutesSecurityTest : JUnitRouteTest() {
     lateinit var subjectMock: Subject
 
     @MockK(relaxed = true)
-    lateinit var configServiceMock: ConfigService
+    lateinit var executionServiceMock: ExecutionService
 
     @MockK(relaxed = true)
-    lateinit var schedulerServiceMock: SchedulerService
+    lateinit var retentionServiceMock: RetentionService
+
+    @MockK(relaxed = true)
+    lateinit var configServiceMock: ConfigService
 
     @Before
     fun setup() {
@@ -64,7 +68,7 @@ internal class ConfigRoutesSecurityTest : JUnitRouteTest() {
         every { configServiceMock.getConfigs() } returns emptyList()
         every { configServiceMock.getConfig("foo") } returns CollectionConfig("foo", null, null, flows = emptyList())
 
-        val schedulerActor = testKit.spawn(SchedulerActor.create(schedulerServiceMock))
+        val schedulerActor = testKit.spawn(SchedulerActor.create(executionServiceMock, retentionServiceMock, configServiceMock))
         val configActor = testKit.spawn(ConfigActor.create(schedulerActor, configServiceMock, ofSeconds(10)))
         routeUnderTest = testRoute(ConfigRoutes(securityManagerMock, configActor, testKit.scheduler(), ofSeconds(10)).routes)
     }

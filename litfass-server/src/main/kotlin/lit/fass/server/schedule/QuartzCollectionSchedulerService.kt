@@ -7,6 +7,7 @@ import com.cronutils.model.definition.CronDefinitionBuilder.instanceDefinitionFo
 import com.cronutils.parser.CronParser
 import lit.fass.server.config.yaml.model.CollectionConfig
 import lit.fass.server.execution.ExecutionService
+import lit.fass.server.logger
 import lit.fass.server.retention.RetentionService
 import lit.fass.server.schedule.model.QuartzCollectionJob
 import lit.fass.server.schedule.model.QuartzRetentionJob
@@ -16,7 +17,6 @@ import org.quartz.JobBuilder.newJob
 import org.quartz.TriggerBuilder.newTrigger
 import org.quartz.TriggerKey.triggerKey
 import org.quartz.impl.StdSchedulerFactory
-import org.slf4j.LoggerFactory
 
 
 /**
@@ -31,7 +31,7 @@ class QuartzCollectionSchedulerService(
     private val retentionService: RetentionService
 ) : SchedulerService {
     companion object {
-        private val log = LoggerFactory.getLogger(this::class.java.enclosingClass)
+        private val log = this.logger()
         private val cronDefinition = instanceDefinitionFor(QUARTZ)
         private val cronParser = CronParser(cronDefinition)
         private val cronDescriptor = CronDescriptor.instance()
@@ -42,11 +42,15 @@ class QuartzCollectionSchedulerService(
     init {
         System.setProperty("org.quartz.threadPool.threadCount", "1")
         scheduler = StdSchedulerFactory.getDefaultScheduler()
+        log.debug("Starting scheduler")
         scheduler.start()
+        log.info("Started scheduler")
     }
 
-    fun stop() {
+    override fun stop() {
+        log.info("Stopping scheduler")
         scheduler.shutdown()
+        log.info("Stopped scheduler")
     }
 
     override fun createCollectionJob(config: CollectionConfig) {

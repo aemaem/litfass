@@ -7,6 +7,7 @@ import lit.fass.server.config.yaml.model.CollectionConfig
  */
 interface SchedulerService {
 
+    fun stop()
     fun createCollectionJob(config: CollectionConfig)
     fun cancelCollectionJob(config: CollectionConfig)
     fun createRetentionJob(config: CollectionConfig)
