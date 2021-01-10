@@ -73,7 +73,7 @@ class CollectionActor private constructor(
             try {
                 executionService.execute(configService.getConfig(message.collection), listOf(data))
             } catch (ex: Exception) {
-                throw ExecutionException("Exception during execution of collection ${message.collection}: ${ex.message}")
+                throw ExecutionException("Exception during execution of collection ${message.collection}: ${ex.message}", ex)
             }
             message.replyTo.tell((Done()))
             same()
