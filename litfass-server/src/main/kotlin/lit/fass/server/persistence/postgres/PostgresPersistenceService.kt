@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.common.base.Charsets.UTF_8
 import com.google.common.hash.Hashing.murmur3_128
+import lit.fass.server.logger
 import lit.fass.server.persistence.*
 import lit.fass.server.persistence.CollectionConfigPersistenceService.Companion.COLLECTION_CONFIG_TABLE
 import lit.fass.server.persistence.CollectionPersistenceService.Companion.ID_KEY
@@ -13,7 +14,6 @@ import org.jooq.DSLContext
 import org.jooq.SQLDialect
 import org.jooq.impl.DSL.*
 import org.jooq.impl.DefaultConfiguration
-import org.slf4j.LoggerFactory
 import java.time.OffsetDateTime
 import java.time.OffsetDateTime.now
 import java.time.ZoneOffset.UTC
@@ -24,7 +24,7 @@ import java.time.ZoneOffset.UTC
 class PostgresPersistenceService(private val dataSource: JdbcDataSource, private val jsonMapper: ObjectMapper) :
     CollectionConfigPersistenceService, CollectionPersistenceService {
     companion object {
-        private val log = LoggerFactory.getLogger(this::class.java.enclosingClass)
+        private val log = this.logger()
     }
 
     private val jooq: DSLContext

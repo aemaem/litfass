@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.databind.exc.MismatchedInputException
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import lit.fass.server.logger
 import org.apache.http.HttpHeaders.ACCEPT
 import org.apache.http.HttpHeaders.AUTHORIZATION
 import org.apache.http.client.config.CookieSpecs.DEFAULT
@@ -15,7 +16,6 @@ import org.apache.http.client.methods.HttpGet
 import org.apache.http.entity.ContentType.APPLICATION_JSON
 import org.apache.http.impl.client.HttpClientBuilder.create
 import org.apache.http.util.EntityUtils.toByteArray
-import org.slf4j.LoggerFactory
 import java.util.*
 
 /**
@@ -28,7 +28,7 @@ class CollectionHttpService(
     }
 ) : HttpService {
     companion object {
-        private val log = LoggerFactory.getLogger(this::class.java.enclosingClass)
+        private val log = this.logger()
     }
 
     override fun get(

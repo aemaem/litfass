@@ -8,13 +8,14 @@ import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
 import lit.fass.server.config.ConfigService
 import lit.fass.server.config.yaml.model.CollectionConfig
+import lit.fass.server.logger
 import lit.fass.server.persistence.CollectionConfigPersistenceService
 import org.apache.commons.lang3.time.DurationFormatUtils.formatDurationHMS
-import org.slf4j.LoggerFactory
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.InputStream
 import java.time.Duration
+import java.time.Duration.ofSeconds
 import java.util.function.Function
 
 /**
@@ -25,15 +26,15 @@ class YamlConfigService(
     private val properties: Config = ConfigFactory.defaultApplication()
 ) : ConfigService {
     companion object {
-        private val log = LoggerFactory.getLogger(this::class.java.enclosingClass)
+        private val log = this.logger()
         private val collectionNameRegex = Regex("^[a-zA-Z0-9_]{2,50}$")
     }
 
     private val configCache = Caffeine.newBuilder()
         .maximumSize(1024)
+        .expireAfterWrite(ofSeconds(45)) // fixme: implement cluster aware caching
         .build<String, CollectionConfig>()
-    private val yamlMapper =
-        ObjectMapper(YAMLFactory()).registerKotlinModule()
+    private val yamlMapper = ObjectMapper(YAMLFactory()).registerKotlinModule()
 
     override fun initializeConfigs() {
         log.info("Reading collection configs from database.")

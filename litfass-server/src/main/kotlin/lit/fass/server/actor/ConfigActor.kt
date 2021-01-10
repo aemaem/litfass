@@ -9,6 +9,7 @@ import akka.actor.typed.javadsl.AskPattern.ask
 import akka.actor.typed.javadsl.Behaviors
 import akka.actor.typed.javadsl.Behaviors.same
 import akka.actor.typed.javadsl.Receive
+import akka.cluster.typed.Cluster
 import akka.japi.function.Function
 import lit.fass.server.actor.ConfigActor.Message
 import lit.fass.server.config.ConfigService

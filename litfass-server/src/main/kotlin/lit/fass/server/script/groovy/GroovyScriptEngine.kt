@@ -1,6 +1,7 @@
 package lit.fass.server.script.groovy
 
 import  groovy.lang.GroovyClassLoader
+import lit.fass.server.logger
 import lit.fass.server.script.ScriptEngine
 import lit.fass.server.script.ScriptLanguage
 import lit.fass.server.script.ScriptLanguage.GROOVY
@@ -19,7 +20,7 @@ import kotlin.system.measureTimeMillis
 class GroovyScriptEngine : ScriptEngine {
     companion object {
         private val lang = GROOVY
-        private val log = LoggerFactory.getLogger(this::class.java.enclosingClass)
+        private val log = this.logger()
         private val scriptLog = LoggerFactory.getLogger("$lang.Script")
         private val scriptTimestampFormatter = ISO_DATE_TIME.withZone(UTC)
     }

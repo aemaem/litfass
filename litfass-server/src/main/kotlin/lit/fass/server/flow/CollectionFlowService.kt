@@ -2,8 +2,8 @@ package lit.fass.server.flow
 
 import lit.fass.server.config.yaml.model.*
 import lit.fass.server.http.HttpService
+import lit.fass.server.logger
 import lit.fass.server.script.ScriptEngine
-import org.slf4j.LoggerFactory
 
 /**
  * @author Michael Mair
@@ -13,7 +13,7 @@ class CollectionFlowService(
     private val scriptEngines: List<ScriptEngine>
 ) : FlowService {
     companion object {
-        private val log = LoggerFactory.getLogger(this::class.java.enclosingClass)
+        private val log = this.logger()
 
         @Suppress("RegExpRedundantEscape")
         private val variableRegex = Regex("\\$\\{(\\w+)\\}")

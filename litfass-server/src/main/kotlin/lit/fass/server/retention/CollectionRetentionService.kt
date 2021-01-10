@@ -1,8 +1,8 @@
 package lit.fass.server.retention
 
 import lit.fass.server.config.yaml.model.CollectionConfig
+import lit.fass.server.logger
 import lit.fass.server.persistence.CollectionPersistenceService
-import org.slf4j.LoggerFactory
 import java.time.Duration
 import java.time.OffsetDateTime.now
 import java.time.ZoneOffset.UTC
@@ -15,7 +15,7 @@ class CollectionRetentionService(
 ) : RetentionService {
 
     companion object {
-        private val log = LoggerFactory.getLogger(this::class.java.enclosingClass)
+        private val log = this.logger()
     }
 
     private var retentionCronExpression: String = "0 0 0 ? * SUN *"

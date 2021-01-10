@@ -1,17 +1,17 @@
 package lit.fass.server.schedule.model
 
 import lit.fass.server.config.yaml.model.CollectionConfig
+import lit.fass.server.logger
 import lit.fass.server.retention.RetentionService
 import org.quartz.Job
 import org.quartz.JobExecutionContext
-import org.slf4j.LoggerFactory
 
 /**
  * @author Michael Mair
  */
 class QuartzRetentionJob : Job {
     companion object : QuartzJob() {
-        private val log = LoggerFactory.getLogger(this::class.java.enclosingClass)
+        private val log = this.logger()
         override fun getType(): String = "retention"
     }
 
