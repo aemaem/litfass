@@ -9,9 +9,11 @@ import lit.fass.server.helper.TestTypes.ApiTest
 import lit.fass.server.helper.TestcontainerSupport
 import lit.fass.server.persistence.CollectionConfigPersistenceService.Companion.COLLECTION_CONFIG_TABLE
 import org.assertj.core.api.Assertions.assertThat
+import org.awaitility.Awaitility.with
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation
 import org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS
+import java.util.concurrent.TimeUnit.SECONDS
 
 /**
  * @author Michael Mair
@@ -100,13 +102,12 @@ internal class ConfigsApiTest : TestcontainerSupport() {
                 assertThat(response.statusCode).isEqualTo(204)
             }
 
-        assertThat(litfassServer.logs).contains(
-            "Creating scheduled collection job foo with cron * * * * * ? *",
-            "Creating scheduled collection job foo with cron * * * * * ? *",
-            "Collection job foo to be scheduled every second",
-            "Creating scheduled retention job foo with cron 0 0 0 ? * SUN *",
-            "Retention job foo to be scheduled at 00:00 at Sunday day"
-        )
+        with().pollDelay(1, SECONDS).await().until {
+            litfassServer.logs.contains("Creating scheduled collection job foo with cron * * * * * ? *")
+            litfassServer.logs.contains("Collection job foo to be scheduled every second")
+            litfassServer.logs.contains("Creating scheduled retention job foo with cron 0 0 0 ? * SUN *")
+            litfassServer.logs.contains("Retention job foo to be scheduled at 00:00 at Sunday day")
+        }
     }
 
     @Test
