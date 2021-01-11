@@ -128,4 +128,35 @@ internal class CollectionsApiTest : TestcontainerSupport() {
         with().pollDelay(3, SECONDS).await().until { selectAllFromTable("foo").size == 0 }
     }
 
+    @Test
+    @Order(6)
+    fun `collections {collection} GET endpoint works after exception`() {
+        "/configs"
+            .httpPost()
+            .authentication().basic("admin", "admin")
+            .body(ClassPathResource("failure-in-script.yml").file)
+            .response()
+            .apply {
+                val response = second
+                assertThat(response.statusCode).isEqualTo(204)
+            }
+        "/collections/failure_in_script?foo=bar"
+            .httpGet()
+            .response()
+            .apply {
+                val response = second
+                assertThat(response.statusCode).isEqualTo(-1)
+            }
+        "/collections/foo?param1=foo&param1=bar&param2=true"
+            .httpPost()
+            .objectBody(mapOf("id" to "1", "foo" to "bar"))
+            .response()
+            .apply {
+                val response = second
+                assertThat(response.statusCode).isEqualTo(200)
+            }
+        assertThat(litfassServer.logs).contains("Saved collection foo")
+        with().pollDelay(3, SECONDS).await().until { selectAllFromTable("foo").size == 1 }
+    }
+
 }

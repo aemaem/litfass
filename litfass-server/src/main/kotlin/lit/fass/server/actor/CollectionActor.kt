@@ -2,10 +2,11 @@ package lit.fass.server.actor
 
 import akka.actor.typed.ActorRef
 import akka.actor.typed.Behavior
+import akka.actor.typed.PreRestart
+import akka.actor.typed.SupervisorStrategy
 import akka.actor.typed.javadsl.AbstractBehavior
 import akka.actor.typed.javadsl.ActorContext
-import akka.actor.typed.javadsl.Behaviors
-import akka.actor.typed.javadsl.Behaviors.same
+import akka.actor.typed.javadsl.Behaviors.*
 import akka.actor.typed.javadsl.Receive
 import lit.fass.server.actor.CollectionActor.Message
 import lit.fass.server.config.ConfigService
@@ -38,7 +39,9 @@ class CollectionActor private constructor(
             executionService: ExecutionService,
             persistenceServices: List<CollectionPersistenceService>
         ): Behavior<Message> {
-            return Behaviors.setup { context -> CollectionActor(configService, executionService, persistenceServices, context) }
+            return supervise(setup<Message> { context ->
+                CollectionActor(configService, executionService, persistenceServices, context)
+            }).onFailure(SupervisorStrategy.restart())
         }
     }
 
@@ -76,6 +79,10 @@ class CollectionActor private constructor(
                 throw ExecutionException("Exception during execution of collection ${message.collection}: ${ex.message}", ex)
             }
             message.replyTo.tell((Done()))
+            same()
+        }
+        .onSignal(PreRestart::class.java) {
+            log.info("Restarting actor")
             same()
         }
         .build()

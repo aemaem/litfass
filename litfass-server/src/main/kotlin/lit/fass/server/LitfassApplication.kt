@@ -5,7 +5,6 @@ import akka.actor.CoordinatedShutdown
 import akka.actor.CoordinatedShutdown.PhaseActorSystemTerminate
 import akka.actor.CoordinatedShutdown.PhaseBeforeServiceUnbind
 import akka.actor.typed.ActorSystem
-import akka.actor.typed.SupervisorStrategy.restart
 import akka.actor.typed.SupervisorStrategy.restartWithBackoff
 import akka.actor.typed.javadsl.Behaviors
 import akka.actor.typed.javadsl.Behaviors.supervise
@@ -125,10 +124,7 @@ object LitfassApplication : RouteDirectives() {
             Behaviors.empty()
         }
 
-        val system: ActorSystem<Void> = ActorSystem.create(
-            supervise(rootBehavior).onFailure(restart()),
-            "litfass"
-        )
+        val system: ActorSystem<Void> = ActorSystem.create(rootBehavior, "litfass")
 
         CoordinatedShutdown.get(system).addTask(PhaseBeforeServiceUnbind(), "shutdownLogging", Supplier {
             log.info("Application is being terminated...")

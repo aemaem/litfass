@@ -1,0 +1,9 @@
+collection: failure_in_script
+flows:
+  - flow:
+      steps:
+        - script:
+            description: "Transform something"
+            language: groovy
+            code: |
+              binding.data.something.something

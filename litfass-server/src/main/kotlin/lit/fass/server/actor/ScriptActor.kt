@@ -2,12 +2,14 @@ package lit.fass.server.actor
 
 import akka.actor.typed.ActorRef
 import akka.actor.typed.Behavior
+import akka.actor.typed.PreRestart
+import akka.actor.typed.SupervisorStrategy
 import akka.actor.typed.javadsl.AbstractBehavior
 import akka.actor.typed.javadsl.ActorContext
-import akka.actor.typed.javadsl.Behaviors
-import akka.actor.typed.javadsl.Behaviors.same
+import akka.actor.typed.javadsl.Behaviors.*
 import akka.actor.typed.javadsl.Receive
 import lit.fass.server.actor.ScriptActor.Message
+import lit.fass.server.logger
 import lit.fass.server.script.ScriptEngine
 import lit.fass.server.script.ScriptException
 import lit.fass.server.script.ScriptLanguage
@@ -23,9 +25,13 @@ class ScriptActor private constructor(
 ) : AbstractBehavior<Message>(context) {
 
     companion object {
+        private val log = this.logger()
+
         @JvmStatic
         fun create(scriptEngines: List<ScriptEngine>): Behavior<Message> {
-            return Behaviors.setup { context -> ScriptActor(scriptEngines, context) }
+            return supervise(setup<Message> { context ->
+                ScriptActor(scriptEngines, context)
+            }).onFailure(SupervisorStrategy.restart())
         }
     }
 
@@ -45,6 +51,10 @@ class ScriptActor private constructor(
 
             val result = scriptEngine.invoke(script, Collections.singletonList(data))
             it.replyTo.tell(ScriptResult(result))
+            same()
+        }
+        .onSignal(PreRestart::class.java) {
+            log.info("Restarting actor")
             same()
         }
         .build()
