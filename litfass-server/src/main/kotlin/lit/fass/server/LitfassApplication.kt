@@ -90,7 +90,8 @@ object LitfassApplication : RouteDirectives() {
             val securityManager = SecurityManager(config)
 
             val askScheduler = context.system.scheduler()
-            val askTimout = config.getDuration("litfass.routes.ask-timeout")
+            val askTimeout = config.getDuration("litfass.routes.ask-timeout")
+            val askHttpTimeout = config.getDuration("litfass.http.ask-timeout")
 
             val clusterSingleton = ClusterSingleton.get(context.system)
             val schedulerActor = clusterSingleton.init(
@@ -101,7 +102,7 @@ object LitfassApplication : RouteDirectives() {
                     "globalSchedulerActor"
                 )
             )
-            val configActor = context.spawn(ConfigActor.create(schedulerActor, configService, askTimout), "configActor")
+            val configActor = context.spawn(ConfigActor.create(schedulerActor, configService, askTimeout), "configActor")
             val collectionActor = context.spawn(CollectionActor.create(configService, executionService, persistenceServices), "collectionActor")
             val scriptActor = context.spawn(ScriptActor.create(scriptEngines), "scriptActor")
 
@@ -110,9 +111,9 @@ object LitfassApplication : RouteDirectives() {
             HttpServer(
                 concat(
                     HealthRoutes(cluster).routes,
-                    CollectionRoutes(securityManager, collectionActor, askScheduler, askTimout).routes,
-                    ConfigRoutes(securityManager, configActor, askScheduler, askTimout).routes,
-                    ScriptRoutes(securityManager, scriptActor, askScheduler, askTimout).routes
+                    CollectionRoutes(securityManager, collectionActor, askScheduler, askHttpTimeout).routes,
+                    ConfigRoutes(securityManager, configActor, askScheduler, askHttpTimeout).routes,
+                    ScriptRoutes(securityManager, scriptActor, askScheduler, askHttpTimeout).routes
                 )
             ).startHttpServer(context.system)
 
