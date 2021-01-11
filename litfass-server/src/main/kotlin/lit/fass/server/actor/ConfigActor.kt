@@ -1,19 +1,16 @@
 package lit.fass.server.actor
 
-import akka.actor.typed.ActorRef
-import akka.actor.typed.Behavior
-import akka.actor.typed.Scheduler
+import akka.actor.typed.*
 import akka.actor.typed.javadsl.AbstractBehavior
 import akka.actor.typed.javadsl.ActorContext
 import akka.actor.typed.javadsl.AskPattern.ask
-import akka.actor.typed.javadsl.Behaviors
-import akka.actor.typed.javadsl.Behaviors.same
+import akka.actor.typed.javadsl.Behaviors.*
 import akka.actor.typed.javadsl.Receive
-import akka.cluster.typed.Cluster
 import akka.japi.function.Function
 import lit.fass.server.actor.ConfigActor.Message
 import lit.fass.server.config.ConfigService
 import lit.fass.server.config.yaml.model.CollectionConfig
+import lit.fass.server.logger
 import java.io.InputStream
 import java.time.Duration
 
@@ -30,15 +27,17 @@ class ConfigActor private constructor(
 ) : AbstractBehavior<Message>(context) {
 
     companion object {
+        private val log = this.logger()
+
         @JvmStatic
         fun create(
             schedulerActor: ActorRef<SchedulerActor.Message>,
             configService: ConfigService,
             timeout: Duration
         ): Behavior<Message> {
-            return Behaviors.setup { context ->
+            return supervise(setup<Message> { context ->
                 ConfigActor(schedulerActor, configService, context, context.system.scheduler(), timeout)
-            }
+            }).onFailure(SupervisorStrategy.restart())
         }
     }
 
@@ -87,6 +86,10 @@ class ConfigActor private constructor(
                     configService.removeConfig(it.collection)
                     it.replyTo.tell(Done())
                 }
+            same()
+        }
+        .onSignal(PreRestart::class.java) {
+            log.info("Restarting actor")
             same()
         }
         .build()

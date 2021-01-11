@@ -3,6 +3,7 @@ package lit.fass.server.actor
 import akka.actor.typed.ActorRef
 import akka.actor.typed.Behavior
 import akka.actor.typed.PostStop
+import akka.actor.typed.PreRestart
 import akka.actor.typed.javadsl.AbstractBehavior
 import akka.actor.typed.javadsl.ActorContext
 import akka.actor.typed.javadsl.Behaviors.same
@@ -63,7 +64,12 @@ class SchedulerActor private constructor(
             it.replyTo.tell(Done())
             same()
         }
+        .onSignal(PreRestart::class.java) {
+            log.info("Restarting actor")
+            same()
+        }
         .onSignal(PostStop::class.java) {
+            log.info("Stopping actor")
             schedulerService.stop()
             same()
         }
