@@ -17,7 +17,7 @@ import org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS
 internal class HealthApiTest : TestcontainerSupport() {
 
     @Test
-    fun `actuator ready GET endpoint`() {
+    fun `ready GET endpoint`() {
         "/ready"
             .httpGet()
             .response()
@@ -28,7 +28,7 @@ internal class HealthApiTest : TestcontainerSupport() {
     }
 
     @Test
-    fun `actuator health GET endpoint`() {
+    fun `health GET endpoint`() {
         "/health"
             .httpGet()
             .response()

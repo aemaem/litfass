@@ -2,6 +2,7 @@ package lit.fass.server.http.route
 
 import akka.actor.testkit.typed.javadsl.TestKitJunitResource
 import akka.actor.typed.ActorRef
+import akka.actor.typed.pubsub.Topic
 import akka.http.javadsl.marshallers.jackson.Jackson.unmarshaller
 import akka.http.javadsl.model.ContentTypes.TEXT_PLAIN_UTF8
 import akka.http.javadsl.model.HttpRequest.*
@@ -48,6 +49,7 @@ internal class ConfigRoutesFunctionTest : JUnitRouteTest() {
 
     lateinit var configActor: ActorRef<ConfigActor.Message>
     lateinit var schedulerActor: ActorRef<SchedulerActor.Message>
+    lateinit var configTopic: ActorRef<Topic.Command<ConfigActor.Message>>
 
     @MockK
     lateinit var securityManagerMock: SecurityManager
@@ -80,7 +82,8 @@ internal class ConfigRoutesFunctionTest : JUnitRouteTest() {
                 CollectionConfig("foo", null, null, flows = listOf(CollectionFlowConfig(null, null, steps = emptyList())))
 
         schedulerActor = testKit.spawn(SchedulerActor.create(executionServiceMock, retentionServiceMock, configServiceMock))
-        configActor = testKit.spawn(ConfigActor.create(schedulerActor, configServiceMock, ofSeconds(10)))
+        configTopic = testKit.spawn(Topic.create(ConfigActor.Message::class.java, "collection-config-test"))
+        configActor = testKit.spawn(ConfigActor.create(schedulerActor, configTopic, configServiceMock, ofSeconds(10)))
         routeUnderTest = testRoute(ConfigRoutes(securityManagerMock, configActor, testKit.scheduler(), ofSeconds(10)).routes)
     }
 

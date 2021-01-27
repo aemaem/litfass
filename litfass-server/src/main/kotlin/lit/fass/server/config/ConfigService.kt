@@ -17,4 +17,5 @@ interface ConfigService {
     fun getConfig(name: String): CollectionConfig
     fun getConfigs(): Collection<CollectionConfig>
     fun removeConfig(name: String)
+    fun invalidateConfig(name: String)
 }

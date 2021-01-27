@@ -8,6 +8,7 @@ import akka.actor.typed.ActorSystem
 import akka.actor.typed.SupervisorStrategy.restartWithBackoff
 import akka.actor.typed.javadsl.Behaviors
 import akka.actor.typed.javadsl.Behaviors.supervise
+import akka.actor.typed.pubsub.Topic
 import akka.cluster.typed.Cluster
 import akka.cluster.typed.ClusterSingleton
 import akka.cluster.typed.SingletonActor
@@ -101,11 +102,18 @@ object LitfassApplication : RouteDirectives() {
                     "globalSchedulerActor"
                 )
             )
-            val configActor = context.spawn(ConfigActor.create(schedulerActor, configService, askTimeout), "configActor")
-            val collectionActor = context.spawn(CollectionActor.create(configService, executionService, persistenceServices), "collectionActor")
-            val scriptActor = context.spawn(ScriptActor.create(scriptEngines), "scriptActor")
-
             val cluster = Cluster.get(context.system)
+
+            val collectionConfigTopic = context.spawn(Topic.create(ConfigActor.Message::class.java, "collection-config"), "collectionConfigTopic")
+
+            val configActor = context.spawn(ConfigActor.create(schedulerActor, collectionConfigTopic, configService, askTimeout), "configActor")
+            collectionConfigTopic.tell(Topic.subscribe(configActor))
+            log.debug("Initialized actor {}", configActor.path())
+            val collectionActor = context.spawn(CollectionActor.create(configService, executionService, persistenceServices), "collectionActor")
+            log.debug("Initialized actor {}", collectionActor.path())
+            val scriptActor = context.spawn(ScriptActor.create(scriptEngines), "scriptActor")
+            log.debug("Initialized actor {}", scriptActor.path())
+
 
             HttpServer(
                 concat(

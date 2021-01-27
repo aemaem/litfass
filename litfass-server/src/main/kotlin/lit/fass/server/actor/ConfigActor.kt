@@ -6,7 +6,9 @@ import akka.actor.typed.javadsl.ActorContext
 import akka.actor.typed.javadsl.AskPattern.ask
 import akka.actor.typed.javadsl.Behaviors.*
 import akka.actor.typed.javadsl.Receive
+import akka.actor.typed.pubsub.Topic
 import akka.japi.function.Function
+import com.fasterxml.jackson.annotation.JsonCreator
 import lit.fass.server.actor.ConfigActor.Message
 import lit.fass.server.config.ConfigService
 import lit.fass.server.config.yaml.model.CollectionConfig
@@ -20,10 +22,11 @@ import java.time.Duration
  */
 class ConfigActor private constructor(
     private val schedulerActor: ActorRef<SchedulerActor.Message>,
+    private val collectionConfigTopic: ActorRef<Topic.Command<Message>>,
     private val configService: ConfigService,
-    context: ActorContext<Message>?,
     private val scheduler: Scheduler,
-    private val timeout: Duration
+    private val timeout: Duration,
+    context: ActorContext<Message>?
 ) : AbstractBehavior<Message>(context) {
 
     companion object {
@@ -32,11 +35,12 @@ class ConfigActor private constructor(
         @JvmStatic
         fun create(
             schedulerActor: ActorRef<SchedulerActor.Message>,
+            collectionConfigTopic: ActorRef<Topic.Command<Message>>,
             configService: ConfigService,
             timeout: Duration
         ): Behavior<Message> {
-            return supervise(setup<Message> { context ->
-                ConfigActor(schedulerActor, configService, context, context.system.scheduler(), timeout)
+            return supervise<Message?>(setup { context ->
+                ConfigActor(schedulerActor, collectionConfigTopic, configService, context.system.scheduler(), timeout, context)
             }).onFailure(SupervisorStrategy.restart())
         }
     }
@@ -44,6 +48,7 @@ class ConfigActor private constructor(
     interface Message : SerializationMarker
     class Done : Message
     class InitializeConfigs : Message
+    data class InvalidateConfig @JsonCreator constructor(val collection: String) : Message
     data class GetConfig(val collection: String, val replyTo: ActorRef<Config>) : Message
     data class Config(val collection: String, val response: CollectionConfig) : Message
     data class GetConfigs(val replyTo: ActorRef<Configs>) : Message
@@ -55,6 +60,10 @@ class ConfigActor private constructor(
     override fun createReceive(): Receive<Message> = newReceiveBuilder()
         .onMessage(InitializeConfigs::class.java) {
             configService.initializeConfigs()
+            same()
+        }
+        .onMessage(InvalidateConfig::class.java) {
+            configService.invalidateConfig(it.collection)
             same()
         }
         .onMessage(GetConfig::class.java) {
@@ -72,6 +81,7 @@ class ConfigActor private constructor(
                         SchedulerActor.ScheduleJob(config, ref)
                     }, timeout, scheduler)
                         .thenRun {
+                            collectionConfigTopic.tell(Topic.publish(InvalidateConfig(config.collection)))
                             it.replyTo.tell(Done())
                         }
                 }
@@ -84,6 +94,7 @@ class ConfigActor private constructor(
             }, timeout, scheduler)
                 .thenRun {
                     configService.removeConfig(it.collection)
+                    collectionConfigTopic.tell(Topic.publish(InvalidateConfig(config.collection)))
                     it.replyTo.tell(Done())
                 }
             same()
@@ -93,5 +104,4 @@ class ConfigActor private constructor(
             same()
         }
         .build()
-
 }

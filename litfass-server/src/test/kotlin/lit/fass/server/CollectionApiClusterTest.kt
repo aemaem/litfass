@@ -52,6 +52,8 @@ internal class CollectionApiClusterTest : TestcontainerClusterSupport() {
             }
         assertThat(aggregatedLogs()).contains("Saved collection bar")
         with().pollDelay(3, SECONDS).await().until { selectAllFromTable("bar").size == 2 }
+        assertThat(litfassServer2.logs).contains("Invalidating config bar")
+        assertThat(litfassServer3.logs).contains("Invalidating config bar")
     }
 
     @Test
@@ -109,8 +111,10 @@ internal class CollectionApiClusterTest : TestcontainerClusterSupport() {
                 val response = second
                 assertThat(response.statusCode).isEqualTo(200)
             }
-        assertThat(aggregatedLogs()).contains("Saved collection foo")
         with().pollDelay(3, SECONDS).await().until { selectAllFromTable("foo").size == 1 }
+        assertThat(aggregatedLogs()).contains("Saved collection foo")
+        assertThat(litfassServer1.logs).contains("Invalidating config foo")
+        assertThat(litfassServer3.logs).contains("Invalidating config foo")
     }
 
     @Test

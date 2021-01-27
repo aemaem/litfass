@@ -32,7 +32,6 @@ class YamlConfigService(
 
     private val configCache = Caffeine.newBuilder()
         .maximumSize(1024)
-        .expireAfterWrite(ofSeconds(45)) // fixme: implement cluster aware caching
         .build<String, CollectionConfig>()
     private val yamlMapper = ObjectMapper(YAMLFactory()).registerKotlinModule()
 
@@ -127,6 +126,11 @@ class YamlConfigService(
             log.error(ex.message, ex)
             throw ConfigException("Unable to delete config $name in database")
         }
+        configCache.invalidate(name)
+    }
+
+    override fun invalidateConfig(name: String) {
+        log.debug("Invalidating config $name")
         configCache.invalidate(name)
     }
 

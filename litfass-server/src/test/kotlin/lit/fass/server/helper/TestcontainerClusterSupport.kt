@@ -128,6 +128,7 @@ abstract class TestcontainerClusterSupport {
             litfassServer1.start()
             litfassServer2.start()
             litfassServer3.start()
+            Thread.sleep(30_000)
         }
     }
 

@@ -1,6 +1,8 @@
 package lit.fass.server.http.route
 
 import akka.actor.testkit.typed.javadsl.TestKitJunitResource
+import akka.actor.typed.pubsub.Topic
+import akka.cluster.typed.Cluster
 import akka.http.javadsl.model.ContentTypes.TEXT_PLAIN_UTF8
 import akka.http.javadsl.model.HttpRequest.*
 import akka.http.javadsl.model.StatusCodes.*
@@ -69,7 +71,8 @@ internal class ConfigRoutesSecurityTest : JUnitRouteTest() {
         every { configServiceMock.getConfig("foo") } returns CollectionConfig("foo", null, null, flows = emptyList())
 
         val schedulerActor = testKit.spawn(SchedulerActor.create(executionServiceMock, retentionServiceMock, configServiceMock))
-        val configActor = testKit.spawn(ConfigActor.create(schedulerActor, configServiceMock, ofSeconds(10)))
+        val configTopic = testKit.spawn(Topic.create(ConfigActor.Message::class.java, "collection-config-test"))
+        val configActor = testKit.spawn(ConfigActor.create(schedulerActor, configTopic, configServiceMock, ofSeconds(10)))
         routeUnderTest = testRoute(ConfigRoutes(securityManagerMock, configActor, testKit.scheduler(), ofSeconds(10)).routes)
     }
 
