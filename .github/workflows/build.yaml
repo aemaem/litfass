@@ -93,12 +93,12 @@ jobs:
 #          name: unit-test-report
 #          retention-days: 7
 #          path: litfass-server/build/reports/tests/unitTest
-#      - name: Cache dependencies
-#        uses: actions/cache@v2
-#        with:
-#          path: ~/.gradle/caches
-#          key: cache-gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle.kts') }}
-#          restore-keys: cache-gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle.kts') }}
+      - name: Cache dependencies
+        uses: actions/cache@v2
+        with:
+          path: ./litfass-grafana-plugin/node_modules
+          key: cache-node-${{ runner.os }}-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: cache-node-${{ runner.os }}-${{ hashFiles('**/yarn.lock') }}
       - name: Build
         run: yarn build
         working-directory: ${{ env.working-directory }}
