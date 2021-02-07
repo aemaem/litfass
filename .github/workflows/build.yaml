@@ -67,11 +67,8 @@ jobs:
     runs-on: ubuntu-18.04
     environment: default
     # todo: implement correctly
-#    env:
-#      GRADLE_OPTS: '-Xmx128m -Dorg.gradle.jvmargs="-XX:+HeapDumpOnOutOfMemoryError"'
-#      DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
-#      DOCKER_HUB_PASSWORD: ${{ secrets.DOCKER_HUB_PASSWORD }}
-#      DOCKER_HUB_EMAIL: ${{ secrets.DOCKER_HUB_EMAIL }}
+    env:
+      working-directory: ./litfass-grafana-plugin
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -83,8 +80,6 @@ jobs:
           node-version: 12
           java-package: jdk
           architecture: x64
-      - name: Change directory to grafana plugin root
-        run: cd litfass-grafana-plugin
       - name: Install dependencies
         run: yarn install
       - name: Test
