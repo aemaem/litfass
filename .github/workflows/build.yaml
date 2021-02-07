@@ -82,6 +82,7 @@ jobs:
           architecture: x64
       - name: Install dependencies
         run: yarn install
+        working-directory: ${{ env.working-directory }}
       - name: Test
         run: yarn test
         working-directory: ${{ env.working-directory }}
