@@ -84,6 +84,7 @@ jobs:
         run: yarn install
       - name: Test
         run: yarn test
+        working-directory: ${{ env.working-directory }}
 #      - name: Upload test report
 #        if: ${{ always() }}
 #        uses: actions/upload-artifact@v2
@@ -99,6 +100,7 @@ jobs:
 #          restore-keys: cache-gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle.kts') }}
       - name: Build
         run: yarn build
+        working-directory: ${{ env.working-directory }}
       - uses: actions/upload-artifact@v2
         with:
           name: executable
