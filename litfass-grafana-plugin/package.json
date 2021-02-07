@@ -1,0 +1,25 @@
+{
+  "name": "litfass",
+  "version": "0.1.0",
+  "description": "Litfass Plugin",
+  "author": "Michael Mair",
+  "license": "Apache-2.0",
+  "scripts": {
+    "build": "grafana-toolkit plugin:build",
+    "test": "grafana-toolkit plugin:test",
+    "dev": "grafana-toolkit plugin:dev",
+    "watch": "grafana-toolkit plugin:dev --watch",
+    "start": "yarn watch",
+    "test:accessibility": "pa11y-ci --config .pa11yci.json"
+  },
+  "dependencies": {
+    "@grafana/data": "next",
+    "@grafana/runtime": "next",
+    "@grafana/ui": "next"
+  },
+  "devDependencies": {
+    "@grafana/toolkit": "next",
+    "eslint-plugin-react-hooks": "4.0.8",
+    "pa11y-ci": "^2.4.0"
+  }
+}
